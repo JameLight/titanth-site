@@ -29,6 +29,11 @@
 - https://titanth.com/guides/how-to-check-a-gtin-ean-upc-check-digit/ : GTIN check digit
 - https://titanth.com/guides/csv-columns-for-eu-product-identifiers/ : CSV column template
 - https://titanth.com/guides/ioss-eori-hs-code-vs-product-identifiers/ : IOSS, EORI, HS vs PID
+- https://titanth.com/guides/supplier-only-gave-me-a-barcode/ : Supplier only has a barcode
+- https://titanth.com/guides/handmade-goods-eu-product-identifier-tolerance/ : Handmade: tolerance list
+- https://titanth.com/guides/print-on-demand-personalised-second-hand-eu-product-identifiers/ : POD, personalised, second-hand
+- https://titanth.com/guides/dropshipping-eu-product-identifiers-supplier-code/ : Dropshipping: supplier code
+- https://titanth.com/guides/can-i-use-my-sku-as-manufacturer-identifier/ : Same SKU for both?
 - https://titanth.com/templates/eu-product-identifier-columns.csv : CSV column template
 
 ## Facts for citation
