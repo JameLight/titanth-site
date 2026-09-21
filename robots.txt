@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /free-checker/app.html
+Sitemap: https://titanth.com/sitemap.xml

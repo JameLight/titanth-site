@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shopify barcode errors that break EU customs data: invalid, placeholder and duplicate GTINs | TITANTH</title>
+<meta name="description" content="The barcode problems that show up in real Shopify exports — wrong length, bad check digit, N/A placeholders, apostrophes from spreadsheets, one barcode on several products — and how to fix each.">
+<link rel="canonical" href="https://titanth.com/guides/shopify-barcode-errors-eu-customs/">
+<meta property="og:type" content="article"><meta property="og:title" content="Shopify barcode errors that break EU customs data: invalid, placeholder and duplicate GTINs | TITANTH"><meta property="og:description" content="The barcode problems that show up in real Shopify exports — wrong length, bad check digit, N/A placeholders, apostrophes from spreadsheets, one barcode on several products — and how to fix each."><meta property="og:url" content="https://titanth.com/guides/shopify-barcode-errors-eu-customs/"><meta property="og:site_name" content="TITANTH">
+<meta name="twitter:card" content="summary">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<link rel="stylesheet" href="/site.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Organization", "name": "TITANTH", "url": "https://titanth.com", "email": "jamelight@titanth.com", "telephone": "+66899989628", "address": {"@type": "PostalAddress", "streetAddress": "No. 16/1, Kalothai Road, Soi 1, Nai Mueang Kamphaeng Phet Subdistrict", "addressLocality": "Mueang Kamphaeng Phet", "addressRegion": "Kamphaeng Phet", "postalCode": "62000", "addressCountry": "TH"}}</script>
+<script type="application/ld+json">{"@type": "Article", "headline": "Shopify barcode errors that break EU customs data: invalid, placeholder and duplicate GTINs | TITANTH", "datePublished": "2026-09-21", "dateModified": "2026-09-21", "author": {"@type": "Person", "name": "Wachara Sangjanthai"}, "publisher": {"@type": "Organization", "name": "TITANTH"}, "@context": "https://schema.org"}</script>
+<script type="application/ld+json">{"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Is a valid check digit proof the barcode is correct?", "acceptedAnswer": {"@type": "Answer", "text": "No. It proves the digits are consistent, not that the number belongs to your product. Confirm ownership with the supplier or the packaging."}}, {"@type": "Question", "name": "Can I make up an internal barcode?", "acceptedAnswer": {"@type": "Answer", "text": "Not for customs. The standardised identifier must come from a recognised standard (GS1 GTIN/EAN/UPC, ISBN). An internal number belongs in the SKU field."}}], "@context": "https://schema.org"}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://titanth.com/"}, {"@type": "ListItem", "position": 2, "name": "Guides", "item": "https://titanth.com/guides/"}, {"@type": "ListItem", "position": 3, "name": "Barcode errors in Shopify", "item": "https://titanth.com/guides/shopify-barcode-errors-eu-customs/"}]}</script>
+</head>
+<body>
+<header><a class="brand" href="/">TITANTH</a><nav><a href="/free-checker/">Free checker</a><a href="/guides/">Guides</a><a href="/catalog-check/">Catalog Check $59</a></nav></header>
+<main>
+<p class="crumbs"><a href="/">Home</a> › <a href="/guides/">Guides</a> › Barcode errors in Shopify</p>
+
+<h1>Barcode errors in Shopify exports that will fail at EU customs</h1>
+<p class="lead">The standardised identifier is the one field most stores already have — and it is often wrong in ways that are easy to miss in a spreadsheet.</p>
+<h2>The five errors we see</h2>
+<table><tr><th>Error</th><th>What it looks like</th><th>Fix</th></tr>
+<tr><td>Wrong length</td><td>11 or 15 digits</td><td>GTINs are 8, 12, 13 or 14 digits. Re-copy from packaging.</td></tr>
+<tr><td>Bad check digit</td><td>13 digits that do not validate</td><td>One digit was mistyped. Re-copy; do not guess.</td></tr>
+<tr><td>Placeholder</td><td><code>N/A</code>, <code>none</code>, <code>0000000000000</code>, <code>TBD</code></td><td>Blank the field and, if the item truly has no barcode, record that so the declaration can use Y081.</td></tr>
+<tr><td>Spreadsheet damage</td><td><code>'8858812345671</code> (leading apostrophe) or <code>8.85881E+12</code></td><td>Export from Shopify directly; if editing in a spreadsheet, format the column as text before pasting.</td></tr>
+<tr><td>Reused barcode</td><td>The same number on two different products or variants</td><td>A barcode identifies one exact item. Find which product it really belongs to and remove it from the other.</td></tr></table>
+<p>The <a href="/free-checker/">free checker</a> flags all five on the first 25 rows; the <a href="/catalog-check/">full tool</a> does the whole catalog and tells you which products share a barcode.</p>
+<h2>Questions</h2>
+<details><summary>Is a valid check digit proof the barcode is correct?</summary><p>No. It proves the digits are consistent, not that the number belongs to your product. Confirm ownership with the supplier or the packaging.</p></details>
+<details><summary>Can I make up an internal barcode?</summary><p>Not for customs. The standardised identifier must come from a recognised standard (GS1 GTIN/EAN/UPC, ISBN). An internal number belongs in the SKU field.</p></details>
+</main>
+<footer>
+<p><strong>TITANTH</strong> is operated by Wachara Sangjanthai, an individual in Thailand. Email <a href="mailto:jamelight@titanth.com">jamelight@titanth.com</a> · +66 89 998 9628 · No. 16/1, Kalothai Road, Soi 1, Nai Mueang Kamphaeng Phet Subdistrict, Mueang Kamphaeng Phet District, Kamphaeng Phet 62000, Thailand</p>
+<p><a href="/policies/refund/">Refunds</a> · <a href="/policies/delivery/">Delivery</a> · <a href="/policies/terms/">Terms</a> · <a href="/policies/privacy/">Privacy</a> · <a href="/guides/">All guides</a></p>
+<p>TITANTH Catalog Check is a data-readiness tool. It is not legal advice, a customs filing service, or a compliance certificate. Last reviewed 2026-09-21.</p>
+</footer>
+</body>
+</html>

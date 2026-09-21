@@ -1,0 +1,20 @@
+# TITANTH
+> TITANTH Catalog Check is a browser-based tool that checks a Shopify product CSV for the product identifiers the EU requires on consumer-parcel customs declarations from 1 November 2026 (merchant code, non-standardised manufacturer code, standardised barcode). It runs locally, does not upload data, and is sold as a one-time US$59 license per store. A free version checks the first 25 rows.
+
+## Pages
+- https://titanth.com/ : overview
+- https://titanth.com/free-checker/ : free 25-row checker
+- https://titanth.com/catalog-check/ : product, US$59
+- https://titanth.com/guides/ : guides index
+- https://titanth.com/guides/shopify-csv-manufacturer-identifier/ : the manufacturer identifier is not in a Shopify export
+- https://titanth.com/guides/eu-parcel-held-missing-product-identifier/ : checklist when a parcel is held
+- https://titanth.com/guides/m-pid-ns-pid-s-pid-explained/ : definitions and Y081
+- https://titanth.com/guides/supplier-product-code-request-template/ : supplier email template
+- https://titanth.com/guides/carrier-pid-fields-fedex-ups-dhl/ : where carriers take the codes
+- https://titanth.com/guides/eu-product-identifier-etsy-ebay-woocommerce-shopify/ : by platform
+- https://titanth.com/guides/eu-product-identifier-deadline-1-november-2026/ : timeline and six-week plan
+- https://titanth.com/guides/shopify-barcode-errors-eu-customs/ : barcode errors
+
+## Facts
+- Legal basis: Commission Delegated Regulation (EU) 2026/1022. Voluntary from 2026-07-01, mandatory from 2026-11-01.
+- Not legal advice; not a customs filing service; no compliance certification.

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Where FedEx, UPS and DHL take EU product identifiers — invoice fields and API | TITANTH</title>
+<meta name="description" content="How express carriers collect the EU product identifiers (merchant code, manufacturer code, barcode): commercial invoice line items, shipping platform item fields, and the July–October test window.">
+<link rel="canonical" href="https://titanth.com/guides/carrier-pid-fields-fedex-ups-dhl/">
+<meta property="og:type" content="article"><meta property="og:title" content="Where FedEx, UPS and DHL take EU product identifiers — invoice fields and API | TITANTH"><meta property="og:description" content="How express carriers collect the EU product identifiers (merchant code, manufacturer code, barcode): commercial invoice line items, shipping platform item fields, and the July–October test window."><meta property="og:url" content="https://titanth.com/guides/carrier-pid-fields-fedex-ups-dhl/"><meta property="og:site_name" content="TITANTH">
+<meta name="twitter:card" content="summary">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<link rel="stylesheet" href="/site.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Organization", "name": "TITANTH", "url": "https://titanth.com", "email": "jamelight@titanth.com", "telephone": "+66899989628", "address": {"@type": "PostalAddress", "streetAddress": "No. 16/1, Kalothai Road, Soi 1, Nai Mueang Kamphaeng Phet Subdistrict", "addressLocality": "Mueang Kamphaeng Phet", "addressRegion": "Kamphaeng Phet", "postalCode": "62000", "addressCountry": "TH"}}</script>
+<script type="application/ld+json">{"@type": "Article", "headline": "Where FedEx, UPS and DHL take EU product identifiers — invoice fields and API | TITANTH", "datePublished": "2026-09-21", "dateModified": "2026-09-21", "author": {"@type": "Person", "name": "Wachara Sangjanthai"}, "publisher": {"@type": "Organization", "name": "TITANTH"}, "@context": "https://schema.org"}</script>
+<script type="application/ld+json">{"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Do I put the codes on the customs form or the invoice?", "acceptedAnswer": {"@type": "Answer", "text": "For express carriers the commercial invoice line items (or the equivalent item fields in their software) are where the identifiers are captured; the carrier's broker moves them into the declaration."}}, {"@type": "Question", "name": "What if I use a shipping app connected to Shopify?", "acceptedAnswer": {"@type": "Answer", "text": "Check whether the app has item-level fields for the three identifiers and whether it reads them from Shopify. Most read SKU and barcode; few have a manufacturer-code field yet, so you may need to add it in the app."}}], "@context": "https://schema.org"}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://titanth.com/"}, {"@type": "ListItem", "position": 2, "name": "Guides", "item": "https://titanth.com/guides/"}, {"@type": "ListItem", "position": 3, "name": "Carrier PID fields", "item": "https://titanth.com/guides/carrier-pid-fields-fedex-ups-dhl/"}]}</script>
+</head>
+<body>
+<header><a class="brand" href="/">TITANTH</a><nav><a href="/free-checker/">Free checker</a><a href="/guides/">Guides</a><a href="/catalog-check/">Catalog Check $59</a></nav></header>
+<main>
+<p class="crumbs"><a href="/">Home</a> › <a href="/guides/">Guides</a> › Carrier PID fields</p>
+
+<h1>Where carriers take the EU product identifiers</h1>
+<p class="lead">The regulation says <em>what</em> customs needs; each carrier decides <em>where</em> you type it. The pattern across express carriers is the same: identifiers go on the <strong>commercial invoice line items</strong> or the equivalent item fields in the shipping platform or API.</p>
+<h2>What to expect</h2>
+<table><tr><th>Carrier</th><th>What has been published</th><th>What you should do</th></tr>
+<tr><td>FedEx</td><td>An EU product identifier guide describing merchant, non-standardised manufacturer and standardised identifiers per line item</td><td>Confirm the exact header names with your FedEx account contact; test one shipment before November</td></tr>
+<tr><td>UPS</td><td>EU customs change notices stating that for consumer low-value shipments the merchant code and manufacturer code are required per line item, barcode where available, on the commercial invoice</td><td>Same: confirm headers, send a test parcel</td></tr>
+<tr><td>DHL Express</td><td>Guidance that PIDs are an EU requirement all express carriers must meet; system fields rolling out</td><td>Ask which fields map to which identifier in your DHL tooling</td></tr>
+<tr><td>Postal services</td><td>Many origin posts have not published product-identifier fields yet</td><td>Check with your post; if it cannot carry the codes, consumer parcels to the EU may need an express carrier after 1 November</td></tr></table>
+<div class="warn">This table summarises publicly available carrier material as of September 2026 and will change. Treat your carrier's own instructions as the source of truth.</div>
+<h2>Prepare the data once, use it everywhere</h2>
+<p>Whatever the carrier calls the fields, the three values per item are the same. Get them right in your catalog first — <a href="/free-checker/">check your Shopify export</a> — then map them into each carrier's fields.</p>
+<h2>Questions</h2>
+<details><summary>Do I put the codes on the customs form or the invoice?</summary><p>For express carriers the commercial invoice line items (or the equivalent item fields in their software) are where the identifiers are captured; the carrier's broker moves them into the declaration.</p></details>
+<details><summary>What if I use a shipping app connected to Shopify?</summary><p>Check whether the app has item-level fields for the three identifiers and whether it reads them from Shopify. Most read SKU and barcode; few have a manufacturer-code field yet, so you may need to add it in the app.</p></details>
+</main>
+<footer>
+<p><strong>TITANTH</strong> is operated by Wachara Sangjanthai, an individual in Thailand. Email <a href="mailto:jamelight@titanth.com">jamelight@titanth.com</a> · +66 89 998 9628 · No. 16/1, Kalothai Road, Soi 1, Nai Mueang Kamphaeng Phet Subdistrict, Mueang Kamphaeng Phet District, Kamphaeng Phet 62000, Thailand</p>
+<p><a href="/policies/refund/">Refunds</a> · <a href="/policies/delivery/">Delivery</a> · <a href="/policies/terms/">Terms</a> · <a href="/policies/privacy/">Privacy</a> · <a href="/guides/">All guides</a></p>
+<p>TITANTH Catalog Check is a data-readiness tool. It is not legal advice, a customs filing service, or a compliance certificate. Last reviewed 2026-09-21.</p>
+</footer>
+</body>
+</html>

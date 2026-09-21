@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Where is the manufacturer product identifier in a Shopify CSV export? | TITANTH</title>
+<meta name="description" content="Shopify product exports have no column for the manufacturer&#x27;s or supplier&#x27;s product code (NS-PID). Here is what EU customs means by it, what to collect, and how to add it to your catalog.">
+<link rel="canonical" href="https://titanth.com/guides/shopify-csv-manufacturer-identifier/">
+<meta property="og:type" content="article"><meta property="og:title" content="Where is the manufacturer product identifier in a Shopify CSV export? | TITANTH"><meta property="og:description" content="Shopify product exports have no column for the manufacturer&#x27;s or supplier&#x27;s product code (NS-PID). Here is what EU customs means by it, what to collect, and how to add it to your catalog."><meta property="og:url" content="https://titanth.com/guides/shopify-csv-manufacturer-identifier/"><meta property="og:site_name" content="TITANTH">
+<meta name="twitter:card" content="summary">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<link rel="stylesheet" href="/site.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Organization", "name": "TITANTH", "url": "https://titanth.com", "email": "jamelight@titanth.com", "telephone": "+66899989628", "address": {"@type": "PostalAddress", "streetAddress": "No. 16/1, Kalothai Road, Soi 1, Nai Mueang Kamphaeng Phet Subdistrict", "addressLocality": "Mueang Kamphaeng Phet", "addressRegion": "Kamphaeng Phet", "postalCode": "62000", "addressCountry": "TH"}}</script>
+<script type="application/ld+json">{"@type": "Article", "headline": "Where is the manufacturer product identifier in a Shopify CSV export? | TITANTH", "datePublished": "2026-09-21", "dateModified": "2026-09-21", "author": {"@type": "Person", "name": "Wachara Sangjanthai"}, "publisher": {"@type": "Organization", "name": "TITANTH"}, "@context": "https://schema.org"}</script>
+<script type="application/ld+json">{"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Can I use the barcode as the manufacturer identifier?", "acceptedAnswer": {"@type": "Answer", "text": "No. The barcode is the standardised identifier (S-PID). The non-standardised manufacturer identifier is a separate field for the maker's own model or part number."}}, {"@type": "Question", "name": "What if the supplier says they have no code?", "acceptedAnswer": {"@type": "Answer", "text": "Ask for whatever they use internally on invoices or packing lists — a model, article or part number. If there is truly none, record that answer; the rule expects a code from the manufacturer, producer or supplier, and your carrier or customs representative can advise on that case."}}, {"@type": "Question", "name": "Does Google Shopping / MPN work?", "acceptedAnswer": {"@type": "Answer", "text": "It can hold a model number, but it is product-level in the Shopify export, so variants that need different codes cannot be distinguished. Use it only when all variants share the same manufacturer model number."}}], "@context": "https://schema.org"}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://titanth.com/"}, {"@type": "ListItem", "position": 2, "name": "Guides", "item": "https://titanth.com/guides/"}, {"@type": "ListItem", "position": 3, "name": "Manufacturer identifier in Shopify", "item": "https://titanth.com/guides/shopify-csv-manufacturer-identifier/"}]}</script>
+</head>
+<body>
+<header><a class="brand" href="/">TITANTH</a><nav><a href="/free-checker/">Free checker</a><a href="/guides/">Guides</a><a href="/catalog-check/">Catalog Check $59</a></nav></header>
+<main>
+<p class="crumbs"><a href="/">Home</a> › <a href="/guides/">Guides</a> › Manufacturer identifier in Shopify</p>
+
+<h1>Where is the manufacturer product identifier in a Shopify export?</h1>
+<p class="lead">Short answer: <strong>it is not there</strong>. The standard Shopify product CSV has <code>Variant SKU</code> (your code) and <code>Variant Barcode</code> (the retail barcode), but no field for the code the maker or supplier uses for the item. EU customs calls that the <em>non-standardised manufacturer product identifier</em> and, from 1 November 2026, expects it on consumer parcels.</p>
+<h2>The three codes, mapped to Shopify</h2>
+<table><tr><th>EU customs term</th><th>Plain meaning</th><th>Shopify column</th></tr>
+<tr><td>Merchant product identifier (M-PID)</td><td>Your own code for the item</td><td><code>Variant SKU</code> (or the variant ID)</td></tr>
+<tr><td>Non-standardised manufacturer product identifier (NS-PID)</td><td>The maker's or supplier's own model / part / article number</td><td><strong>None.</strong> <code>Google Shopping / MPN</code> exists but is product-level and rarely filled</td></tr>
+<tr><td>Standardised manufacturer product identifier (S-PID)</td><td>GTIN / EAN / UPC / ISBN — the retail barcode</td><td><code>Variant Barcode</code></td></tr></table>
+<h2>What to do</h2>
+<ol>
+<li><strong>Decide where the maker's code will live.</strong> Options: a variant metafield, the <code>Google Shopping / MPN</code> column (product-level only — fine if all variants share one model number), or a separate spreadsheet you keep next to the export.</li>
+<li><strong>Collect the codes from suppliers.</strong> Ask for the model / part / article number for each variant, not just the product. <a href="/guides/supplier-product-code-request-template/">Use this email template</a>.</li>
+<li><strong>Do not substitute.</strong> A barcode is not the maker's code; the vendor name is not the maker's code; your SKU is not the maker's code. Customs treats them as three different fields.</li>
+<li><strong>Check what you already have.</strong> Run your export through the <a href="/free-checker/">free checker</a> to see blank SKUs and bad barcodes while you wait for suppliers.</li>
+</ol>
+<div class="warn">If you make the goods yourself, you are the manufacturer: your own model number is the maker's code, and you may use the same value as the SKU if that is genuinely your model reference.</div>
+<p><a class="cta" href="/free-checker/">Check your CSV free — first 25 rows</a></p>
+<h2>Questions</h2>
+<details><summary>Can I use the barcode as the manufacturer identifier?</summary><p>No. The barcode is the standardised identifier (S-PID). The non-standardised manufacturer identifier is a separate field for the maker's own model or part number.</p></details>
+<details><summary>What if the supplier says they have no code?</summary><p>Ask for whatever they use internally on invoices or packing lists — a model, article or part number. If there is truly none, record that answer; the rule expects a code from the manufacturer, producer or supplier, and your carrier or customs representative can advise on that case.</p></details>
+<details><summary>Does Google Shopping / MPN work?</summary><p>It can hold a model number, but it is product-level in the Shopify export, so variants that need different codes cannot be distinguished. Use it only when all variants share the same manufacturer model number.</p></details>
+</main>
+<footer>
+<p><strong>TITANTH</strong> is operated by Wachara Sangjanthai, an individual in Thailand. Email <a href="mailto:jamelight@titanth.com">jamelight@titanth.com</a> · +66 89 998 9628 · No. 16/1, Kalothai Road, Soi 1, Nai Mueang Kamphaeng Phet Subdistrict, Mueang Kamphaeng Phet District, Kamphaeng Phet 62000, Thailand</p>
+<p><a href="/policies/refund/">Refunds</a> · <a href="/policies/delivery/">Delivery</a> · <a href="/policies/terms/">Terms</a> · <a href="/policies/privacy/">Privacy</a> · <a href="/guides/">All guides</a></p>
+<p>TITANTH Catalog Check is a data-readiness tool. It is not legal advice, a customs filing service, or a compliance certificate. Last reviewed 2026-09-21.</p>
+</footer>
+</body>
+</html>
