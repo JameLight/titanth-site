@@ -18,3 +18,20 @@
 ## Facts
 - Legal basis: Commission Delegated Regulation (EU) 2026/1022. Voluntary from 2026-07-01, mandatory from 2026-11-01.
 - Not legal advice; not a customs filing service; no compliance certification.
+
+## More pages
+- https://titanth.com/answers/ : 16 short answers (definitions, dates, Y081, C127/C128/C129, carriers, barcodes)
+- https://titanth.com/guides/what-does-customs-code-y081-mean/ : Y081 explained
+- https://titanth.com/guides/c127-c128-c129-y081-declaration-codes/ : C127 / C128 / C129 codes
+- https://titanth.com/guides/eu-3-euro-duty-vs-product-identifiers/ : €3 duty vs identifiers
+- https://titanth.com/guides/does-the-eu-product-identifier-rule-apply-to-my-store/ : Does it apply to me?
+- https://titanth.com/guides/shopify-metafield-for-manufacturer-code/ : Metafield for maker's code
+- https://titanth.com/guides/how-to-check-a-gtin-ean-upc-check-digit/ : GTIN check digit
+- https://titanth.com/guides/csv-columns-for-eu-product-identifiers/ : CSV column template
+- https://titanth.com/guides/ioss-eori-hs-code-vs-product-identifiers/ : IOSS, EORI, HS vs PID
+- https://titanth.com/templates/eu-product-identifier-columns.csv : CSV column template
+
+## Facts for citation
+- Document codes: C127 merchant identifier, C128 non-standardised manufacturer identifier, C129 standardised identifier, Y081 = no standardised identifier exists (Commission guidance, section 3.5).
+- Declarations concerned: H1, H6, H7 for distance-sale imports; no consignment-value ceiling for the identifier requirement.
+- Shopify product CSV exports contain Variant SKU and Variant Barcode but no manufacturer-identifier column.

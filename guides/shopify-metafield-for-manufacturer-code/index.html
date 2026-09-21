@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How to store the manufacturer product code in Shopify (metafield) and get it into your export | TITANTH</title>
+<meta name="description" content="Step-by-step: create a variant metafield for the manufacturer or supplier product code (NS-PID) in Shopify, fill it, and check that it appears in your CSV export or keep it in a side sheet keyed by SKU.">
+<link rel="canonical" href="https://titanth.com/guides/shopify-metafield-for-manufacturer-code/">
+<meta property="og:type" content="article"><meta property="og:title" content="How to store the manufacturer product code in Shopify (metafield) and get it into your export | TITANTH"><meta property="og:description" content="Step-by-step: create a variant metafield for the manufacturer or supplier product code (NS-PID) in Shopify, fill it, and check that it appears in your CSV export or keep it in a side sheet keyed by SKU."><meta property="og:url" content="https://titanth.com/guides/shopify-metafield-for-manufacturer-code/"><meta property="og:site_name" content="TITANTH">
+<meta name="twitter:card" content="summary">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<link rel="stylesheet" href="/site.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Organization", "name": "TITANTH", "url": "https://titanth.com", "email": "jamelight@titanth.com", "telephone": "+66899989628", "address": {"@type": "PostalAddress", "streetAddress": "No. 16/1, Kalothai Road, Soi 1, Nai Mueang Kamphaeng Phet Subdistrict", "addressLocality": "Mueang Kamphaeng Phet", "addressRegion": "Kamphaeng Phet", "postalCode": "62000", "addressCountry": "TH"}}</script>
+<script type="application/ld+json">{"@type": "Article", "headline": "How to store the manufacturer product code in Shopify (metafield) and get it into your export | TITANTH", "datePublished": "2026-09-21", "dateModified": "2026-09-21", "author": {"@type": "Person", "name": "Wachara Sangjanthai"}, "publisher": {"@type": "Organization", "name": "TITANTH"}, "@context": "https://schema.org"}</script>
+<script type="application/ld+json">{"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Which Shopify plan is needed for metafields?", "acceptedAnswer": {"@type": "Answer", "text": "Metafield definitions are available on all current Shopify plans."}}, {"@type": "Question", "name": "Can the free checker read my metafield column?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, if the column is in the CSV you load. Use the 'Match identifier columns' panel to point the maker's-code field at it."}}], "@context": "https://schema.org"}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://titanth.com/"}, {"@type": "ListItem", "position": 2, "name": "Guides", "item": "https://titanth.com/guides/"}, {"@type": "ListItem", "position": 3, "name": "Metafield for maker's code", "item": "https://titanth.com/guides/shopify-metafield-for-manufacturer-code/"}]}</script>
+</head>
+<body>
+<header><a class="brand" href="/">TITANTH</a><nav><a href="/free-checker/">Free checker</a><a href="/guides/">Guides</a><a href="/answers/">Answers</a><a href="/catalog-check/">Catalog Check $59</a></nav></header>
+<main>
+<p class="crumbs"><a href="/">Home</a> › <a href="/guides/">Guides</a> › Metafield for maker&#x27;s code</p>
+<p class="answer"><strong>Short answer:</strong> Create a variant metafield (for example <code>custom.manufacturer_code</code>, single line text), fill it per variant from your supplier answers, then export products and confirm the metafield column is present. If your export does not show it, keep a side sheet keyed by SKU and map that column in the checker.</p>
+<h1>Storing the maker's code in Shopify</h1>
+<h2>Steps</h2>
+<ol class="steps">
+<li>Shopify admin → Settings → Custom data → <strong>Variants</strong> → Add definition. Name: "Manufacturer code". Namespace and key: <code>custom.manufacturer_code</code>. Type: single line text. Save.</li>
+<li>Open each product → variant → scroll to Metafields → enter the maker's model or part number exactly as the supplier wrote it.</li>
+<li>For many variants, use Shopify's bulk editor (Products → select → Bulk edit) and add the metafield column.</li>
+<li>Products → Export → CSV. Open the file and look for a column named like <code>Manufacturer code (product.metafields.custom.manufacturer_code)</code> or similar. If it is there, you are done.</li>
+<li>If it is not there, export the metafield with a CSV app, or keep a simple side sheet: columns <code>Variant SKU</code>, <code>Manufacturer code</code>, <code>Source</code>. In the checker, choose that column under "Match identifier columns".</li>
+</ol>
+<h2>Why a variant metafield and not the product-level MPN</h2>
+<p>The <code>Google Shopping / MPN</code> column is product-level. If a product has sizes or colours with different maker codes, product-level storage cannot express that. A variant metafield can.</p>
+<h2>Rules of thumb</h2>
+<ul><li>Enter the code exactly; do not "clean" it.</li>
+<li>Record where it came from (supplier sheet, packaging, email) in a second metafield or your side sheet.</li>
+<li>If the maker uses the same code for every variant, entering it on each variant is still correct.</li></ul>
+<p><a class="cta" href="/free-checker/">Check the export after you add the column — free</a></p><h2>Questions</h2>
+<details><summary>Which Shopify plan is needed for metafields?</summary><p>Metafield definitions are available on all current Shopify plans.</p></details>
+<details><summary>Can the free checker read my metafield column?</summary><p>Yes, if the column is in the CSV you load. Use the 'Match identifier columns' panel to point the maker's-code field at it.</p></details><div class="related"><h2>Related guides</h2><ul><li><a href="/guides/shopify-csv-manufacturer-identifier/">Manufacturer identifier in Shopify</a></li><li><a href="/guides/eu-parcel-held-missing-product-identifier/">Parcel held: missing identifier</a></li><li><a href="/guides/m-pid-ns-pid-s-pid-explained/">M-PID, NS-PID, S-PID</a></li><li><a href="/guides/supplier-product-code-request-template/">Supplier request template</a></li><li><a href="/guides/carrier-pid-fields-fedex-ups-dhl/">Carrier PID fields</a></li><li><a href="/guides/eu-product-identifier-etsy-ebay-woocommerce-shopify/">Etsy, eBay, WooCommerce, Shopify</a></li><li><a href="/guides/eu-product-identifier-deadline-1-november-2026/">Deadline 1 Nov 2026</a></li><li><a href="/guides/shopify-barcode-errors-eu-customs/">Barcode errors in Shopify</a></li><li><a href="/guides/what-does-customs-code-y081-mean/">Y081 explained</a></li><li><a href="/guides/c127-c128-c129-y081-declaration-codes/">C127 / C128 / C129 codes</a></li><li><a href="/guides/eu-3-euro-duty-vs-product-identifiers/">€3 duty vs identifiers</a></li><li><a href="/guides/does-the-eu-product-identifier-rule-apply-to-my-store/">Does it apply to me?</a></li><li><a href="/guides/how-to-check-a-gtin-ean-upc-check-digit/">GTIN check digit</a></li><li><a href="/guides/csv-columns-for-eu-product-identifiers/">CSV column template</a></li><li><a href="/guides/ioss-eori-hs-code-vs-product-identifiers/">IOSS, EORI, HS vs PID</a></li></ul><p><a href="/answers/">Straight answers</a> · <a href="/free-checker/">Free checker</a> · <a href="/catalog-check/">Catalog Check US$59</a></p></div>
+</main>
+<footer>
+<p><strong>TITANTH</strong> is operated by Wachara Sangjanthai, an individual in Thailand. Email <a href="mailto:jamelight@titanth.com">jamelight@titanth.com</a> · +66 89 998 9628 · No. 16/1, Kalothai Road, Soi 1, Nai Mueang Kamphaeng Phet Subdistrict, Mueang Kamphaeng Phet District, Kamphaeng Phet 62000, Thailand</p>
+<p><a href="/policies/refund/">Refunds</a> · <a href="/policies/delivery/">Delivery</a> · <a href="/policies/terms/">Terms</a> · <a href="/policies/privacy/">Privacy</a> · <a href="/guides/">All guides</a></p>
+<p>TITANTH Catalog Check is a data-readiness tool. It is not legal advice, a customs filing service, or a compliance certificate. Last reviewed 2026-09-21.</p>
+</footer>
+</body>
+</html>

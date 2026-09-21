@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How to verify a GTIN / EAN / UPC check digit by hand (with example) | TITANTH</title>
+<meta name="description" content="The check-digit formula for GTIN-8, UPC-A (12), EAN-13 and GTIN-14 with a worked example, plus the errors that make a barcode invalid on EU customs data.">
+<link rel="canonical" href="https://titanth.com/guides/how-to-check-a-gtin-ean-upc-check-digit/">
+<meta property="og:type" content="article"><meta property="og:title" content="How to verify a GTIN / EAN / UPC check digit by hand (with example) | TITANTH"><meta property="og:description" content="The check-digit formula for GTIN-8, UPC-A (12), EAN-13 and GTIN-14 with a worked example, plus the errors that make a barcode invalid on EU customs data."><meta property="og:url" content="https://titanth.com/guides/how-to-check-a-gtin-ean-upc-check-digit/"><meta property="og:site_name" content="TITANTH">
+<meta name="twitter:card" content="summary">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<link rel="stylesheet" href="/site.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Organization", "name": "TITANTH", "url": "https://titanth.com", "email": "jamelight@titanth.com", "telephone": "+66899989628", "address": {"@type": "PostalAddress", "streetAddress": "No. 16/1, Kalothai Road, Soi 1, Nai Mueang Kamphaeng Phet Subdistrict", "addressLocality": "Mueang Kamphaeng Phet", "addressRegion": "Kamphaeng Phet", "postalCode": "62000", "addressCountry": "TH"}}</script>
+<script type="application/ld+json">{"@type": "Article", "headline": "How to verify a GTIN / EAN / UPC check digit by hand (with example) | TITANTH", "datePublished": "2026-09-21", "dateModified": "2026-09-21", "author": {"@type": "Person", "name": "Wachara Sangjanthai"}, "publisher": {"@type": "Organization", "name": "TITANTH"}, "@context": "https://schema.org"}</script>
+<script type="application/ld+json">{"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "My barcode has 13 digits but fails the check — what now?", "acceptedAnswer": {"@type": "Answer", "text": "One digit was mistyped or the code is not a real GTIN. Re-copy it from the packaging or the supplier sheet; never adjust the last digit to make it pass."}}, {"@type": "Question", "name": "Can I use a 12-digit UPC in an EAN-13 field?", "acceptedAnswer": {"@type": "Answer", "text": "Yes: a UPC-A is the same code with a leading zero as EAN-13. Customs systems accept GTINs of 8, 12, 13 or 14 digits."}}], "@context": "https://schema.org"}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://titanth.com/"}, {"@type": "ListItem", "position": 2, "name": "Guides", "item": "https://titanth.com/guides/"}, {"@type": "ListItem", "position": 3, "name": "GTIN check digit", "item": "https://titanth.com/guides/how-to-check-a-gtin-ean-upc-check-digit/"}]}</script>
+</head>
+<body>
+<header><a class="brand" href="/">TITANTH</a><nav><a href="/free-checker/">Free checker</a><a href="/guides/">Guides</a><a href="/answers/">Answers</a><a href="/catalog-check/">Catalog Check $59</a></nav></header>
+<main>
+<p class="crumbs"><a href="/">Home</a> › <a href="/guides/">Guides</a> › GTIN check digit</p>
+<p class="answer"><strong>Short answer:</strong> Take the digits except the last one, multiply them alternately by 3 and 1 starting from the <em>rightmost</em> digit, add the results, and the check digit is the number that brings the sum up to the next multiple of 10. Example: 400638133393 → check digit 1, so the EAN-13 is 4006381333931.</p>
+<h1>Verify a GTIN / EAN / UPC check digit</h1>
+<h2>The method (all lengths)</h2>
+<ol class="steps">
+<li>Write the code without its last digit.</li>
+<li>Starting from the right, multiply digits by 3, 1, 3, 1 …</li>
+<li>Add the products.</li>
+<li>Check digit = (10 − (sum mod 10)) mod 10.</li>
+</ol>
+<h2>Worked example: 400638133393?</h2>
+<table><tr><th>Digit (from right)</th><td>3</td><td>9</td><td>3</td><td>3</td><td>3</td><td>1</td><td>8</td><td>3</td><td>6</td><td>0</td><td>0</td><td>4</td></tr>
+<tr><th>Weight</th><td>3</td><td>1</td><td>3</td><td>1</td><td>3</td><td>1</td><td>3</td><td>1</td><td>3</td><td>1</td><td>3</td><td>1</td></tr></table>
+<p>Sum of products = 89; next multiple of 10 minus the sum = <strong>1</strong>. The full code is <code>4006381333931</code>.</p>
+<h2>Valid lengths</h2>
+<p>8 (GTIN-8 / EAN-8), 12 (UPC-A), 13 (EAN-13 / GTIN-13), 14 (GTIN-14 / ITF-14). Anything else is not a GTIN.</p>
+<h2>What a valid check digit does not prove</h2>
+<p>It proves the digits are consistent, not that the code belongs to your product or was issued by GS1. Confirm ownership with the supplier or the packaging. The <a href="/free-checker/">free checker</a> validates length and check digit for the first 25 rows of a Shopify export and flags reused barcodes.</p>
+<h2>Questions</h2>
+<details><summary>My barcode has 13 digits but fails the check — what now?</summary><p>One digit was mistyped or the code is not a real GTIN. Re-copy it from the packaging or the supplier sheet; never adjust the last digit to make it pass.</p></details>
+<details><summary>Can I use a 12-digit UPC in an EAN-13 field?</summary><p>Yes: a UPC-A is the same code with a leading zero as EAN-13. Customs systems accept GTINs of 8, 12, 13 or 14 digits.</p></details><div class="related"><h2>Related guides</h2><ul><li><a href="/guides/shopify-csv-manufacturer-identifier/">Manufacturer identifier in Shopify</a></li><li><a href="/guides/eu-parcel-held-missing-product-identifier/">Parcel held: missing identifier</a></li><li><a href="/guides/m-pid-ns-pid-s-pid-explained/">M-PID, NS-PID, S-PID</a></li><li><a href="/guides/supplier-product-code-request-template/">Supplier request template</a></li><li><a href="/guides/carrier-pid-fields-fedex-ups-dhl/">Carrier PID fields</a></li><li><a href="/guides/eu-product-identifier-etsy-ebay-woocommerce-shopify/">Etsy, eBay, WooCommerce, Shopify</a></li><li><a href="/guides/eu-product-identifier-deadline-1-november-2026/">Deadline 1 Nov 2026</a></li><li><a href="/guides/shopify-barcode-errors-eu-customs/">Barcode errors in Shopify</a></li><li><a href="/guides/what-does-customs-code-y081-mean/">Y081 explained</a></li><li><a href="/guides/c127-c128-c129-y081-declaration-codes/">C127 / C128 / C129 codes</a></li><li><a href="/guides/eu-3-euro-duty-vs-product-identifiers/">€3 duty vs identifiers</a></li><li><a href="/guides/does-the-eu-product-identifier-rule-apply-to-my-store/">Does it apply to me?</a></li><li><a href="/guides/shopify-metafield-for-manufacturer-code/">Metafield for maker&#x27;s code</a></li><li><a href="/guides/csv-columns-for-eu-product-identifiers/">CSV column template</a></li><li><a href="/guides/ioss-eori-hs-code-vs-product-identifiers/">IOSS, EORI, HS vs PID</a></li></ul><p><a href="/answers/">Straight answers</a> · <a href="/free-checker/">Free checker</a> · <a href="/catalog-check/">Catalog Check US$59</a></p></div>
+</main>
+<footer>
+<p><strong>TITANTH</strong> is operated by Wachara Sangjanthai, an individual in Thailand. Email <a href="mailto:jamelight@titanth.com">jamelight@titanth.com</a> · +66 89 998 9628 · No. 16/1, Kalothai Road, Soi 1, Nai Mueang Kamphaeng Phet Subdistrict, Mueang Kamphaeng Phet District, Kamphaeng Phet 62000, Thailand</p>
+<p><a href="/policies/refund/">Refunds</a> · <a href="/policies/delivery/">Delivery</a> · <a href="/policies/terms/">Terms</a> · <a href="/policies/privacy/">Privacy</a> · <a href="/guides/">All guides</a></p>
+<p>TITANTH Catalog Check is a data-readiness tool. It is not legal advice, a customs filing service, or a compliance certificate. Last reviewed 2026-09-21.</p>
+</footer>
+</body>
+</html>
