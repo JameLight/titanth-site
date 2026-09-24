@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>EU product identifier check for Shopify CSV exports | TITANTH</title>
-<meta name="description" content="From 1 November 2026, customs declarations for goods sold at a distance to EU consumers and imported into the EU must carry the merchant code, the manufacturer code and, where one exists, the barcode (Regulation (EU) 2026/1022). Check a Shopify CSV for gaps in your browser. Free for 25 rows.">
+<meta name="description" content="Turn a Shopify product CSV into a clear product-code checklist. Try a synthetic sample without a file, then check 25 rows free. Full offline tool: US$59 once.">
 <link rel="canonical" href="https://titanth.com/">
-<meta property="og:type" content="website"><meta property="og:title" content="EU product identifier check for Shopify CSV exports | TITANTH"><meta property="og:description" content="From 1 November 2026, customs declarations for goods sold at a distance to EU consumers and imported into the EU must carry the merchant code, the manufacturer code and, where one exists, the barcode (Regulation (EU) 2026/1022). Check a Shopify CSV for gaps in your browser. Free for 25 rows."><meta property="og:url" content="https://titanth.com/"><meta property="og:site_name" content="TITANTH">
+<meta property="og:type" content="website"><meta property="og:title" content="EU product identifier check for Shopify CSV exports | TITANTH"><meta property="og:description" content="Turn a Shopify product CSV into a clear product-code checklist. Try a synthetic sample without a file, then check 25 rows free. Full offline tool: US$59 once."><meta property="og:url" content="https://titanth.com/"><meta property="og:site_name" content="TITANTH">
 <meta name="twitter:card" content="summary">
 <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
 <link rel="stylesheet" href="/site.css">
@@ -19,37 +19,40 @@
 <main>
 
 
-<h1>Find the product identifiers EU customs will ask for — before a parcel gets held.</h1>
-<p class="lead">From <strong>1 November 2026</strong>, customs declarations for parcels sold to EU consumers from outside the EU must name three codes per item: your product code, the maker's or supplier's code, and the retail barcode where one exists. A standard Shopify export has no column for the maker's code. TITANTH shows which rows need work and what to ask each supplier, so you do not read thousands of rows by hand.</p>
-<p><a class="cta" href="/free-checker/">Check your CSV free — first 25 rows</a></p>
-<p><a class="cta secondary" href="/catalog-check/">See the full tool — US$59 one-time</a></p>
-<p class="meta">The €3 duty on 1 July was step one; step two is data. UPS tells shippers to review their product catalogue and validate identifier data before 1 November — "missing or inaccurate data could lead to customs delays or holds" — and FedEx says codes its shipping tools cannot yet carry must go on the commercial invoice. Either way the codes have to exist in your catalog first. <a href="/guides/carrier-pid-fields-fedex-ups-dhl/">What each carrier says</a> · <a href="/guides/new-eu-customs-code-2026-2108-shopify-sellers/">The new customs code (September 2026)</a>.</p>
-<div class="grid">
-<div class="card"><h3>Runs in your browser</h3><p>Your CSV never leaves your computer. No Shopify login, no upload, no account.</p></div>
-<div class="card"><h3>Made for Shopify exports</h3><p>Reads the standard product CSV as exported. Finds your SKU and barcode columns automatically.</p></div>
-<div class="card"><h3>Plain findings</h3><p>Blank SKU, blank or invalid barcode, barcode reused on another product, missing maker's code — with the next step for each.</p></div>
-</div>
-<figure class="shot"><img src="/img/shot-worksheet.jpg" alt="TITANTH Catalog Check worksheet: each product row with its finding and next step" loading="lazy" width="910" height="1100"><figcaption>The worksheet: one line per gap, in plain words, with the next step. Synthetic sample data.</figcaption></figure>
+<section class="hero" aria-labelledby="home-title">
+<p class="eyebrow">For Shopify merchants shipping physical goods from outside the EU to EU customers</p>
+<h1 id="home-title">Turn your Shopify CSV into a product-code checklist.</h1>
+<p class="lead">See which SKUs, barcodes and maker codes need attention. Get a next step for each item, prepare questions for suppliers, and record only answers you verify. Your catalog stays on your computer.</p>
+<div class="actions"><a class="cta" href="/free-checker/app.html?demo">See a sample check — no file needed</a><a class="cta secondary" href="/catalog-check/">Explore the full tool — US$59 once</a></div>
+<p class="action-note"><a href="/free-checker/">Want to use your own Shopify CSV? Check the first 25 rows free.</a></p>
+</section>
+<div class="quick-facts" aria-label="Product facts"><div><strong>25 rows free</strong><span>Try your own CSV before buying</span></div><div><strong>10,000 rows</strong><span>Full version, up to 10 MB</span></div><div><strong>US$59 once</strong><span>One merchant store; no subscription</span></div><div><strong>Local review</strong><span>No catalog upload or Shopify login</span></div></div>
+<section class="decision-section" aria-labelledby="example-title"><p class="eyebrow">A worked example</p><h2 id="example-title">From a blank cell to a useful supplier question.</h2><p>Illustrative data, not a real customer result or a customs decision.</p><div class="example-flow"><div><b>1 · Your CSV</b><span>Canvas tote · SKU CB-01<br>The maker's product-code cell is blank.</span></div><div><b>2 · The next action</b><span>Ask the maker which product code identifies this exact tote, or whether they use another confirmed reference.</span></div><div><b>3 · Your review record</b><span>Enter only the answer and source you verified. Both versions export a supplier sheet, working CSV and change log; the full version handles the whole catalog.</span></div></div><p class="proof-note">A blank cell is a question to resolve. The checker cannot invent or authenticate a code.</p><p><a class="inline-link" href="/free-checker/app.html?demo">Try this kind of check with a synthetic sample →</a></p></section>
+<figure class="shot readable-shot"><img src="/img/shot-worksheet.jpg" alt="TITANTH Catalog Check worksheet: each product row with its finding and next step" loading="lazy" width="910" height="1100"><figcaption>Actual tool interface using synthetic sample data. <a href="/img/shot-worksheet.jpg">Open the full-size screenshot.</a></figcaption></figure>
 <h2>How it works</h2>
-<ol class="steps">
+<ol class="plain-steps">
 <li><strong>Export</strong> your products from Shopify (Products → Export → CSV).</li>
 <li><strong>Open the checker</strong> and choose the file. It runs in your browser; nothing is uploaded.</li>
 <li><strong>Work the list</strong>: fix blank SKUs and bad barcodes yourself, send the supplier question sheet for the maker's codes, record each confirmed value.</li>
 </ol>
 <h2>Free or full?</h2>
-<table><tr><th></th><th>Free online checker</th><th>Catalog Check — US$59 once</th></tr>
-<tr><td>Rows checked</td><td>First 25 product rows</td><td>Whole catalog, up to 10,000 rows</td></tr>
+<div class="table-scroll"><table><tr><th></th><th>Free online checker</th><th>Catalog Check — US$59 once</th></tr>
+<tr><td>Rows checked</td><td>First 25 CSV data rows</td><td>Whole catalog, up to 10,000 rows</td></tr>
 <tr><td>Findings with next steps</td><td>Yes</td><td>Yes</td></tr>
-<tr><td>Supplier question sheets by vendor</td><td>Preview only</td><td>Yes, downloadable</td></tr>
-<tr><td>Correction log and working CSV</td><td>Preview only</td><td>Yes, downloadable</td></tr>
+<tr><td>Supplier question sheets by vendor</td><td>Yes, for the first 25 rows</td><td>Yes, for the whole catalog</td></tr>
+<tr><td>Correction log and working CSV</td><td>Yes, for the first 25 rows</td><td>Yes, for the whole catalog</td></tr>
 <tr><td>Runs offline from a file you keep</td><td>No (online page)</td><td>Yes (one HTML file)</td></tr>
-<tr><td>Stores covered</td><td>—</td><td>One store, owner and staff</td></tr></table>
-<h2>What the rule actually asks for</h2>
-<table><tr><th>Code</th><th>Customs name</th><th>Where it usually lives in Shopify</th><th>Required?</th></tr>
+<tr><td>Stores covered</td><td>—</td><td>One store, owner and staff</td></tr></table></div>
+<p><a class="inline-link" href="/catalog-check/">See exactly what the full version includes →</a></p>
+<details class="reference-details"><summary>Why product identifiers matter for EU shipments</summary>
+<p>For the distance-sale imports covered by the rule, the customs data calls for a merchant product identifier, a maker or supplier identifier, and a standardised identifier where one exists. Scope and exceptions need case-by-case review.</p>
+<div class="table-scroll"><table><tr><th>Code</th><th>Customs name</th><th>Where it usually lives in Shopify</th><th>Required?</th></tr>
 <tr><td>Your product code</td><td>Merchant product identifier (M-PID)</td><td><code>Variant SKU</code></td><td>Yes</td></tr>
 <tr><td>Maker's / supplier's code</td><td>Non-standardised manufacturer product identifier (NS-PID)</td><td><strong>No standard column</strong> — you must collect it</td><td>Yes</td></tr>
-<tr><td>Barcode</td><td>Standardised manufacturer product identifier (S-PID: GTIN, EAN, UPC, ISBN)</td><td><code>Variant Barcode</code></td><td>Where one exists</td></tr></table>
+<tr><td>Barcode</td><td>Standardised manufacturer product identifier (S-PID: GTIN, EAN, UPC, ISBN)</td><td><code>Variant Barcode</code></td><td>Where one exists</td></tr></table></div>
 <p class="meta">Source: <a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=celex:32026R1022">Commission Delegated Regulation (EU) 2026/1022</a>. Voluntary from 1 July 2026, mandatory from 1 November 2026. This page is a data-readiness aid, not legal advice.</p>
+</details>
+<p class="meta">For more context on timing and carrier fields, see <a href="/guides/carrier-pid-fields-fedex-ups-dhl/">what carriers say</a> and <a href="/guides/new-eu-customs-code-2026-2108-shopify-sellers/">the September 2026 customs-code update</a>.</p>
 <h2>Start with the guides</h2>
 <ul>
 <li><a href="/guides/shopify-csv-manufacturer-identifier/">Where is the manufacturer identifier in a Shopify export? (It isn't — here is what to do)</a></li>
