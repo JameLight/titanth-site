@@ -38,7 +38,9 @@ button:disabled{opacity:.6;cursor:progress}
 .wait{font-size:.9rem;color:#506872}.wait.late{color:#fff;background:var(--red);padding:.1rem .45rem;border-radius:6px;font-weight:800}
 .status{font-size:.9rem;font-weight:700;color:var(--navy)}
 .case-body p{margin:.3rem 0;overflow-wrap:anywhere}
-.needs{font-weight:700}.needs.urgent{color:var(--red)}
+.needs{font-weight:700}.needs.urgent{color:var(--red)}.needs.vulnerable{color:var(--amber)}
+.case.vulnerable{border-left-color:var(--amber)}
+.duplicate{background:var(--amberbg);border:1px solid var(--amber);border-radius:6px;padding:.3rem .5rem;font-weight:700;color:#5b3d06}
 .details{white-space:pre-wrap}
 .map-link{display:inline-block;margin:.3rem 0;font-weight:700;color:var(--teal)}
 .phone{font-size:1.1rem;font-weight:800;margin:.5rem 0}.phone a{color:var(--green)}
