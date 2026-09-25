@@ -16,3 +16,6 @@ dialog{border:1px solid var(--line);border-radius:12px;padding:1.4rem;width:min(
 .emergency{flex-wrap:wrap}
 .emergency .line-help{flex-basis:100%;margin-top:.3rem}
 #case-form[hidden]{display:none}
+.quick-location-row{flex-basis:100%;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}.quick-location-row .call-button{background:#7b261f;border:0;flex:0 1 auto;white-space:normal}.quick-location-row .call-button:disabled{opacity:.65;cursor:wait}.quick-location-row span{font-size:.86rem;color:#642c26}.emergency .foundation-help{flex-basis:100%;margin-top:.3rem}
+.quick-location-row[hidden]{display:none}
+@media(max-width:650px){.quick-location-row .call-button{flex:1 1 100%}}
