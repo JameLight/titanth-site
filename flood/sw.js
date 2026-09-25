@@ -1,4 +1,4 @@
-const CACHE = "khem-flood-rescue-public-v5";
+const CACHE = "khem-flood-rescue-public-v6";
 const CACHE_FAMILY = CACHE.replace(/v\d+$/, "");
 const SHELL = ["./", "./index.html", "./styles.css", "./app.js", "./model.js", "./storage.js", "./manifest.webmanifest", "./icon.svg"];
 self.addEventListener("install", event => {

@@ -2,6 +2,7 @@ export const SCHEMA_VERSION = 1;
 export const NEEDS = Object.freeze({
   trapped: "มีคนติดอยู่",
   medical: "ต้องการความช่วยเหลือทางการแพทย์",
+  immobile: "มีผู้ป่วยติดเตียงหรือคนที่เคลื่อนย้ายเองไม่ได้ (ต้องใช้เปลหรือเรือ)",
   fast_water: "ระดับน้ำเพิ่มเร็ว",
   boat: "ต้องการเรือหรืออพยพ",
   medicine: "ขาดยาจำเป็น",
@@ -34,7 +35,7 @@ export function createCaseId(cryptoSource = globalThis.crypto) {
 }
 
 export function routingHint(needs) {
-  if (needs.some(n => ["trapped", "medical", "fast_water"].includes(n))) return "RED";
+  if (needs.some(n => ["trapped", "medical", "immobile", "fast_water"].includes(n))) return "RED";
   if (needs.some(n => ["boat", "medicine"].includes(n))) return "ORANGE";
   return "YELLOW";
 }
@@ -131,6 +132,20 @@ export function shareText(item) {
     dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok"
   }).format(new Date(item.createdAt));
   return `ขอความช่วยเหลือน้ำท่วม (ข้อมูลจากผู้แจ้ง ยังไม่ยืนยัน)\nรหัสเคส: ${item.caseId}\nข้อมูล ณ (เวลาไทย): ${thaiTime}\nพื้นที่: ${loc}${coords}${map}\nจำนวนคน: ${item.peopleCount}\nต้องการ: ${item.needs.map(n => NEEDS[n]).join(", ")}\nรายละเอียด: ${item.details || "ไม่มี"}\nโทรกลับ: ${item.contactPhone || "ไม่ได้ระบุ"}\nกรุณาตอบกลับเพื่อยืนยันว่าได้รับข้อมูลแล้ว`;
+}
+
+export function quickLocationText({ latitude, longitude, accuracy }, now = new Date()) {
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+      !Number.isFinite(longitude) || longitude < -180 || longitude > 180 ||
+      !Number.isFinite(accuracy) || accuracy < 0 || accuracy > 100000) {
+    throw new Error("พิกัดจากโทรศัพท์ไม่ถูกต้อง กรุณาบอกจุดสังเกตทางโทรศัพท์แทน");
+  }
+  const lat = latitude.toFixed(6);
+  const lon = longitude.toFixed(6);
+  const thaiTime = new Intl.DateTimeFormat("th-TH", {
+    dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok"
+  }).format(now);
+  return `ขอความช่วยเหลือด่วน น้ำท่วม (ข้อมูลจากผู้แจ้ง ยังไม่ยืนยัน)\nตำแหน่งจากโทรศัพท์ผู้แจ้ง: ${lat}, ${lon} (คลาดเคลื่อนประมาณ ${Math.round(accuracy)} เมตร)\nแผนที่: https://maps.google.com/?q=${lat},${lon}\nข้อมูล ณ (เวลาไทย): ${thaiTime}\nกรุณาตอบกลับเพื่อยืนยันว่าได้รับข้อมูลแล้ว`;
 }
 
 const csvCell = value => {

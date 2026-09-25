@@ -1,5 +1,5 @@
 import { NEEDS, CHANNELS, STATUS, makeCase, recordHandoffAttempt, isStale,
-  possibleDuplicates, shareText, casesCsv } from "./model.js";
+  possibleDuplicates, shareText, quickLocationText, casesCsv } from "./model.js";
 import { listCases, putCase, deleteCase } from "./storage.js";
 
 const $ = selector => document.querySelector(selector);
@@ -10,6 +10,10 @@ const list = $("#case-list");
 let cases = [];
 let pendingHandoff = null;
 let gpsRequestGeneration = 0;
+let draftTouched = false;
+let updateAvailable = false;
+let casesLoaded = false;
+let quickLocationInProgress = false;
 
 function clearGpsFields() {
   gpsRequestGeneration += 1;
@@ -47,12 +51,44 @@ function askConfirm(message, title = "ยืนยันการทำราย
   $("#confirm-message").textContent = message;
   if (typeof dialog.showModal !== "function") return Promise.resolve(window.confirm(`${title}\n${message}`));
   return new Promise(resolve => {
-    let accepted = false;
-    $("#confirm-cancel").onclick = () => dialog.close();
-    $("#confirm-accept").onclick = () => { accepted = true; dialog.close(); };
-    dialog.addEventListener("close", () => resolve(accepted), { once: true });
+    let settled = false;
+    const onClose = () => settle(false);
+    const onCancel = event => { event.preventDefault(); settle(false); };
+    function settle(accepted) {
+      if (settled) return;
+      settled = true;
+      dialog.removeEventListener("close", onClose);
+      dialog.removeEventListener("cancel", onCancel);
+      if (dialog.open) dialog.close();
+      resolve(accepted);
+    }
+    $("#confirm-cancel").onclick = () => settle(false);
+    $("#confirm-accept").onclick = () => settle(true);
+    dialog.addEventListener("close", onClose);
+    dialog.addEventListener("cancel", onCancel);
     dialog.showModal();
   });
+}
+
+function hasUnsavedDraft() {
+  if (!casesLoaded || cases.length || draftTouched || quickLocationInProgress || pendingHandoff ||
+      $("#confirm-dialog").open || $("#handoff-dialog").open) return true;
+  const manualCopy = $("#manual-copy");
+  if (manualCopy && !manualCopy.hidden) return true;
+  return Array.from(form.elements).some(element => {
+    if (element.type === "checkbox") return element.checked !== element.defaultChecked;
+    if ("defaultValue" in element) return element.value !== element.defaultValue;
+    return false;
+  });
+}
+
+function reloadWhenSafe() {
+  if (!updateAvailable) return;
+  if (hasUnsavedDraft()) {
+    if (casesLoaded) toast("มีแอปรุ่นใหม่ เมื่อทำงานกับเคสและบันทึกร่างเสร็จแล้ว กรุณาโหลดหน้านี้ใหม่");
+    return;
+  }
+  location.reload();
 }
 
 function renderNeeds() {
@@ -134,6 +170,7 @@ function render() {
 
 async function refresh() {
   cases = await listCases();
+  casesLoaded = true;
   render();
 }
 
@@ -154,6 +191,7 @@ form.addEventListener("submit", async event => {
     await putCase(item);
     form.reset();
     clearGpsFields();
+    draftTouched = false;
     $("#gps-status").textContent = GPS_HINT;
     await refresh();
     $("#case-list").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -162,6 +200,7 @@ form.addEventListener("submit", async event => {
 });
 
 $("#gps-button").addEventListener("click", () => {
+  draftTouched = true;
   const status = $("#gps-status");
   if (!navigator.geolocation) { status.textContent = "อุปกรณ์นี้ไม่มี GPS กรุณากรอกจุดสังเกต"; return; }
   const requestGeneration = ++gpsRequestGeneration;
@@ -175,6 +214,57 @@ $("#gps-button").addEventListener("click", () => {
   }, () => { if (requestGeneration === gpsRequestGeneration) status.textContent = "ไม่ได้รับพิกัด กรุณากรอกจุดสังเกตด้วยมือ"; },
   { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
 });
+
+$("#quick-location").addEventListener("click", () => {
+  if (quickLocationInProgress) return;
+  const button = $("#quick-location");
+  const status = $("#quick-location-status");
+  if (!navigator.geolocation) {
+    status.textContent = "อุปกรณ์นี้ขอตำแหน่งไม่ได้ ให้โทร 1784 หรือ 1669 แล้วบอกจุดสังเกต";
+    return;
+  }
+  quickLocationInProgress = true;
+  button.disabled = true;
+  status.textContent = "กำลังขอตำแหน่งจากโทรศัพท์นี้…";
+  try { navigator.geolocation.getCurrentPosition(async position => {
+    try {
+      const content = quickLocationText(position.coords);
+      if (typeof navigator.share === "function") {
+        try {
+          await navigator.share({ title: "ขอความช่วยเหลือน้ำท่วม", text: content });
+          status.textContent = "เปิดการแชร์แล้ว หน้านี้ไม่รู้ว่าปลายทางได้รับข้อความหรือยัง โทร 1784 ด้วย";
+          return;
+        } catch (error) {
+          if (error?.name === "AbortError") {
+            status.textContent = "ยกเลิกการแชร์แล้ว ยังไม่มีข้อมูลส่งจากหน้านี้";
+            return;
+          }
+        }
+      }
+      if (await copyText(content)) {
+        status.textContent = "คัดลอกข้อความแล้ว วางใน LINE ปภ. หรือส่งให้ญาติ แล้วโทร 1784 ด้วย การคัดลอกยังไม่ใช่การส่ง";
+      } else {
+        showManualCopy(content);
+        status.textContent = "ข้อความอยู่ในกล่องคัดลอกด้านบน ยังไม่มีข้อมูลส่งจากหน้านี้";
+      }
+    } catch (error) {
+      status.textContent = error.message;
+    } finally {
+      quickLocationInProgress = false;
+      button.disabled = false;
+    }
+  }, () => {
+    status.textContent = "ไม่ได้รับตำแหน่ง ให้โทร 1784 หรือ 1669 แล้วบอกจุดสังเกตที่ใกล้ที่สุด";
+    quickLocationInProgress = false;
+    button.disabled = false;
+  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }); }
+  catch {
+    status.textContent = "ขอตำแหน่งไม่ได้ ให้โทร 1784 หรือ 1669 แล้วบอกจุดสังเกตที่ใกล้ที่สุด";
+    quickLocationInProgress = false;
+    button.disabled = false;
+  }
+});
+$("#quick-location-row").hidden = false;
 
 async function copyCase(item) {
   const content = shareText(item);
@@ -311,14 +401,21 @@ $("#export-json").addEventListener("click", () => exportCases("json"));
 $("#export-csv").addEventListener("click", () => exportCases("csv"));
 
 renderNeeds();
+form.addEventListener("input", () => { draftTouched = true; });
+form.addEventListener("change", () => { draftTouched = true; });
 clearGpsFields();
 window.addEventListener("pageshow", event => {
   if (!event.persisted) return;
   clearGpsFields();
   $("#gps-status").textContent = GPS_HINT;
 });
-refresh().then(() => { form.hidden = false; }).catch(() => { list.replaceChildren(node("div", "error", "เบราว์เซอร์นี้บันทึกเคสไม่ได้ ให้โทร 1784 หรือแจ้ง LINE @1784DDPM โดยตรง หรือเปิดหน้านี้ใน Chrome หรือ Safari")); });
+refresh().then(() => { form.hidden = false; if (updateAvailable) reloadWhenSafe(); }).catch(() => { list.replaceChildren(node("div", "error", "เบราว์เซอร์นี้บันทึกเคสไม่ได้ ให้โทร 1784 หรือแจ้ง LINE @1784DDPM โดยตรง หรือเปิดหน้านี้ใน Chrome หรือ Safari")); });
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  if (hadController) navigator.serviceWorker.addEventListener("controllerchange", () => {
+    updateAvailable = true;
+    reloadWhenSafe();
+  });
   navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
     .then(registration => registration.update())
     .catch(() => toast("ติดตั้งโหมดออฟไลน์ไม่สำเร็จ กรุณาลองโหลดหน้าใหม่ขณะออนไลน์"));
