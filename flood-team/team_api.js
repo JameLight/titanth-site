@@ -193,7 +193,8 @@ export function makeTeamApi(config, fetchImpl = globalThis.fetch.bind(globalThis
       if (old) { try { await auth("logout?scope=local", {}, old.access_token); } catch { /* signed out locally anyway */ } }
     },
     myAccount: async () => one(await rpc("my_account")),
-    team: async () => one(await data("teams?select=id,name,on_duty_until,last_seen_at")),
+    // select=* works before and after SQL v2.2 (v2.2 adds public_phone)
+    team: async () => one(await data("teams?select=*")),
     areas: async () => (await data("team_areas?select=province&order=province")) ?? [],
     members: async () => (await data("team_members?select=user_id,display_name,role,created_at&order=created_at")) ?? [],
     cases: async () => (await data(`cases?select=${CASE_COLUMNS}&order=created_at.desc&limit=300`)) ?? [],
@@ -204,6 +205,7 @@ export function makeTeamApi(config, fetchImpl = globalThis.fetch.bind(globalThis
     release: (caseId, reason) => rpc("release_case", { p_case: caseId, p_reason: reason }),
     setDuty: hours => rpc("set_duty", { p_hours: hours }),
     heartbeat: () => rpc("team_heartbeat"),
+    duplicates: async () => (await rpc("possible_duplicates")) ?? [],
     addMember: (code, name) => rpc("add_member", { p_account_code: code, p_display_name: name }),
     removeMember: code => rpc("remove_member", { p_account_code: code })
   };

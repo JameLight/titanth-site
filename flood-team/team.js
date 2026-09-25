@@ -11,17 +11,22 @@ const SCREENS = ["#loading", "#screen-unconfigured", "#screen-auth", "#screen-wa
 const NEEDS = Object.freeze({
   trapped: "มีคนติดอยู่", medical: "ต้องการแพทย์/บาดเจ็บ", immobile: "ผู้ป่วยติดเตียง/เคลื่อนย้ายเองไม่ได้",
   fast_water: "น้ำขึ้นเร็ว", boat: "ต้องการเรือ/อพยพ", medicine: "ขาดยาจำเป็น", food_water: "ต้องการอาหาร/น้ำดื่ม",
-  other: "ความช่วยเหลืออื่น"
+  other: "ความช่วยเหลืออื่น", dialysis_oxygen: "ผู้ฟอกไต/ใช้ออกซิเจน", pregnant: "หญิงตั้งครรภ์", infant: "เด็กเล็ก",
+  elderly: "ผู้สูงอายุ", disabled: "ผู้พิการ"
 });
-const URGENT = new Set(["trapped", "medical", "immobile", "fast_water"]);
+// Triage: urgent first, then vulnerable groups (Ministry of Public Health list), then the rest.
+const URGENT = new Set(["trapped", "medical", "immobile", "fast_water", "dialysis_oxygen"]);
+const VULNERABLE = new Set(["pregnant", "infant", "elderly", "disabled"]);
 const STATUS = Object.freeze({
   SENT: "รอทีมรับ", ACKNOWLEDGED: "ทีมเรารับแล้ว", EN_ROUTE: "ทีมเรากำลังเดินทาง", NEED_INFO: "ต้องการข้อมูลเพิ่ม",
-  RESOLVED: "ช่วยเสร็จแล้ว", HANDED_TO_OFFICIAL: "ส่งต่อหน่วยงานแล้ว"
+  RESOLVED: "ช่วยเสร็จแล้ว", HANDED_TO_OFFICIAL: "ส่งต่อหน่วยงานแล้ว", WITHDRAWN: "ผู้แจ้งยกเลิกแล้ว (ลบข้อมูลแล้ว)"
 });
 const EVENT = Object.freeze({
   SENT: "ผู้แจ้งส่งเคส", ACKNOWLEDGED: "รับเคส", EN_ROUTE: "กำลังเดินทาง", NEED_INFO: "ต้องการข้อมูลเพิ่ม",
-  RESOLVED: "ช่วยเสร็จแล้ว", HANDED_TO_OFFICIAL: "ส่งต่อหน่วยงาน", VIEWED_CONTACT: "เปิดดูเบอร์โทร", RELEASED: "คืนเคส"
+  RESOLVED: "ช่วยเสร็จแล้ว", HANDED_TO_OFFICIAL: "ส่งต่อหน่วยงาน", VIEWED_CONTACT: "เปิดดูเบอร์โทร", RELEASED: "คืนเคส",
+  WITHDRAWN: "ผู้แจ้งยกเลิกเคส"
 });
+const DUPLICATE_REASON = Object.freeze({ same_phone: "เบอร์เดียวกัน", near: "ตำแหน่งห่างกันไม่เกิน 200 ม." });
 const NEXT = Object.freeze({
   ACKNOWLEDGED: ["EN_ROUTE", "NEED_INFO", "HANDED_TO_OFFICIAL", "RESOLVED"],
   EN_ROUTE: ["NEED_INFO", "HANDED_TO_OFFICIAL", "RESOLVED"],
@@ -30,7 +35,7 @@ const NEXT = Object.freeze({
 const ACTION = Object.freeze({
   EN_ROUTE: "กำลังเดินทาง", NEED_INFO: "ต้องการข้อมูลเพิ่ม", HANDED_TO_OFFICIAL: "ส่งต่อหน่วยงานแล้ว", RESOLVED: "ช่วยเสร็จแล้ว"
 });
-const CLOSED = new Set(["RESOLVED", "HANDED_TO_OFFICIAL"]);
+const CLOSED = new Set(["RESOLVED", "HANDED_TO_OFFICIAL", "WITHDRAWN"]);
 
 let api = null;
 let timer = null;
@@ -42,7 +47,7 @@ let acting = false;
 let state = freshState();
 
 function freshState() {
-  return { account: null, team: null, areas: [], members: [], cases: [], seenOpen: null, phones: new Map(), openHistory: new Set() };
+  return { account: null, team: null, areas: [], members: [], cases: [], duplicates: new Map(), seenOpen: null, phones: new Map(), openHistory: new Set() };
 }
 
 const clock = new Intl.DateTimeFormat("th-TH", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
@@ -55,6 +60,8 @@ const ago = iso => {
   return m < 60 ? `${m} นาทีที่แล้ว` : `${Math.floor(m / 60)} ชม. ${m % 60} นาทีที่แล้ว`;
 };
 const urgent = item => (item.needs ?? []).some(need => URGENT.has(need));
+const vulnerable = item => (item.needs ?? []).some(need => VULNERABLE.has(need));
+const tier = item => (urgent(item) ? 2 : vulnerable(item) ? 1 : 0);
 
 function el(tag, className, text) {
   const element = document.createElement(tag);
@@ -163,8 +170,11 @@ async function refreshAll() {
     show("#screen-waiting");
     return;
   }
-  const [team, areas, members, cases] = await Promise.all([api.team(), api.areas(), api.members(), api.cases()]);
-  Object.assign(state, { team, areas, members, cases });
+  const [team, areas, members, cases, duplicates] = await Promise.all([api.team(), api.areas(), api.members(), api.cases(),
+    api.duplicates().catch(() => [])]);  // hints only; a failure must not stop the list
+  const byCase = new Map();
+  for (const d of duplicates) byCase.set(d.case_id, [...(byCase.get(d.case_id) ?? []), d]);
+  Object.assign(state, { team, areas, members, cases, duplicates: byCase });
   await beat();
   renderTeam();
   show("#screen-team");
@@ -176,7 +186,8 @@ function renderTeam() {
   const { account, team, areas, members, cases } = state;
   const coordinator = account.role === "coordinator";
   $("#team-name").textContent = team?.name ?? account.team_name;
-  $("#me-line").textContent = `คุณ: ${account.display_name} (${coordinator ? "ผู้ประสานงาน" : "สมาชิก"})`;
+  $("#me-line").textContent = `คุณ: ${account.display_name} (${coordinator ? "ผู้ประสานงาน" : "สมาชิก"})` +
+    (team?.public_phone ? ` · เบอร์สายด่วนทีมที่ประชาชนเห็น: ${team.public_phone}` : "");
   $("#areas-line").textContent = areas.length
     ? `จังหวัดที่ทีมดูแล: ${areas.map(area => area.province).join(", ")}`
     : "ทีมยังไม่มีจังหวัดที่ดูแล แจ้งเจ้าของระบบ";
@@ -191,7 +202,7 @@ function renderTeam() {
 
   const ours = item => item.team_id && item.team_id === team?.id;
   const open = cases.filter(item => item.status === "SENT" && !item.team_id)
-    .sort((a, b) => (urgent(b) - urgent(a)) || (new Date(a.created_at) - new Date(b.created_at)));
+    .sort((a, b) => (tier(b) - tier(a)) || (new Date(a.created_at) - new Date(b.created_at)));
   const mine = cases.filter(item => ours(item) && !CLOSED.has(item.status))
     .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
   const closed = cases.filter(item => ours(item) && CLOSED.has(item.status));
@@ -213,7 +224,11 @@ function renderList(selector, items, makeCard, emptyText) {
 function caseBody(item) {
   const box = el("div", "case-body");
   const needs = (item.needs ?? []).map(need => NEEDS[need] ?? "ความช่วยเหลืออื่น").join(" · ");
-  box.append(el("p", urgent(item) ? "needs urgent" : "needs", `${urgent(item) ? "ด่วน: " : ""}${needs}`));
+  const prefix = urgent(item) ? "ด่วน: " : vulnerable(item) ? "กลุ่มเปราะบาง: " : "";
+  box.append(el("p", urgent(item) ? "needs urgent" : vulnerable(item) ? "needs vulnerable" : "needs", `${prefix}${needs}`));
+  for (const d of state.duplicates.get(item.id) ?? []) {
+    box.append(el("p", "duplicate", `อาจซ้ำกับเคส ${d.other_code} (${DUPLICATE_REASON[d.reason] ?? "คล้ายกัน"}) — ตรวจก่อนออกไป`));
+  }
   const place = [item.province, item.district, item.subdistrict].filter(Boolean).join(" · ");
   box.append(el("p", "", `${item.people} คน · ${place}`));
   if (item.landmark) box.append(el("p", "", `จุดสังเกต: ${item.landmark}`));
@@ -228,13 +243,14 @@ function caseBody(item) {
   }
   if (item.outcome) box.append(el("p", "", `ผลที่ทีมรายงาน: ${item.outcome}`));
   if (item.personal_data_purged) {
-    box.append(el("p", "note", "ลบข้อมูลที่ระบุตัวคนได้ของเคสนี้ตามกำหนดแล้ว (เบอร์ รายละเอียด จุดสังเกต ตำบล อำเภอ พิกัด ผลการช่วย และข้อความกับชื่อในประวัติ) เหลือเฉพาะจังหวัด จำนวนคน ประเภทความต้องการ และสถานะ"));
+    const why = item.status === "WITHDRAWN" ? "ผู้แจ้งยกเลิกเคสและขอลบข้อมูล ระบบลบ" : "ระบบลบ";
+    box.append(el("p", "note", `${why}ข้อมูลที่ระบุตัวคนได้ของเคสนี้แล้ว (เบอร์ รายละเอียด จุดสังเกต ตำบล อำเภอ พิกัด ผลการช่วย และข้อความกับชื่อในประวัติ) เหลือเฉพาะจังหวัด จำนวนคน ประเภทความต้องการ และสถานะ`));
   }
   return box;
 }
 
 function openCard(item) {
-  const card = el("article", `case open${urgent(item) ? " urgent" : ""}`);
+  const card = el("article", `case open${urgent(item) ? " urgent" : vulnerable(item) ? " vulnerable" : ""}`);
   const late = Date.now() - new Date(item.created_at).getTime() > LATE_MS;
   const head = el("div", "case-head");
   head.append(el("strong", "", item.code),
