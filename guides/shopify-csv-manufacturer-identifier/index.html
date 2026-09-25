@@ -21,12 +21,12 @@
 <p class="crumbs"><a href="/">Home</a> › <a href="/guides/">Guides</a> › Manufacturer identifier in Shopify</p>
 
 <h1>Where is the manufacturer product identifier in a Shopify export?</h1>
-<p class="lead">Short answer: <strong>there is no column made for it</strong>. The standard Shopify product CSV has <code>Variant SKU</code> (your code) and <code>Variant Barcode</code> (the retail barcode). Shopify&#x27;s help page and sample files also show a Google Shopping MPN (manufacturer part number) column, but a real export from our own store on 25 September 2026 had no Google Shopping columns at all, even though the test products had MPN values, so don&#x27;t count on it. EU customs calls the code the maker or supplier uses for the item the <em>non-standardised manufacturer product identifier</em> and, from 1 November 2026, expects it on consumer parcels.</p>
+<p class="lead">Short answer: <strong>there is no column made for it</strong>. The standard Shopify product CSV has <code>Variant SKU</code> (your code) and a barcode column for the retail barcode (<code>Variant Barcodes</code> in a real export from our own store on 25 September 2026). Shopify&#x27;s help page and sample files also show a Google Shopping MPN (manufacturer part number) column, but a real export from our own store on 25 September 2026 had no Google Shopping columns at all, even though the test products had MPN values, so don&#x27;t count on it. EU customs calls the code the maker or supplier uses for the item the <em>non-standardised manufacturer product identifier</em> and, from 1 November 2026, expects it on consumer parcels.</p>
 <h2>The three codes, mapped to Shopify</h2>
 <table><tr><th>EU customs term</th><th>Plain meaning</th><th>Shopify column</th></tr>
-<tr><td>Merchant product identifier (M-PID)</td><td>Your own code for the item</td><td><code>Variant SKU</code> (or the variant ID)</td></tr>
+<tr><td>Merchant product identifier (M-PID)</td><td>Your own code for the item</td><td><code>Variant SKU</code></td></tr>
 <tr><td>Non-standardised manufacturer product identifier (NS-PID)</td><td>The maker's or supplier's own model / part / article number</td><td><strong>No column made for it.</strong> A Google Shopping MPN column appears in Shopify's sample files, but our own test export had none</td></tr>
-<tr><td>Standardised manufacturer product identifier (S-PID)</td><td>GTIN / EAN / UPC / ISBN — the retail barcode</td><td><code>Variant Barcode</code></td></tr></table>
+<tr><td>Standardised manufacturer product identifier (S-PID)</td><td>GTIN / EAN / UPC / ISBN — the retail barcode</td><td><code>Variant Barcodes</code> (<code>Variant Barcode</code> or <code>Barcode</code> in Shopify's sample files)</td></tr></table>
 <h2>What to do</h2>
 <ol>
 <li><strong>Decide where the maker's code will live.</strong> Options: a variant metafield (edit it in the bulk editor; it does not appear in the product CSV), or a separate spreadsheet keyed by SKU that you keep next to the export. If your export happens to include a Google Shopping MPN column, check that each variant row has its own value. Shopify's documentation says a defined product metafield appears in the CSV; in Shopify's sample file it holds one value per product, on the first row, so it cannot give each size or colour its own code.</li>
@@ -44,7 +44,7 @@
 <footer>
 <p><strong>TITANTH</strong> is operated by Wachara Sangjanthai, an individual in Thailand. Email <a href="mailto:jamelight@titanth.com">jamelight@titanth.com</a> · +66 89 998 9628 · No. 16/1, Kalothai Road, Soi 1, Nai Mueang Kamphaeng Phet Subdistrict, Mueang Kamphaeng Phet District, Kamphaeng Phet 62000, Thailand</p>
 <p><a href="/policies/refund/">Refunds</a> · <a href="/policies/delivery/">Delivery</a> · <a href="/policies/terms/">Terms</a> · <a href="/policies/privacy/">Privacy</a> · <a href="/guides/">All guides</a></p>
-<p>TITANTH Catalog Check is a data-readiness tool. It is not legal advice, a customs filing service, an HS-code classifier, or a compliance certificate. Sources: <a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=celex:32026R1022">Regulation (EU) 2026/1022</a> · <a href="https://taxation-customs.ec.europa.eu/document/download/053e5b4e-f0be-4f20-9a23-3e3b659a6676_en?filename=Customs+Guidance+on+EUR+3+customs+duty.pdf">Commission customs guidance, section 3.5</a>. Last reviewed 2026-09-22.</p>
+<p>TITANTH Catalog Check is a data-readiness tool. It is not legal advice, a customs filing service, an HS-code classifier, or a compliance certificate. Sources: <a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=celex:32026R1022">Regulation (EU) 2026/1022</a> · <a href="https://taxation-customs.ec.europa.eu/document/download/053e5b4e-f0be-4f20-9a23-3e3b659a6676_en?filename=Customs+Guidance+on+EUR+3+customs+duty.pdf">Commission customs guidance, section 3.5</a>. Last reviewed 2026-09-25.</p>
 </footer>
 </body>
 </html>
