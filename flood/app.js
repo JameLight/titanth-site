@@ -4,6 +4,7 @@ import { listCases, putCase, deleteCase } from "./storage.js";
 
 const $ = selector => document.querySelector(selector);
 const DDPM_LINE_URL = "https://lin.ee/MoS2rXU";
+const GPS_HINT = "กดเฉพาะเมื่ออยู่ที่จุดเกิดเหตุ ถ้าแจ้งแทนคนอื่น ให้กรอกจุดสังเกตแทน";
 const form = $("#case-form");
 const list = $("#case-list");
 let cases = [];
@@ -44,6 +45,7 @@ function askConfirm(message, title = "ยืนยันการทำราย
   const dialog = $("#confirm-dialog");
   $("#confirm-title").textContent = title;
   $("#confirm-message").textContent = message;
+  if (typeof dialog.showModal !== "function") return Promise.resolve(window.confirm(`${title}\n${message}`));
   return new Promise(resolve => {
     let accepted = false;
     $("#confirm-cancel").onclick = () => dialog.close();
@@ -93,9 +95,6 @@ function renderCase(item) {
   head.append(time);
   card.append(head);
   const badges = node("div", "badges");
-  const hint = node("span", `badge ${item.routingHint === "RED" ? "red" : item.routingHint === "ORANGE" ? "orange" : ""}`,
-    `สัญญาณ ${item.routingHint} • ไม่ใช่คำวินิจฉัย`);
-  badges.append(hint);
   badges.append(node("span", `badge ${item.status === STATUS.LOCAL_ONLY ? "local" : "attempt"}`,
     item.status === STATUS.LOCAL_ONLY ? "เก็บในเครื่องเท่านั้น" : "ผู้ใช้ระบุว่าส่งต่อแล้ว • ยังไม่ยืนยันผู้รับ"));
   card.append(badges);
@@ -108,7 +107,10 @@ function renderCase(item) {
   card.append(node("p", "case-warning", item.status === STATUS.LOCAL_ONLY
     ? "เคสนี้ยังอยู่ในอุปกรณ์นี้ ไม่มีผู้รับเคสอัตโนมัติ"
     : "คุณระบุว่าส่งต่อแล้ว แต่ยังไม่มีหลักฐานว่ามีผู้รับเคส ถ้าไม่มีการตอบกลับ ให้โทร 1784 หรือ 1669 ตามเหตุ"));
-  card.append(node("p", "shared-device-note", "ถ้าใช้เครื่องร่วมกับผู้อื่น ให้ลบเคสหลังส่งต่อและเก็บหลักฐานการตอบรับไว้ต่างหาก"));
+  card.append(node("p", "shared-device-note", "ถ้าใช้เครื่องร่วมกับผู้อื่น ให้ลบเคสหลังส่งต่อและเก็บหลักฐานการตอบรับไว้ต่างหาก ข้อความที่คัดลอกอาจค้างในคลิปบอร์ดของเครื่อง"));
+  const preview = node("details", "message-preview");
+  preview.append(node("summary", "", "ดูข้อความที่จะส่ง (อ่านให้เจ้าหน้าที่ 1784 ฟังได้)"), node("pre", "", shareText(item)));
+  card.append(preview);
   const actions = node("div", "case-actions");
   actions.append(button("คัดลอกข้อความ", "secondary-button", () => copyCase(item)));
   actions.append(lineLink());
@@ -152,7 +154,7 @@ form.addEventListener("submit", async event => {
     await putCase(item);
     form.reset();
     clearGpsFields();
-    $("#gps-status").textContent = "กดเฉพาะเมื่ออยู่ที่จุดเกิดเหตุ ถ้าแจ้งแทนคนอื่น ให้กรอกจุดสังเกตแทน";
+    $("#gps-status").textContent = GPS_HINT;
     await refresh();
     $("#case-list").scrollIntoView({ behavior: "smooth", block: "start" });
     toast("บันทึกในเครื่องแล้ว ยังไม่มีการส่งไปยังผู้รับเคส");
@@ -177,7 +179,7 @@ $("#gps-button").addEventListener("click", () => {
 async function copyCase(item) {
   const content = shareText(item);
   if (await copyText(content)) {
-    toast("คัดลอกแล้ว กด เปิด LINE ปภ. แล้วเพิ่มเพื่อน แชท วางข้อความ กดส่ง และตอบคำถามจนได้ข้อความยืนยันรับเรื่อง หรือโทร 1784 การคัดลอกยังไม่ใช่การส่งเคส");
+    toast("คัดลอกแล้ว เปิด LINE ปภ. เพิ่มเพื่อน วางและกดส่ง แล้วตอบคำถามจนทราบว่ามีผู้รับเรื่อง การคัดลอกยังไม่ใช่การส่งเคส");
   } else {
     showManualCopy(content);
     toast("คัดลอกอัตโนมัติไม่ได้ ข้อความอยู่ในกล่องด้านบน กดค้างเพื่อคัดลอก");
@@ -246,6 +248,20 @@ async function shareCase(item) {
 async function handoffCase(item) {
   pendingHandoff = item;
   $("#handoff-form").reset();
+  if (typeof $("#handoff-dialog").showModal !== "function") {
+    pendingHandoff = null;
+    const answer = window.prompt("ใช้ช่องทางใด? พิมพ์ 1 โทรศัพท์, 2 LINE, 3 SMS หรือ 4 ช่องทางอื่น");
+    const channel = { "1": "phone", "2": "line", "3": "sms", "4": "other" }[answer];
+    if (answer === null) return;
+    if (!channel) { toast("กรุณาเลือกช่องทาง 1 ถึง 4"); return; }
+    if (!window.confirm("บันทึกว่าคุณพยายามส่งต่อแล้ว? หน้านี้ยังไม่มีหลักฐานว่าปลายทางได้รับเคส")) return;
+    try {
+      await putCase(recordHandoffAttempt(item, { channel }));
+      await refresh();
+      toast("บันทึกคำยืนยันของคุณแล้ว ยังไม่มีหลักฐานว่าปลายทางรับเคส");
+    } catch (error) { toast(error.message); }
+    return;
+  }
   $("#handoff-dialog").showModal();
 }
 
@@ -254,7 +270,7 @@ $("#handoff-form").addEventListener("submit", async event => {
   event.preventDefault();
   if (!pendingHandoff) return;
   const channel = new FormData(event.currentTarget).get("channel");
-  if (!Object.hasOwn(CHANNELS, channel)) return;
+  if (!Object.prototype.hasOwnProperty.call(CHANNELS, channel)) return;
   try {
     await putCase(recordHandoffAttempt(pendingHandoff, { channel }));
     $("#handoff-dialog").close();
@@ -299,9 +315,9 @@ clearGpsFields();
 window.addEventListener("pageshow", event => {
   if (!event.persisted) return;
   clearGpsFields();
-  $("#gps-status").textContent = "กดเฉพาะเมื่ออยู่ที่จุดเกิดเหตุ ถ้าแจ้งแทนคนอื่น ให้กรอกจุดสังเกตแทน";
+  $("#gps-status").textContent = GPS_HINT;
 });
-refresh().catch(error => { list.replaceChildren(node("div", "error", `${error.message} กรุณาใช้เบราว์เซอร์ปกติและเปิดพื้นที่จัดเก็บข้อมูล`)); });
+refresh().then(() => { form.hidden = false; }).catch(() => { list.replaceChildren(node("div", "error", "เบราว์เซอร์นี้บันทึกเคสไม่ได้ ให้โทร 1784 หรือแจ้ง LINE @1784DDPM โดยตรง หรือเปิดหน้านี้ใน Chrome หรือ Safari")); });
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
   navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
     .then(registration => registration.update())
