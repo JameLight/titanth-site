@@ -4,6 +4,7 @@
 ## Pages
 - https://titanth.com/ : overview
 - https://titanth.com/free-checker/ : free 25-row checker
+- https://titanth.com/flood/ : Thai flood help-message helper; routes people to official channels (1784, LINE @1784DDPM, 1669); sends nothing itself
 - https://titanth.com/catalog-check/ : product, US$59
 - https://titanth.com/guides/ : guides index
 - https://titanth.com/guides/shopify-csv-manufacturer-identifier/ : the manufacturer identifier is not in a Shopify export
