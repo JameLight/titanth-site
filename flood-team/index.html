@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://jktnyuhrbithgbsvcrwa.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#103b50">
+  <title>หน้าทีมอาสา — พร้อมแจ้งน้ำท่วม</title>
+  <link rel="stylesheet" href="./team.css">
+  <script type="module" src="./team.js"></script>
+</head>
+<body>
+  <header class="top">
+    <div><strong>พร้อมแจ้งน้ำท่วม</strong><span>หน้าทีมอาสา (รับเคสที่ประชาชนส่งเข้ามา)</span></div>
+    <button type="button" id="sign-out" class="quiet" hidden>ออกจากระบบ</button>
+  </header>
+
+  <main>
+    <p id="loading" class="note">กำลังเปิด…</p>
+
+    <section id="screen-unconfigured" hidden>
+      <h1>ยังไม่ได้ตั้งค่าระบบ</h1>
+      <p>หน้านี้ยังไม่ได้เชื่อมกับฐานข้อมูลของทีม ให้เจ้าของระบบตั้งค่าตามคู่มือก่อน</p>
+    </section>
+
+    <section id="screen-auth" hidden>
+      <h1>เข้าสู่ระบบทีมอาสา</h1>
+      <p class="note">ใช้อีเมลของคุณเป็นชื่อบัญชี ระบบนี้ไม่ส่งอีเมลหาคุณ ตั้งรหัสผ่านอย่างน้อย 8 ตัวและจำไว้เอง</p>
+      <label>อีเมล<input id="auth-email" type="email" autocomplete="username" required maxlength="200"></label>
+      <label>รหัสผ่าน<input id="auth-password" type="password" autocomplete="current-password" required minlength="8" maxlength="72"></label>
+      <div class="row">
+        <button type="button" id="sign-in" class="primary">เข้าสู่ระบบ</button>
+        <button type="button" id="sign-up" class="secondary">สร้างบัญชีใหม่</button>
+      </div>
+      <p class="note">ลืมรหัสผ่าน: ให้ผู้ประสานงานเอาบัญชีเก่าออกจากทีม แล้วสร้างบัญชีใหม่</p>
+    </section>
+
+    <section id="screen-waiting" hidden>
+      <h1>บัญชีนี้ยังไม่อยู่ในทีม</h1>
+      <p>บอก <strong>รหัสบัญชี</strong> นี้กับผู้ประสานงานทีมของคุณ ต่อหน้าหรือทางโทรศัพท์ เมื่อเขาเพิ่มคุณแล้ว หน้านี้จะเปลี่ยนเอง</p>
+      <p id="account-code" class="code" aria-label="รหัสบัญชี"></p>
+      <p class="note">รหัสบัญชีไม่ใช่รหัสผ่าน ห้ามบอกรหัสผ่านกับใคร และผู้ประสานงานควรเพิ่มเฉพาะคนที่รู้จักตัวจริง</p>
+    </section>
+
+    <section id="screen-team" hidden>
+      <div class="team-bar">
+        <h1 id="team-name"></h1>
+        <p id="me-line" class="note"></p>
+        <p id="areas-line" class="note"></p>
+      </div>
+
+      <div id="duty-box" class="duty">
+        <p id="duty-line" role="status"></p>
+        <div id="duty-actions" class="row" hidden>
+          <button type="button" class="secondary" data-duty="4">เริ่มเฝ้า 4 ชม.</button>
+          <button type="button" class="secondary" data-duty="8">เฝ้า 8 ชม.</button>
+          <button type="button" class="secondary" data-duty="12">เฝ้า 12 ชม.</button>
+          <button type="button" class="danger" data-duty="0">หยุดเฝ้า</button>
+        </div>
+      </div>
+
+      <p id="new-banner" class="banner" role="alert" hidden></p>
+
+      <h2>รอทีมรับ <span id="count-open" class="count"></span></h2>
+      <p class="note">เคสที่ยังไม่มีทีมใดรับ ในจังหวัดที่ทีมของคุณดูแล เรียงเคสด่วนก่อน แล้วเคสที่รอนานก่อน</p>
+      <div id="list-open" class="list"></div>
+
+      <h2>เคสของทีมเรา <span id="count-mine" class="count"></span></h2>
+      <p class="note">สถานะที่กดในหน้านี้คือ "คำรายงานของทีม" ผู้แจ้งจะเห็นว่า ทีมของคุณแจ้งว่า… ให้กดตามที่ทำจริงเท่านั้น</p>
+      <div id="list-mine" class="list"></div>
+
+      <details id="closed-box">
+        <summary>ปิดแล้ว <span id="count-closed" class="count"></span></summary>
+        <div id="list-closed" class="list"></div>
+      </details>
+
+      <details id="members-box">
+        <summary>สมาชิกทีม</summary>
+        <div id="members-list"></div>
+        <div id="add-member" hidden>
+          <h3>เพิ่มสมาชิก (ผู้ประสานงานเท่านั้น)</h3>
+          <p class="note">ให้คนที่จะเข้าทีมเปิดหน้านี้ สร้างบัญชี แล้วอ่านรหัสบัญชีให้คุณฟัง เพิ่มเฉพาะคนที่คุณรู้จักตัวจริง</p>
+          <label>รหัสบัญชี (10 ตัว)<input id="add-code" type="text" inputmode="text" autocomplete="off" maxlength="14"></label>
+          <label>ชื่อที่ใช้ในทีม<input id="add-name" type="text" autocomplete="off" maxlength="60"></label>
+          <button type="button" id="add-button" class="secondary">เพิ่มเข้าทีม</button>
+        </div>
+      </details>
+
+      <p class="updated"><span id="updated-line"></span> <button type="button" id="refresh" class="quiet">อัปเดตตอนนี้</button></p>
+    </section>
+
+    <p id="toast" class="toast" role="status" aria-live="polite" hidden></p>
+  </main>
+
+  <dialog id="ask-dialog" aria-labelledby="ask-title">
+    <h2 id="ask-title"></h2>
+    <p id="ask-text"></p>
+    <label id="ask-input-label" hidden><span id="ask-input-caption"></span><textarea id="ask-input" rows="3" maxlength="200"></textarea></label>
+    <p id="ask-error" class="error" hidden></p>
+    <div class="row end">
+      <button type="button" id="ask-cancel" class="quiet">ยกเลิก</button>
+      <button type="button" id="ask-ok" class="primary"></button>
+    </div>
+  </dialog>
+
+  <footer>หน้านี้สำหรับทีมอาสาที่ได้รับเชิญเท่านั้น • ข้อมูลผู้แจ้งเป็นข้อมูลส่วนบุคคล ใช้เพื่อช่วยเหลือเท่านั้น ห้ามส่งต่อ ห้ามถ่ายหน้าจอไปโพสต์ • ถ้าเหตุเกินกำลัง ส่งต่อ 1784 / 1669</footer>
+</body>
+</html>
