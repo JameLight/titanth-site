@@ -3,6 +3,7 @@ import { NEEDS, CHANNELS, STATUS, makeCase, recordHandoffAttempt, isStale,
 import { listCases, putCase, deleteCase } from "./storage.js";
 
 const $ = selector => document.querySelector(selector);
+const DDPM_LINE_URL = "https://lin.ee/MoS2rXU";
 const form = $("#case-form");
 const list = $("#case-list");
 let cases = [];
@@ -66,6 +67,14 @@ function button(label, className, onClick) {
   return b;
 }
 
+function lineLink() {
+  const link = node("a", "secondary-button", "เปิด LINE ปภ. (วางข้อความเอง)");
+  link.href = DDPM_LINE_URL;
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  return link;
+}
+
 function renderCase(item) {
   const card = node("article", `case-card ${item.routingHint === "RED" ? "urgent" : ""}`);
   const head = node("div", "case-head");
@@ -85,9 +94,11 @@ function renderCase(item) {
   if (isStale(item)) card.append(node("p", "case-warning", "ข้อมูลนี้บันทึกเกิน 6 ชั่วโมงแล้ว ควรตรวจสถานการณ์ใหม่ก่อนส่งต่อ"));
   if (item.routingHint === "RED") card.append(node("p", "case-warning", "มีสัญญาณอันตราย โทร 1784 หรือ 1669 ตามเหตุทันที"));
   if (item.status === STATUS.LOCAL_ONLY) card.append(node("p", "case-warning", "เคสนี้ยังอยู่ในอุปกรณ์นี้ ไม่มีผู้รับเคสอัตโนมัติ"));
+  else card.append(node("p", "case-warning", "คุณระบุว่าส่งต่อแล้ว แต่ยังไม่มีหลักฐานว่ามีใครรับเคส ถ้ายังไม่มีใครติดต่อกลับ ให้โทร 1784 หรือ 1669 ซ้ำ"));
+  card.append(node("p", "shared-device-note", "ถ้าใช้เครื่องร่วมกับผู้อื่น ให้ลบเคสหลังส่งต่อและเก็บหลักฐานการตอบรับไว้ต่างหาก"));
   const actions = node("div", "case-actions");
-  actions.append(button("คัดลอกแล้วเปิด LINE ปภ.", "secondary-button", () => copyThenLine(item)));
   actions.append(button("คัดลอกข้อความ", "secondary-button", () => copyCase(item)));
+  actions.append(lineLink());
   actions.append(button("แชร์ข้อความ", "secondary-button", () => shareCase(item)));
   actions.append(button("บันทึกว่าฉันพยายามส่งต่อแล้ว", "text-button", () => handoffCase(item)));
   actions.append(button("ลบเคส", "danger-button", () => removeCase(item)));
@@ -127,12 +138,19 @@ form.addEventListener("submit", async event => {
     if (duplicates.length && !await askConfirm(`พบเคสคล้ายกัน ${duplicates.length} เคสในช่วง 2 ชั่วโมงที่ผ่านมา ต้องการบันทึกอีกเคสหรือไม่`, "พบเคสคล้ายกัน")) return;
     await putCase(item);
     form.reset();
+    clearGps();
     $("#gps-status").textContent = "ใช้จุดสังเกตแทน GPS ได้";
     await refresh();
     $("#case-list").scrollIntoView({ behavior: "smooth", block: "start" });
     toast("บันทึกในเครื่องแล้ว ยังไม่มีการส่งไปยังผู้รับเคส");
   } catch (error) { showError(error.message); }
 });
+
+// Public build (Claude): form.reset() does not clear hidden inputs set by script; clear them so a new case never reuses old coordinates.
+function clearGps() {
+  for (const name of ["lat", "lon", "accuracyMeters"]) form.elements[name].value = "";
+}
+clearGps();
 
 $("#gps-button").addEventListener("click", () => {
   const status = $("#gps-status");
@@ -147,19 +165,40 @@ $("#gps-button").addEventListener("click", () => {
   { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
 });
 
-async function copyCase(item) {
+// Public build (Claude): copy with a fallback, because in-app browsers (e.g. inside LINE) may block the clipboard API.
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch {}
   try {
-    await navigator.clipboard.writeText(shareText(item));
-    toast("คัดลอกข้อความแล้ว นำไปวางใน LINE @1784DDPM หรืออ่านให้เจ้าหน้าที่ 1784 ฟัง ยังไม่มีใครได้รับข้อมูลจนกว่าคุณจะส่ง");
-  } catch { toast("คัดลอกไม่สำเร็จ ลองใช้ปุ่มแชร์หรือเปิดผ่าน HTTPS/localhost"); }
+    const area = document.createElement("textarea");
+    area.value = text; area.setAttribute("readonly", ""); area.className = "copy-fallback";
+    document.body.append(area); area.select(); area.setSelectionRange(0, text.length);
+    const ok = document.execCommand("copy"); area.remove();
+    if (ok) return true;
+  } catch {}
+  return false;
 }
 
-async function copyThenLine(item) {
-  try {
-    await navigator.clipboard.writeText(shareText(item));
-    toast("คัดลอกแล้ว กำลังเปิด LINE ปภ. ให้วางข้อความในแชท แล้วกดส่งตำแหน่ง (Location) ด้วย ยังไม่มีใครได้รับข้อมูลจนกว่าคุณจะกดส่ง");
-  } catch { toast("คัดลอกไม่สำเร็จ จะเปิด LINE ปภ. ให้ กรุณาพิมพ์ข้อมูลตามเคส หรือกดปุ่มแชร์แทน"); }
-  setTimeout(() => { location.href = "https://line.me/R/ti/p/%401784DDPM"; }, 900);
+function showManualCopy(text) {
+  let box = document.getElementById("manual-copy");
+  if (!box) {
+    box = document.createElement("section"); box.id = "manual-copy"; box.className = "manual-copy";
+    const note = document.createElement("p");
+    note.textContent = "คัดลอกอัตโนมัติไม่ได้ในแอปนี้ ให้กดค้างที่ข้อความด้านล่าง เลือกทั้งหมด แล้วคัดลอก จากนั้นวางใน LINE ปภ. @1784DDPM หรืออ่านให้เจ้าหน้าที่ 1784 ฟัง";
+    const area = document.createElement("textarea"); area.readOnly = true; area.rows = 11;
+    const close = document.createElement("button"); close.type = "button"; close.className = "text-button"; close.textContent = "ปิดกล่องนี้";
+    close.addEventListener("click", () => { box.hidden = true; });
+    box.append(note, area, close);
+    document.querySelector("main").prepend(box);
+  }
+  const area = box.querySelector("textarea");
+  area.value = text; box.hidden = false;
+  box.scrollIntoView({ block: "start" }); area.focus(); area.select();
+}
+
+async function copyCase(item) {
+  const text = shareText(item);
+  if (await copyText(text)) toast("คัดลอกแล้ว ให้วางและกดส่งใน LINE ปภ. @1784DDPM หรือแจ้งทางโทร 1784 การคัดลอกยังไม่ใช่การส่งเคส");
+  else { showManualCopy(text); toast("คัดลอกอัตโนมัติไม่ได้ ข้อความอยู่ในกล่องด้านบน กดค้างเพื่อคัดลอก"); }
 }
 
 async function shareCase(item) {

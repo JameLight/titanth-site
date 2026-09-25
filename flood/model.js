@@ -103,14 +103,19 @@ export function possibleDuplicates(item, others) {
   });
 }
 
-const thaiTime = iso => { try { return new Date(iso).toLocaleString("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "medium", timeStyle: "short" }); } catch { return iso; } };
-
 export function shareText(item) {
   const loc = [item.location.subdistrict && `ต.${item.location.subdistrict}`,
     item.location.district && `อ.${item.location.district}`, `จ.${item.location.province}`,
     item.location.landmark && `จุดสังเกต: ${item.location.landmark}`].filter(Boolean).join(" ");
-  const coords = item.location.lat === null ? "" : `\nพิกัด: ${item.location.lat}, ${item.location.lon}\nแผนที่: https://maps.google.com/?q=${item.location.lat},${item.location.lon}`;
-  return `ขอความช่วยเหลือน้ำท่วม (ข้อมูลจากผู้แจ้ง ยังไม่ยืนยัน)\nรหัสเคส: ${item.caseId}\nเวลาแจ้ง: ${thaiTime(item.createdAt)}\nพื้นที่: ${loc}${coords}\nจำนวนคน: ${item.peopleCount}\nต้องการ: ${item.needs.map(n => NEEDS[n]).join(", ")}\nรายละเอียด: ${item.details || "ไม่มี"}\nโทรกลับ: ${item.contactPhone || "ไม่ได้ระบุ"}\nกรุณาตอบกลับเพื่อยืนยันว่าได้รับข้อมูลแล้ว`;
+  const accuracy = Number.isFinite(item.location.accuracyMeters) && item.location.accuracyMeters > 0
+    ? ` (คลาดเคลื่อนประมาณ ${Math.round(item.location.accuracyMeters)} เมตร)` : "";
+  const coords = item.location.lat === null ? "" : `\nพิกัด: ${item.location.lat}, ${item.location.lon}${accuracy}`;
+  const map = Number.isFinite(item.location.lat) && Number.isFinite(item.location.lon)
+    ? `\nแผนที่: https://maps.google.com/?q=${item.location.lat},${item.location.lon}` : "";
+  const thaiTime = new Intl.DateTimeFormat("th-TH", {
+    dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok"
+  }).format(new Date(item.createdAt));
+  return `ขอความช่วยเหลือน้ำท่วม (ข้อมูลจากผู้แจ้ง ยังไม่ยืนยัน)\nรหัสเคส: ${item.caseId}\nเวลาแจ้ง (ไทย): ${thaiTime}\nพื้นที่: ${loc}${coords}${map}\nจำนวนคน: ${item.peopleCount}\nต้องการ: ${item.needs.map(n => NEEDS[n]).join(", ")}\nรายละเอียด: ${item.details || "ไม่มี"}\nโทรกลับ: ${item.contactPhone || "ไม่ได้ระบุ"}\nกรุณาตอบกลับเพื่อยืนยันว่าได้รับข้อมูลแล้ว`;
 }
 
 const csvCell = value => {
