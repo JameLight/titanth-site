@@ -38,7 +38,7 @@ export function makeCase(input, { now = new Date(), id = globalThis.crypto?.rand
     landmark: clean(input.landmark),
     lat: input.lat === "" || input.lat == null ? null : Number(input.lat),
     lon: input.lon === "" || input.lon == null ? null : Number(input.lon),
-    accuracyMeters: input.accuracyMeters == null ? null : Number(input.accuracyMeters)
+    accuracyMeters: input.accuracyMeters === "" || input.accuracyMeters == null ? null : Number(input.accuracyMeters)
   };
   if (!id) throw new Error("อุปกรณ์ไม่สามารถสร้างรหัสเคสที่ปลอดภัยได้");
   if (!location.province) throw new Error("กรุณาระบุจังหวัด");
@@ -56,6 +56,10 @@ export function makeCase(input, { now = new Date(), id = globalThis.crypto?.rand
     throw new Error("ลองจิจูดไม่ถูกต้อง");
   }
   if ((location.lat === null) !== (location.lon === null)) throw new Error("พิกัดต้องมีทั้งละติจูดและลองจิจูด");
+  if (location.accuracyMeters !== null && (!Number.isFinite(location.accuracyMeters) || location.accuracyMeters < 0 || location.accuracyMeters > 100000)) {
+    throw new Error("ค่าความคลาดเคลื่อน GPS ไม่ถูกต้อง");
+  }
+  if (location.accuracyMeters !== null && location.lat === null) throw new Error("ค่าความคลาดเคลื่อน GPS ต้องมีพิกัดด้วย");
   const at = now.toISOString();
   return {
     schemaVersion: SCHEMA_VERSION,
@@ -88,7 +92,7 @@ export function recordHandoffAttempt(item, { channel, now = new Date() } = {}) {
 }
 
 export function isStale(item, now = new Date()) {
-  return now.getTime() - new Date(item.updatedAt).getTime() > STALE_AFTER_MS;
+  return now.getTime() - new Date(item.createdAt).getTime() > STALE_AFTER_MS;
 }
 
 export function possibleDuplicates(item, others) {
@@ -107,9 +111,9 @@ export function shareText(item) {
   const loc = [item.location.subdistrict && `ต.${item.location.subdistrict}`,
     item.location.district && `อ.${item.location.district}`, `จ.${item.location.province}`,
     item.location.landmark && `จุดสังเกต: ${item.location.landmark}`].filter(Boolean).join(" ");
-  const accuracy = Number.isFinite(item.location.accuracyMeters) && item.location.accuracyMeters > 0
+  const accuracy = Number.isFinite(item.location.accuracyMeters) && item.location.accuracyMeters >= 0
     ? ` (คลาดเคลื่อนประมาณ ${Math.round(item.location.accuracyMeters)} เมตร)` : "";
-  const coords = item.location.lat === null ? "" : `\nพิกัด: ${item.location.lat}, ${item.location.lon}${accuracy}`;
+  const coords = item.location.lat === null ? "" : `\nพิกัดจากโทรศัพท์ผู้แจ้ง: ${item.location.lat}, ${item.location.lon}${accuracy}`;
   const map = Number.isFinite(item.location.lat) && Number.isFinite(item.location.lon)
     ? `\nแผนที่: https://maps.google.com/?q=${item.location.lat},${item.location.lon}` : "";
   const thaiTime = new Intl.DateTimeFormat("th-TH", {
@@ -125,10 +129,10 @@ const csvCell = value => {
 };
 
 export function casesCsv(items) {
-  const headers = ["case_id", "created_at", "status", "routing_hint", "province", "district", "subdistrict", "landmark", "latitude", "longitude", "people_count", "needs", "details", "contact_phone"];
+  const headers = ["case_id", "created_at", "status", "routing_hint", "province", "district", "subdistrict", "landmark", "latitude", "longitude", "accuracy_meters", "people_count", "needs", "details", "contact_phone"];
   const rows = items.map(item => [item.caseId, item.createdAt, item.status, item.routingHint,
     item.location.province, item.location.district, item.location.subdistrict, item.location.landmark,
-    item.location.lat ?? "", item.location.lon ?? "", item.peopleCount, item.needs.join(";"),
+    item.location.lat ?? "", item.location.lon ?? "", item.location.accuracyMeters ?? "", item.peopleCount, item.needs.join(";"),
     item.details, item.contactPhone].map(csvCell).join(","));
   return "\uFEFF" + headers.map(csvCell).join(",") + "\r\n" + rows.join("\r\n") + "\r\n";
 }
