@@ -1,4 +1,4 @@
-const CACHE = "khem-flood-rescue-public-v2";
+const CACHE = "khem-flood-rescue-public-v3";
 const SHELL = ["./", "./index.html", "./operator.html", "./styles.css", "./app.js", "./operator.js", "./model.js", "./storage.js", "./manifest.webmanifest", "./icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));

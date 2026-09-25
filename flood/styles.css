@@ -9,3 +9,5 @@ dialog{border:1px solid var(--line);border-radius:12px;padding:1.4rem;width:min(
 /* public build (Claude): clipboard fallback */
 .copy-fallback{position:fixed;left:-9999px;top:0;opacity:0}
 .manual-copy{background:#fff;border:2px solid #bf3d31;border-radius:12px;padding:1rem;margin:1rem 0}.manual-copy textarea{width:100%;font:inherit;font-size:16px;margin:.5rem 0}
+/* public build (Claude), W-01: a user-reported handoff keeps the warning colour; nobody has confirmed receipt */
+.badge.attempt{background:#fff1df;color:#795310}

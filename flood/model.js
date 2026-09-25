@@ -107,7 +107,9 @@ export function shareText(item) {
   const loc = [item.location.subdistrict && `ต.${item.location.subdistrict}`,
     item.location.district && `อ.${item.location.district}`, `จ.${item.location.province}`,
     item.location.landmark && `จุดสังเกต: ${item.location.landmark}`].filter(Boolean).join(" ");
-  const coords = item.location.lat === null ? "" : `\nพิกัด: ${item.location.lat}, ${item.location.lon}`;
+  const accuracy = Number.isFinite(item.location.accuracyMeters) && item.location.accuracyMeters > 0
+    ? ` (คลาดเคลื่อนประมาณ ${Math.round(item.location.accuracyMeters)} เมตร)` : "";
+  const coords = item.location.lat === null ? "" : `\nพิกัด: ${item.location.lat}, ${item.location.lon}${accuracy}`;
   const map = Number.isFinite(item.location.lat) && Number.isFinite(item.location.lon)
     ? `\nแผนที่: https://maps.google.com/?q=${item.location.lat},${item.location.lon}` : "";
   const thaiTime = new Intl.DateTimeFormat("th-TH", {

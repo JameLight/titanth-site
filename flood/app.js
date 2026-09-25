@@ -94,6 +94,7 @@ function renderCase(item) {
   if (isStale(item)) card.append(node("p", "case-warning", "ข้อมูลนี้บันทึกเกิน 6 ชั่วโมงแล้ว ควรตรวจสถานการณ์ใหม่ก่อนส่งต่อ"));
   if (item.routingHint === "RED") card.append(node("p", "case-warning", "มีสัญญาณอันตราย โทร 1784 หรือ 1669 ตามเหตุทันที"));
   if (item.status === STATUS.LOCAL_ONLY) card.append(node("p", "case-warning", "เคสนี้ยังอยู่ในอุปกรณ์นี้ ไม่มีผู้รับเคสอัตโนมัติ"));
+  else card.append(node("p", "case-warning", "คุณระบุว่าส่งต่อแล้ว แต่ยังไม่มีหลักฐานว่ามีใครรับเคส ถ้ายังไม่มีใครติดต่อกลับ ให้โทร 1784 หรือ 1669 ซ้ำ"));
   card.append(node("p", "shared-device-note", "ถ้าใช้เครื่องร่วมกับผู้อื่น ให้ลบเคสหลังส่งต่อและเก็บหลักฐานการตอบรับไว้ต่างหาก"));
   const actions = node("div", "case-actions");
   actions.append(button("คัดลอกข้อความ", "secondary-button", () => copyCase(item)));
@@ -137,12 +138,19 @@ form.addEventListener("submit", async event => {
     if (duplicates.length && !await askConfirm(`พบเคสคล้ายกัน ${duplicates.length} เคสในช่วง 2 ชั่วโมงที่ผ่านมา ต้องการบันทึกอีกเคสหรือไม่`, "พบเคสคล้ายกัน")) return;
     await putCase(item);
     form.reset();
+    clearGps();
     $("#gps-status").textContent = "ใช้จุดสังเกตแทน GPS ได้";
     await refresh();
     $("#case-list").scrollIntoView({ behavior: "smooth", block: "start" });
     toast("บันทึกในเครื่องแล้ว ยังไม่มีการส่งไปยังผู้รับเคส");
   } catch (error) { showError(error.message); }
 });
+
+// Public build (Claude): form.reset() does not clear hidden inputs set by script; clear them so a new case never reuses old coordinates.
+function clearGps() {
+  for (const name of ["lat", "lon", "accuracyMeters"]) form.elements[name].value = "";
+}
+clearGps();
 
 $("#gps-button").addEventListener("click", () => {
   const status = $("#gps-status");
