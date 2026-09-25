@@ -1,6 +1,8 @@
 import { NEEDS, CHANNELS, STATUS, makeCase, recordHandoffAttempt, isStale,
-  possibleDuplicates, shareText, quickLocationText, casesCsv } from "./model.js";
+  possibleDuplicates, shareText, quickLocationText, ddpmLinePrefillUrl,
+  quickLocationQrText, caseQrText, casesCsv } from "./model.js";
 import { listCases, putCase, deleteCase } from "./storage.js";
+import { qrSvg } from "./qr.js";
 
 const $ = selector => document.querySelector(selector);
 const DDPM_LINE_URL = "https://lin.ee/MoS2rXU";
@@ -28,6 +30,26 @@ function node(tag, className, content) {
   if (className) element.className = className;
   if (content != null) element.textContent = String(content);
   return element;
+}
+
+function showQr(panel, message, isCase = false) {
+  panel.replaceChildren();
+  panel.hidden = false;
+  try {
+    const markup = qrSvg(message);
+    const svg = new DOMParser().parseFromString(markup, "image/svg+xml").documentElement;
+    if (svg.localName !== "svg") throw new Error("สร้าง QR ไม่สำเร็จ ให้คัดลอกข้อความแทน");
+    svg.setAttribute("role", "img");
+    svg.setAttribute("aria-label", "QR ข้อความขอความช่วยเหลือน้ำท่วม");
+    const details = node("details", "");
+    details.append(node("summary", "", "อ่านข้อความใน QR"), node("pre", "", message));
+    panel.append(node("p", "", "ให้คนที่มีสัญญาณสแกน คัดลอกข้อความ แล้วส่งต่อทาง LINE ปภ. หรืออ่านให้ 1784 ฟัง ข้อความยังไม่ถึงใครจนกว่าจะมีคนส่ง"),
+      node("p", "", isCase ? "QR นี้เป็นข้อความย่อ มีพิกัดและเบอร์โทรถ้าระบุไว้ แต่ไม่รวมรายละเอียดเพิ่มเติม กรุณาส่งหรืออ่านฉบับเต็มเมื่อทำได้" : "QR นี้มีตำแหน่งของโทรศัพท์เครื่องนี้ ให้สแกนเฉพาะคนที่คุณไว้ใจ"),
+      document.importNode(svg, true), details);
+  } catch (error) {
+    panel.append(node("p", "qr-error", error.message || "สร้าง QR ไม่สำเร็จ ให้คัดลอกข้อความแทน"));
+  }
+  panel.scrollIntoView({ block: "nearest" });
 }
 
 function toast(message) {
@@ -151,9 +173,15 @@ function renderCase(item) {
   actions.append(button("คัดลอกข้อความ", "secondary-button", () => copyCase(item)));
   actions.append(lineLink());
   actions.append(button("แชร์ข้อความ", "secondary-button", () => shareCase(item)));
+  const qrPanel = node("div", "qr-panel");
+  qrPanel.hidden = true;
+  actions.append(button("แสดง QR ส่งต่อออฟไลน์", "secondary-button", () => {
+    try { showQr(qrPanel, caseQrText(item), true); }
+    catch (error) { qrPanel.replaceChildren(node("p", "qr-error", error.message)); qrPanel.hidden = false; }
+  }));
   actions.append(button("บันทึกว่าฉันพยายามส่งต่อแล้ว", "text-button", () => handoffCase(item)));
   actions.append(button("ลบเคส", "danger-button", () => removeCase(item)));
-  card.append(actions);
+  card.append(actions, qrPanel);
   return card;
 }
 
@@ -216,22 +244,31 @@ $("#gps-button").addEventListener("click", () => {
 });
 
 // KFR-10: find the location, then let the person send it straight into the DDPM LINE chat (one tap on a real link).
-const DDPM_OA_MESSAGE_URL = text => `https://line.me/R/oaMessage/%40155zwaue/?${encodeURIComponent(text)}`;
 let lastQuickLocationText = "";
+let lastQuickQrText = "";
 
-function showQuickLocationResult(content, accuracy) {
+function showQuickLocationResult(content, coords) {
   lastQuickLocationText = content;
+  try { lastQuickQrText = quickLocationQrText(coords); }
+  catch { lastQuickQrText = ""; }
   const line = $("#quick-location-line");
-  line.href = DDPM_OA_MESSAGE_URL(content);
+  line.href = ddpmLinePrefillUrl(content);
   line.hidden = false;
   $("#quick-location-more").hidden = false;
+  $("#quick-location-qr").hidden = !lastQuickQrText;
+  $("#quick-location-qr-panel").hidden = true;
+  $("#quick-location-qr-panel").replaceChildren();
   $("#quick-location-row").hidden = false;
-  $("#quick-location-status").textContent = `ได้ตำแหน่งแล้ว (คลาดเคลื่อนประมาณ ${Math.round(accuracy)} เมตร) กด "ส่งเข้า LINE ปภ. ทันที" แล้วกดส่งใน LINE ข้อความยังไม่ถึงใครจนกว่าคุณจะกดส่ง ถ้าอันตรายให้โทร 1784 ด้วย`;
+  $("#quick-location-status").textContent = `ได้ตำแหน่งแล้ว (คลาดเคลื่อนประมาณ ${Math.round(coords.accuracy)} เมตร) กด "ส่งเข้า LINE ปภ. ทันที" แล้วกดส่งใน LINE ข้อความยังไม่ถึงใครจนกว่าคุณจะกดส่ง ถ้าอันตรายให้โทร 1784 ด้วย`;
 }
 
 function showQuickLocationProblem(message) {
+  lastQuickLocationText = "";
+  lastQuickQrText = "";
   $("#quick-location-line").hidden = true;
   $("#quick-location-more").hidden = true;
+  $("#quick-location-qr-panel").hidden = true;
+  $("#quick-location-qr-panel").replaceChildren();
   $("#quick-location-row").hidden = false;
   $("#quick-location-status").textContent = message;
 }
@@ -246,7 +283,7 @@ $("#quick-location").addEventListener("click", () => {
   const done = () => { quickLocationInProgress = false; button.disabled = false; };
   try {
     navigator.geolocation.getCurrentPosition(position => {
-      try { showQuickLocationResult(quickLocationText(position.coords), position.coords.accuracy); }
+      try { showQuickLocationResult(quickLocationText(position.coords), position.coords); }
       catch (error) { showQuickLocationProblem(error.message); }
       finally { done(); }
     }, () => { showQuickLocationProblem("ไม่ได้รับตำแหน่ง ให้โทร 1784 หรือ 1669 แล้วบอกจุดสังเกตที่ใกล้ที่สุด"); done(); },
@@ -275,6 +312,10 @@ $("#quick-location-share").addEventListener("click", async () => {
   }
 });
 $("#quick-location-copy").addEventListener("click", () => copyQuickLocation());
+$("#quick-location-qr").addEventListener("click", () => {
+  if (!lastQuickQrText) return;
+  showQr($("#quick-location-qr-panel"), lastQuickQrText);
+});
 $("#quick-location").hidden = false;
 
 async function copyCase(item) {
