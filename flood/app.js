@@ -8,6 +8,15 @@ const form = $("#case-form");
 const list = $("#case-list");
 let cases = [];
 let pendingHandoff = null;
+let gpsRequestGeneration = 0;
+
+function clearGpsFields() {
+  gpsRequestGeneration += 1;
+  for (const name of ["lat", "lon", "accuracyMeters"]) {
+    form.elements[name].value = "";
+    form.elements[name].defaultValue = "";
+  }
+}
 
 function node(tag, className, content) {
   const element = document.createElement(tag);
@@ -91,10 +100,14 @@ function renderCase(item) {
     item.status === STATUS.LOCAL_ONLY ? "เก็บในเครื่องเท่านั้น" : "ผู้ใช้ระบุว่าส่งต่อแล้ว • ยังไม่ยืนยันผู้รับ"));
   card.append(badges);
   card.append(node("p", "", `${item.peopleCount} คน · ${item.needs.map(n => NEEDS[n]).join(", ")}`));
-  if (isStale(item)) card.append(node("p", "case-warning", "ข้อมูลนี้บันทึกเกิน 6 ชั่วโมงแล้ว ควรตรวจสถานการณ์ใหม่ก่อนส่งต่อ"));
+  if (isStale(item)) card.append(node("p", "case-warning", "ข้อมูลสถานการณ์นี้บันทึกเกิน 6 ชั่วโมงแล้ว ควรตรวจใหม่ก่อนส่งต่อ"));
   if (item.routingHint === "RED") card.append(node("p", "case-warning", "มีสัญญาณอันตราย โทร 1784 หรือ 1669 ตามเหตุทันที"));
-  if (item.status === STATUS.LOCAL_ONLY) card.append(node("p", "case-warning", "เคสนี้ยังอยู่ในอุปกรณ์นี้ ไม่มีผู้รับเคสอัตโนมัติ"));
-  else card.append(node("p", "case-warning", "คุณระบุว่าส่งต่อแล้ว แต่ยังไม่มีหลักฐานว่ามีใครรับเคส ถ้ายังไม่มีใครติดต่อกลับ ให้โทร 1784 หรือ 1669 ซ้ำ"));
+  if (Number.isFinite(item.location.accuracyMeters) && item.location.accuracyMeters > 500) {
+    card.append(node("p", "case-warning", `GPS คลาดเคลื่อนประมาณ ${Math.round(item.location.accuracyMeters)} เมตร กรุณาตรวจจุดสังเกตก่อนส่งต่อ`));
+  }
+  card.append(node("p", "case-warning", item.status === STATUS.LOCAL_ONLY
+    ? "เคสนี้ยังอยู่ในอุปกรณ์นี้ ไม่มีผู้รับเคสอัตโนมัติ"
+    : "คุณระบุว่าส่งต่อแล้ว แต่ยังไม่มีหลักฐานว่ามีผู้รับเคส ถ้าไม่มีการตอบกลับ ให้โทร 1784 หรือ 1669 ตามเหตุ"));
   card.append(node("p", "shared-device-note", "ถ้าใช้เครื่องร่วมกับผู้อื่น ให้ลบเคสหลังส่งต่อและเก็บหลักฐานการตอบรับไว้ต่างหาก"));
   const actions = node("div", "case-actions");
   actions.append(button("คัดลอกข้อความ", "secondary-button", () => copyCase(item)));
@@ -138,67 +151,86 @@ form.addEventListener("submit", async event => {
     if (duplicates.length && !await askConfirm(`พบเคสคล้ายกัน ${duplicates.length} เคสในช่วง 2 ชั่วโมงที่ผ่านมา ต้องการบันทึกอีกเคสหรือไม่`, "พบเคสคล้ายกัน")) return;
     await putCase(item);
     form.reset();
-    clearGps();
-    $("#gps-status").textContent = "ใช้จุดสังเกตแทน GPS ได้";
+    clearGpsFields();
+    $("#gps-status").textContent = "กดเฉพาะเมื่ออยู่ที่จุดเกิดเหตุ ถ้าแจ้งแทนคนอื่น ให้กรอกจุดสังเกตแทน";
     await refresh();
     $("#case-list").scrollIntoView({ behavior: "smooth", block: "start" });
     toast("บันทึกในเครื่องแล้ว ยังไม่มีการส่งไปยังผู้รับเคส");
   } catch (error) { showError(error.message); }
 });
 
-// Public build (Claude): form.reset() does not clear hidden inputs set by script; clear them so a new case never reuses old coordinates.
-function clearGps() {
-  for (const name of ["lat", "lon", "accuracyMeters"]) form.elements[name].value = "";
-}
-clearGps();
-
 $("#gps-button").addEventListener("click", () => {
   const status = $("#gps-status");
   if (!navigator.geolocation) { status.textContent = "อุปกรณ์นี้ไม่มี GPS กรุณากรอกจุดสังเกต"; return; }
+  const requestGeneration = ++gpsRequestGeneration;
   status.textContent = "กำลังขอพิกัด…";
   navigator.geolocation.getCurrentPosition(position => {
+    if (requestGeneration !== gpsRequestGeneration) return;
     form.elements.lat.value = position.coords.latitude;
     form.elements.lon.value = position.coords.longitude;
     form.elements.accuracyMeters.value = Math.round(position.coords.accuracy);
-    status.textContent = `ได้พิกัดแล้ว (คลาดเคลื่อนประมาณ ${Math.round(position.coords.accuracy)} เมตร) กรุณาตรวจจุดสังเกตด้วย`;
-  }, () => { status.textContent = "ไม่ได้รับพิกัด กรุณากรอกจุดสังเกตด้วยมือ"; },
+    status.textContent = `ได้ตำแหน่งของโทรศัพท์นี้แล้ว (คลาดเคลื่อนประมาณ ${Math.round(position.coords.accuracy)} เมตร) กรุณากรอกจุดสังเกตด้วย`;
+  }, () => { if (requestGeneration === gpsRequestGeneration) status.textContent = "ไม่ได้รับพิกัด กรุณากรอกจุดสังเกตด้วยมือ"; },
   { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
 });
 
-// Public build (Claude): copy with a fallback, because in-app browsers (e.g. inside LINE) may block the clipboard API.
-async function copyText(text) {
-  try { await navigator.clipboard.writeText(text); return true; } catch {}
-  try {
-    const area = document.createElement("textarea");
-    area.value = text; area.setAttribute("readonly", ""); area.className = "copy-fallback";
-    document.body.append(area); area.select(); area.setSelectionRange(0, text.length);
-    const ok = document.execCommand("copy"); area.remove();
-    if (ok) return true;
-  } catch {}
-  return false;
+async function copyCase(item) {
+  const content = shareText(item);
+  if (await copyText(content)) {
+    toast("คัดลอกแล้ว กด เปิด LINE ปภ. แล้วเพิ่มเพื่อน แชท วางข้อความ กดส่ง และตอบคำถามจนได้ข้อความยืนยันรับเรื่อง หรือโทร 1784 การคัดลอกยังไม่ใช่การส่งเคส");
+  } else {
+    showManualCopy(content);
+    toast("คัดลอกอัตโนมัติไม่ได้ ข้อความอยู่ในกล่องด้านบน กดค้างเพื่อคัดลอก");
+  }
 }
 
-function showManualCopy(text) {
-  let box = document.getElementById("manual-copy");
+async function copyText(content) {
+  try {
+    await navigator.clipboard.writeText(content);
+    return true;
+  } catch {}
+  const area = document.createElement("textarea");
+  area.value = content;
+  area.readOnly = true;
+  area.className = "copy-fallback";
+  document.body.append(area);
+  try {
+    area.select();
+    area.setSelectionRange(0, content.length);
+    return document.execCommand("copy");
+  } catch {
+    return false;
+  } finally {
+    area.remove();
+  }
+}
+
+function showManualCopy(content) {
+  let box = $("#manual-copy");
   if (!box) {
-    box = document.createElement("section"); box.id = "manual-copy"; box.className = "manual-copy";
-    const note = document.createElement("p");
-    note.textContent = "คัดลอกอัตโนมัติไม่ได้ในแอปนี้ ให้กดค้างที่ข้อความด้านล่าง เลือกทั้งหมด แล้วคัดลอก จากนั้นวางใน LINE ปภ. @1784DDPM หรืออ่านให้เจ้าหน้าที่ 1784 ฟัง";
-    const area = document.createElement("textarea"); area.readOnly = true; area.rows = 11;
-    const close = document.createElement("button"); close.type = "button"; close.className = "text-button"; close.textContent = "ปิดกล่องนี้";
-    close.addEventListener("click", () => { box.hidden = true; });
+    box = node("section", "manual-copy");
+    box.id = "manual-copy";
+    const note = node("p", "", "คัดลอกอัตโนมัติไม่ได้ในแอปนี้ ให้กดค้างที่ข้อความด้านล่าง เลือกทั้งหมด แล้วคัดลอก จากนั้นวางใน LINE ปภ. @1784DDPM หรืออ่านให้เจ้าหน้าที่ 1784 ฟัง");
+    const area = document.createElement("textarea");
+    area.readOnly = true;
+    area.rows = 11;
+    const close = button("ปิดกล่องนี้", "text-button", () => clearManualCopy());
     box.append(note, area, close);
-    document.querySelector("main").prepend(box);
+    $(".primary").prepend(box);
   }
   const area = box.querySelector("textarea");
-  area.value = text; box.hidden = false;
-  box.scrollIntoView({ block: "start" }); area.focus(); area.select();
+  area.value = content;
+  box.hidden = false;
+  box.scrollIntoView({ block: "start" });
+  area.focus();
+  area.select();
 }
 
-async function copyCase(item) {
-  const text = shareText(item);
-  if (await copyText(text)) toast("คัดลอกแล้ว ให้วางและกดส่งใน LINE ปภ. @1784DDPM หรือแจ้งทางโทร 1784 การคัดลอกยังไม่ใช่การส่งเคส");
-  else { showManualCopy(text); toast("คัดลอกอัตโนมัติไม่ได้ ข้อความอยู่ในกล่องด้านบน กดค้างเพื่อคัดลอก"); }
+function clearManualCopy() {
+  const box = $("#manual-copy");
+  if (!box) return;
+  box.querySelector("textarea").value = "";
+  box.hidden = true;
 }
 
 async function shareCase(item) {
@@ -234,7 +266,7 @@ $("#handoff-form").addEventListener("submit", async event => {
 
 async function removeCase(item) {
   if (!await askConfirm("หากเคยส่งข้อความไปช่องทางอื่น ข้อมูลปลายทางจะไม่ถูกลบ", "ลบเคสนี้ออกจากอุปกรณ์")) return;
-  try { await deleteCase(item.caseId); await refresh(); toast("ลบเคสในอุปกรณ์นี้แล้ว"); }
+  try { await deleteCase(item.caseId); clearManualCopy(); await refresh(); toast("ลบเคสในอุปกรณ์นี้แล้ว"); }
   catch (error) { toast(error.message); }
 }
 
@@ -263,6 +295,12 @@ $("#export-json").addEventListener("click", () => exportCases("json"));
 $("#export-csv").addEventListener("click", () => exportCases("csv"));
 
 renderNeeds();
+clearGpsFields();
+window.addEventListener("pageshow", event => {
+  if (!event.persisted) return;
+  clearGpsFields();
+  $("#gps-status").textContent = "กดเฉพาะเมื่ออยู่ที่จุดเกิดเหตุ ถ้าแจ้งแทนคนอื่น ให้กรอกจุดสังเกตแทน";
+});
 refresh().catch(error => { list.replaceChildren(node("div", "error", `${error.message} กรุณาใช้เบราว์เซอร์ปกติและเปิดพื้นที่จัดเก็บข้อมูล`)); });
 if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
   navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
