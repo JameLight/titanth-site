@@ -3,7 +3,7 @@
 *{box-sizing:border-box}body{margin:0;font:17px/1.65 -apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:var(--ink);background:#fff}
 header,main,footer{max-width:960px;margin:auto;padding:0 20px}header{display:flex;justify-content:space-between;align-items:center;min-height:72px;gap:16px;flex-wrap:wrap}
 .brand{font-weight:800;letter-spacing:.08em;text-decoration:none;color:var(--ink);font-size:20px}
-.brand img{display:block;width:56px;height:56px}
+.brand img{display:block;width:72px;height:72px}
 @media(max-width:600px){.brand img{width:48px;height:48px}}nav a{margin-left:16px;text-decoration:none;color:var(--ink);font-size:15px}
 h1{font-size:clamp(30px,4.5vw,44px);line-height:1.15;margin:.4em 0}h2{font-size:26px;margin-top:1.6em}h3{font-size:20px}p,li{max-width:70ch}
 .lead{font-size:20px;color:#3f5a70}.cta{display:inline-block;background:var(--blue);color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none;font-weight:600}
