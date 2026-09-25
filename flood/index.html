@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#103b50">
+  <meta name="description" content="ช่วยเตรียมข้อความขอความช่วยเหลือน้ำท่วมให้ครบ แล้วส่งเข้าช่องทางทางการเอง: โทร 1784, LINE @1784DDPM หรือ 1669 เว็บนี้ไม่ได้ส่งเรื่องให้ใคร">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./styles.css">
+  <title>ช่วยเตรียมข้อความขอความช่วยเหลือน้ำท่วม | KHEM Flood Rescue</title>
+</head>
+<body>
+  <div class="test-ribbon">ไม่ใช่เว็บของหน่วยงานรัฐ • เว็บนี้ไม่ได้ส่งเรื่องให้ใคร • ใช้เตรียมข้อความ แล้วส่งเข้าช่องทางทางการเอง</div>
+  <header class="site-header">
+    <div class="brand"><img src="./icon.svg" alt="" width="38" height="38"><div><strong>KHEM Flood Rescue</strong><span>บันทึกคำขอความช่วยเหลือน้ำท่วม</span></div></div>
+    <a href="./operator.html" class="quiet-link" hidden>ดูไฟล์เคสสำหรับผู้ประสานงาน</a>
+  </header>
+  <main class="layout">
+    <section class="primary">
+      <div class="intro">
+        <h1>ขอความช่วยเหลือน้ำท่วม</h1>
+        <p>กรอกข้อมูลให้ครบเท่าที่ทราบ ระบบจะเก็บไว้ในอุปกรณ์นี้ และช่วยจัดข้อความสำหรับส่งต่อด้วยตัวเอง</p>
+      </div>
+      <section class="emergency" aria-labelledby="emergency-title">
+        <div><h2 id="emergency-title">ถ้ามีอันตรายทันที ให้โทรตอนนี้</h2><p>แอปนี้ไม่มีเจ้าหน้าที่เฝ้ารับเคส การบันทึกข้อมูลไม่ใช่การแจ้งเหตุ</p><p>แจ้งทาง LINE ได้ที่ <strong>@1784DDPM</strong> (ปภ.) ส่งตำแหน่งและรูปในแชทได้ กรอกเคสด้านล่างแล้วกด "คัดลอกแล้วเปิด LINE ปภ." เพื่อวางข้อความ</p></div>
+        <div class="call-actions"><a href="tel:1784" class="call-button">โทร 1784 <small>สาธารณภัย</small></a><a href="tel:1669" class="call-button">โทร 1669 <small>การแพทย์ฉุกเฉิน</small></a><a href="https://line.me/R/ti/p/%401784DDPM" class="call-button" rel="noopener">LINE ปภ. <small>@1784DDPM</small></a></div>
+      </section>
+      <section class="composer" aria-labelledby="form-title">
+        <div class="section-heading"><h2 id="form-title">บันทึกข้อมูลเคส</h2><span>เก็บในเครื่องเท่านั้น</span></div>
+        <form id="case-form" novalidate>
+          <fieldset><legend>สถานที่เกิดเหตุ</legend>
+            <div class="field-grid"><label>จังหวัด <span class="required">*</span><input name="province" autocomplete="address-level1" required placeholder="เช่น เชียงราย"></label><label>อำเภอหรือเขต<input name="district" autocomplete="address-level2" placeholder="ถ้าทราบ"></label><label>ตำบลหรือแขวง<input name="subdistrict" placeholder="ถ้าทราบ"></label><label>จุดสังเกต <span class="optional">ถ้าไม่ใช้ GPS</span><input name="landmark" placeholder="บ้านเลขที่ ซอย วัด หรืออาคารใกล้เคียง"></label></div>
+            <div class="gps-row"><button type="button" id="gps-button" class="secondary-button">ใช้พิกัดจากอุปกรณ์</button><span id="gps-status">ใช้จุดสังเกตแทน GPS ได้</span></div>
+            <input type="hidden" name="lat"><input type="hidden" name="lon"><input type="hidden" name="accuracyMeters">
+          </fieldset>
+          <fieldset><legend>ผู้ที่ต้องการความช่วยเหลือ</legend>
+            <div class="field-grid"><label>จำนวนคน <span class="required">*</span><input name="peopleCount" type="number" inputmode="numeric" min="1" max="999" value="1" required></label><label>เบอร์โทรกลับ <span class="optional">ถ้ามี</span><input name="contactPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="เก็บในเครื่องและอยู่ในข้อความที่แชร์"></label></div>
+            <div class="choice-label">ต้องการความช่วยเหลือเรื่องใด <span class="required">*</span></div>
+            <div id="needs-list" class="needs-list"></div>
+            <label class="full-label">รายละเอียดเพิ่มเติม<textarea name="details" rows="3" maxlength="1000" placeholder="เช่น น้ำสูงระดับใด มีผู้ป่วยหรือจุดเข้าถึงยากอย่างไร"></textarea></label>
+          </fieldset>
+          <p class="privacy-note">ข้อมูลนี้อยู่ในเบราว์เซอร์ของอุปกรณ์นี้จนกว่าคุณจะลบ หรือเบราว์เซอร์ล้างข้อมูลเว็บไซต์ อย่าใช้เครื่องสาธารณะกรอกเบอร์โทรหรือพิกัดละเอียด</p>
+          <div id="form-error" class="error" role="alert" hidden></div>
+          <button type="submit" class="primary-button">บันทึกเคสในเครื่อง</button>
+        </form>
+      </section>
+      <section class="case-section" aria-labelledby="cases-title">
+        <div class="section-heading"><h2 id="cases-title">เคสในอุปกรณ์นี้</h2><span id="case-count">0 เคส</span></div>
+        <div id="case-list" class="case-list"></div>
+      </section>
+    </section>
+    <aside class="side" aria-label="สถานะและข้อควรรู้">
+      <div class="status-guide"><h2>อ่านสถานะก่อนส่งต่อ</h2><ol><li><strong>เก็บในเครื่อง</strong><span>ยังไม่มีหน่วยงานหรือทีมใดได้รับข้อมูล</span></li><li><strong>ผู้ใช้ระบุว่าส่งต่อแล้ว</strong><span>เป็นบันทึกจากผู้ใช้ ยังไม่มีหลักฐานว่าผู้รับเห็นข้อความ</span></li><li><strong>ผู้รับตอบรับ</strong><span>ต้นแบบนี้ยังยืนยันสถานะนี้ไม่ได้ ต้องมีช่องทางรับเคสและหลักฐานจากผู้รับก่อน</span></li></ol></div>
+      <div class="side-block"><h2>ข้อมูลที่ควรแจ้ง</h2><p>สถานที่และจุดสังเกต จำนวนคน ความต้องการ เวลาที่ข้อมูลยังเป็นปัจจุบัน และเบอร์ที่ติดต่อกลับได้</p></div>
+      <div class="side-block" hidden><h2>สำหรับผู้ประสานงาน</h2><p>ไฟล์ส่งออกมีเบอร์โทรและพิกัดละเอียด ห้ามนำขึ้นแผนที่สาธารณะหรือส่งต่อเกินจำเป็น</p><div class="export-actions"><button id="export-json" type="button" class="text-button">ส่งออก JSON</button><button id="export-csv" type="button" class="text-button">ส่งออก CSV</button></div></div>
+    </aside>
+  </main>
+  <footer>ต้นแบบสำหรับการทดสอบขั้นตอนทำงาน • ไม่มีระบบรับเคสส่วนกลาง • ไม่มีการส่งข้อมูลจากเว็บไซต์นี้โดยอัตโนมัติ</footer>
+  <dialog id="handoff-dialog" aria-labelledby="handoff-title"><form id="handoff-form"><h2 id="handoff-title">บันทึกการพยายามส่งต่อ</h2><p>บันทึกนี้เป็นคำบอกของคุณ ระบบไม่มีหลักฐานว่าปลายทางได้รับหรือรับเคสแล้ว</p><label>ช่องทางที่ใช้<select name="channel" required><option value="">เลือกช่องทาง</option><option value="phone">โทรศัพท์</option><option value="line">LINE</option><option value="sms">SMS</option><option value="other">ช่องทางอื่น</option></select></label><label class="confirm-line"><input name="understand" type="checkbox" required> ฉันเข้าใจว่ายังไม่มีการยืนยันจากผู้รับ</label><div class="dialog-actions"><button type="button" id="handoff-cancel" class="text-button">ยกเลิก</button><button type="submit" class="primary-button">บันทึกคำยืนยันของฉัน</button></div></form></dialog>
+  <dialog id="confirm-dialog" aria-labelledby="confirm-title"><h2 id="confirm-title">ยืนยันการทำรายการ</h2><p id="confirm-message"></p><div class="dialog-actions"><button type="button" id="confirm-cancel" class="text-button">ยกเลิก</button><button type="button" id="confirm-accept" class="primary-button">ยืนยัน</button></div></dialog>
+  <div id="toast" role="status" aria-live="polite" class="toast" hidden></div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
