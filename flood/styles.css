@@ -9,3 +9,10 @@ dialog{border:1px solid var(--line);border-radius:12px;padding:1.4rem;width:min(
 .copy-fallback{position:fixed;left:-9999px;top:0;opacity:0}
 .manual-copy{background:#fff;border:2px solid #bf3d31;border-radius:12px;padding:1rem;margin:1rem 0}
 .manual-copy textarea{width:100%;font:inherit;font-size:16px;margin:.5rem 0}
+.message-preview{margin:.6rem 0}
+.message-preview summary{cursor:pointer;font-weight:700;color:var(--teal)}
+.message-preview pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;font-size:.9rem;background:#f6fafb;border:1px solid var(--line);border-radius:6px;padding:.6rem;margin:.4rem 0 0}
+.gps-row{flex-wrap:wrap}
+.emergency{flex-wrap:wrap}
+.emergency .line-help{flex-basis:100%;margin-top:.3rem}
+#case-form[hidden]{display:none}

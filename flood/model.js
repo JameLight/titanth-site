@@ -21,6 +21,17 @@ export const STATUS = Object.freeze({
 export const STALE_AFTER_MS = 6 * 60 * 60 * 1000; // เกณฑ์เตือนของต้นแบบ ไม่ใช่ SLA
 
 const clean = value => String(value ?? "").trim().replace(/\s+/g, " ");
+const has = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
+
+export function createCaseId(cryptoSource = globalThis.crypto) {
+  if (typeof cryptoSource?.randomUUID === "function") return cryptoSource.randomUUID();
+  if (typeof cryptoSource?.getRandomValues !== "function") return null;
+  const bytes = cryptoSource.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+}
 
 export function routingHint(needs) {
   if (needs.some(n => ["trapped", "medical", "fast_water"].includes(n))) return "RED";
@@ -28,8 +39,8 @@ export function routingHint(needs) {
   return "YELLOW";
 }
 
-export function makeCase(input, { now = new Date(), id = globalThis.crypto?.randomUUID?.() } = {}) {
-  const needs = [...new Set((input.needs || []).filter(n => Object.hasOwn(NEEDS, n)))];
+export function makeCase(input, { now = new Date(), id = createCaseId() } = {}) {
+  const needs = [...new Set((input.needs || []).filter(n => has(NEEDS, n)))];
   const peopleCount = Number(input.peopleCount);
   const location = {
     province: clean(input.province),
@@ -80,7 +91,7 @@ export function makeCase(input, { now = new Date(), id = globalThis.crypto?.rand
 }
 
 export function recordHandoffAttempt(item, { channel, now = new Date() } = {}) {
-  if (!Object.hasOwn(CHANNELS, channel)) throw new Error("กรุณาเลือกช่องทางที่ใช้ส่งต่อ");
+  if (!has(CHANNELS, channel)) throw new Error("กรุณาเลือกช่องทางที่ใช้ส่งต่อ");
   const at = now.toISOString();
   return {
     ...item,
@@ -119,7 +130,7 @@ export function shareText(item) {
   const thaiTime = new Intl.DateTimeFormat("th-TH", {
     dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok"
   }).format(new Date(item.createdAt));
-  return `ขอความช่วยเหลือน้ำท่วม (ข้อมูลจากผู้แจ้ง ยังไม่ยืนยัน)\nรหัสเคส: ${item.caseId}\nเวลาแจ้ง (ไทย): ${thaiTime}\nพื้นที่: ${loc}${coords}${map}\nจำนวนคน: ${item.peopleCount}\nต้องการ: ${item.needs.map(n => NEEDS[n]).join(", ")}\nรายละเอียด: ${item.details || "ไม่มี"}\nโทรกลับ: ${item.contactPhone || "ไม่ได้ระบุ"}\nกรุณาตอบกลับเพื่อยืนยันว่าได้รับข้อมูลแล้ว`;
+  return `ขอความช่วยเหลือน้ำท่วม (ข้อมูลจากผู้แจ้ง ยังไม่ยืนยัน)\nรหัสเคส: ${item.caseId}\nข้อมูล ณ (เวลาไทย): ${thaiTime}\nพื้นที่: ${loc}${coords}${map}\nจำนวนคน: ${item.peopleCount}\nต้องการ: ${item.needs.map(n => NEEDS[n]).join(", ")}\nรายละเอียด: ${item.details || "ไม่มี"}\nโทรกลับ: ${item.contactPhone || "ไม่ได้ระบุ"}\nกรุณาตอบกลับเพื่อยืนยันว่าได้รับข้อมูลแล้ว`;
 }
 
 const csvCell = value => {
@@ -142,7 +153,7 @@ export function validateImport(data) {
   if (!Array.isArray(items) || items.length > 10000) throw new Error("ไฟล์ต้องมีรายการ cases ที่ถูกต้อง");
   for (const item of items) {
     if (item.schemaVersion !== SCHEMA_VERSION || typeof item.caseId !== "string" ||
-        !Object.hasOwn(STATUS, item.status) || !item.location || !Array.isArray(item.needs)) {
+        !has(STATUS, item.status) || !item.location || !Array.isArray(item.needs)) {
       throw new Error("พบเคสที่ไม่ตรงกับรูปแบบข้อมูลของต้นแบบ");
     }
   }

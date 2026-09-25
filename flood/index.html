@@ -9,27 +9,29 @@
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./styles.css">
-  <title>ช่วยเตรียมข้อความขอความช่วยเหลือน้ำท่วม | KHEM Flood Rescue</title>
+  <title>ช่วยเตรียมข้อความขอความช่วยเหลือน้ำท่วม | KHEM ตัวช่วยข้อความน้ำท่วม</title>
 </head>
 <body>
   <div class="test-ribbon">ไม่ใช่เว็บของหน่วยงานรัฐ • เว็บนี้ไม่ได้ส่งเรื่องให้ใคร • ใช้เตรียมข้อความ แล้วส่งเข้าช่องทางทางการเอง</div>
   <header class="site-header">
-    <div class="brand"><img src="./icon.svg" alt="" width="38" height="38"><div><strong>KHEM Flood Rescue</strong><span>ตัวช่วยเตรียมข้อความ ไม่ใช่ช่องทางแจ้งเหตุ</span></div></div>
+    <div class="brand"><img src="./icon.svg" alt="" width="38" height="38"><div><strong>KHEM ตัวช่วยข้อความน้ำท่วม</strong><span>ตัวช่วยเตรียมข้อความ ไม่ใช่ช่องทางแจ้งเหตุ</span></div></div>
     
   </header>
   <main class="layout">
     <section class="primary">
+      <section class="emergency" aria-labelledby="emergency-title">
+        <div><h2 id="emergency-title">ถ้ามีอันตรายทันที ให้โทรตอนนี้</h2><p>แอปนี้ไม่มีเจ้าหน้าที่เฝ้ารับเคส การบันทึกข้อมูลไม่ใช่การแจ้งเหตุ</p></div>
+        <div class="call-actions"><a href="tel:1784" class="call-button">โทร 1784 <small>สาธารณภัย</small></a><a href="tel:1669" class="call-button">โทร 1669 <small>การแพทย์ฉุกเฉิน</small></a><a href="https://lin.ee/MoS2rXU" target="_blank" rel="noopener noreferrer" class="call-button">LINE ปภ. <small>@1784DDPM • กดส่งเอง</small></a></div>
+        <p class="line-help">LINE ปภ. <strong>@1784DDPM</strong>: กดเพิ่มเพื่อนแล้วเข้าแชท วางข้อความจากหน้านี้ ส่งตำแหน่งตามที่เจ้าหน้าที่ขอ และตอบคำถามในแชทจนทราบว่ามีผู้รับเรื่อง</p>
+      </section>
+      <noscript><p class="error">แบบฟอร์มนี้ใช้ไม่ได้เมื่อปิด JavaScript ให้โทร 1784 หรือแจ้ง LINE @1784DDPM โดยตรง</p></noscript>
       <div class="intro">
         <h1>เตรียมข้อความขอความช่วยเหลือน้ำท่วม</h1>
-        <p>กรอกข้อมูลให้ครบเท่าที่ทราบ ระบบจะเก็บไว้ในอุปกรณ์นี้ และช่วยจัดข้อความสำหรับส่งต่อด้วยตัวเอง</p>
+        <p>กรอกเท่าที่รู้ หน้านี้จะจัดเป็นข้อความให้ แล้วคุณส่งเองทาง LINE @1784DDPM หรืออ่านให้เจ้าหน้าที่ 1784 ฟัง ข้อมูลอยู่ในอุปกรณ์นี้เท่านั้น</p>
       </div>
-      <section class="emergency" aria-labelledby="emergency-title">
-        <div><h2 id="emergency-title">ถ้ามีอันตรายทันที ให้โทรตอนนี้</h2><p>แอปนี้ไม่มีเจ้าหน้าที่เฝ้ารับเคส การบันทึกข้อมูลไม่ใช่การแจ้งเหตุ</p><p>LINE ปภ. <strong>@1784DDPM</strong>: กดเพิ่มเพื่อน แล้วแชท วางข้อความจากหน้านี้ ส่งตำแหน่ง (Location) และตอบคำถามของ LINE ปภ. จนได้ข้อความยืนยันรับเรื่อง</p></div>
-        <div class="call-actions"><a href="tel:1784" class="call-button">โทร 1784 <small>สาธารณภัย</small></a><a href="tel:1669" class="call-button">โทร 1669 <small>การแพทย์ฉุกเฉิน</small></a><a href="https://lin.ee/MoS2rXU" target="_blank" rel="noopener noreferrer" class="call-button">LINE ปภ. <small>@1784DDPM • กดส่งเอง</small></a></div>
-      </section>
       <section class="composer" aria-labelledby="form-title">
         <div class="section-heading"><h2 id="form-title">บันทึกข้อมูลเคส</h2><span>เก็บในเครื่องเท่านั้น</span></div>
-        <form id="case-form" novalidate>
+        <form id="case-form" novalidate hidden>
           <fieldset><legend>สถานที่เกิดเหตุ</legend>
             <div class="field-grid"><label>จังหวัด <span class="required">*</span><input name="province" autocomplete="address-level1" required placeholder="เช่น เชียงราย"></label><label>อำเภอหรือเขต<input name="district" autocomplete="address-level2" placeholder="ถ้าทราบ"></label><label>ตำบลหรือแขวง<input name="subdistrict" placeholder="ถ้าทราบ"></label><label>จุดสังเกต <span class="optional">ควรกรอกเสมอ</span><input name="landmark" placeholder="บ้านเลขที่ ซอย วัด หรืออาคารใกล้เคียง"></label></div>
             <div class="gps-row"><button type="button" id="gps-button" class="secondary-button">ใช้ตำแหน่งของโทรศัพท์นี้</button><span id="gps-status">กดเฉพาะเมื่ออยู่ที่จุดเกิดเหตุ ถ้าแจ้งแทนคนอื่น ให้กรอกจุดสังเกตแทน</span></div>
@@ -41,7 +43,7 @@
             <div id="needs-list" class="needs-list"></div>
             <label class="full-label">รายละเอียดเพิ่มเติม<textarea name="details" rows="3" maxlength="1000" placeholder="เช่น น้ำสูงระดับใด มีผู้ป่วยหรือจุดเข้าถึงยากอย่างไร"></textarea></label>
           </fieldset>
-          <p class="privacy-note">ข้อมูลนี้อยู่ในเบราว์เซอร์ของอุปกรณ์นี้จนกว่าคุณจะลบ หรือเบราว์เซอร์ล้างข้อมูลเว็บไซต์ อย่าใช้เครื่องสาธารณะกรอกเบอร์โทรหรือพิกัดละเอียด</p>
+          <p class="privacy-note">ข้อมูลเก็บในเบราว์เซอร์ของอุปกรณ์นี้ ใครเปิดหน้านี้ในอุปกรณ์เดียวกันอาจเห็นเคสได้ ถ้าใช้เครื่องร่วมกับผู้อื่น ให้ลบเคสหลังส่งต่อ</p>
           <div id="form-error" class="error" role="alert" hidden></div>
           <button type="submit" class="primary-button">บันทึกเคสในเครื่อง</button>
         </form>
@@ -52,7 +54,7 @@
       </section>
     </section>
     <aside class="side" aria-label="สถานะและข้อควรรู้">
-      <div class="status-guide"><h2>อ่านสถานะก่อนส่งต่อ</h2><ol><li><strong>เก็บในเครื่อง</strong><span>ยังไม่มีหน่วยงานหรือทีมใดได้รับข้อมูล</span></li><li><strong>ผู้ใช้ระบุว่าส่งต่อแล้ว</strong><span>เป็นบันทึกจากผู้ใช้ ยังไม่มีหลักฐานว่าผู้รับเห็นข้อความ</span></li><li><strong>ผู้รับตอบรับ</strong><span>ต้นแบบนี้ยังยืนยันสถานะนี้ไม่ได้ ต้องมีช่องทางรับเคสและหลักฐานจากผู้รับก่อน</span></li></ol></div>
+      <div class="status-guide"><h2>อ่านสถานะก่อนส่งต่อ</h2><ol><li><strong>เก็บในเครื่อง</strong><span>ยังไม่มีหน่วยงานหรือทีมใดได้รับข้อมูล</span></li><li><strong>ผู้ใช้ระบุว่าส่งต่อแล้ว</strong><span>เป็นบันทึกจากผู้ใช้ ยังไม่มีหลักฐานว่าผู้รับเห็นข้อความ</span></li><li><strong>เจ้าหน้าที่ตอบรับ</strong><span>ตรวจจากคำตอบใน LINE หรือการโทรกลับ หน้านี้ไม่รู้ว่ามีผู้รับเรื่องหรือยัง</span></li></ol></div>
       <div class="side-block"><h2>ข้อมูลที่ควรแจ้ง</h2><p>สถานที่และจุดสังเกต จำนวนคน ความต้องการ เวลาที่ข้อมูลยังเป็นปัจจุบัน และเบอร์ที่ติดต่อกลับได้</p></div>
       <div class="side-block" hidden><h2>สำหรับผู้ประสานงาน</h2><p>ไฟล์ส่งออกมีเบอร์โทรและพิกัดละเอียด ห้ามนำขึ้นแผนที่สาธารณะหรือส่งต่อเกินจำเป็น</p><div class="export-actions"><button id="export-json" type="button" class="text-button">ส่งออก JSON</button><button id="export-csv" type="button" class="text-button">ส่งออก CSV</button></div></div>
     </aside>
