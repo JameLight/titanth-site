@@ -26,7 +26,8 @@ button:disabled{opacity:.6;cursor:progress}
 .duty{margin:.8rem 0;padding:.7rem;border-radius:10px;border:2px solid var(--line);background:#fff}
 .duty.on{border-color:var(--green);background:#f0fbf4}
 .duty p{margin:0;font-weight:700}
-.banner{padding:.7rem;border-radius:10px;background:var(--red);color:#fff;font-weight:800;cursor:pointer}
+.banner{padding:.7rem;border-radius:10px;background:var(--red);color:#fff;font-weight:800;cursor:pointer;margin:.5rem 0}
+.banner.withdrawn{background:var(--navy)}
 .count{font-weight:600;color:#506872}
 .list{display:grid;gap:.7rem}
 .case{background:#fff;border:1.5px solid var(--line);border-left:6px solid var(--teal);border-radius:10px;padding:.7rem .8rem}
