@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>How to store the manufacturer product code in Shopify (metafield) and get it into your export | TITANTH</title>
-<meta name="description" content="Where to keep the manufacturer or supplier product code (NS-PID) in Shopify: the MPN column, a variant metafield or a side sheet, and which of them appear in your product CSV export.">
+<meta name="description" content="Where to keep the manufacturer or supplier product code (NS-PID) in Shopify: a variant metafield or a side sheet, and what does and does not appear in your product CSV export.">
 <link rel="canonical" href="https://titanth.com/guides/shopify-metafield-for-manufacturer-code/">
-<meta property="og:type" content="article"><meta property="og:title" content="How to store the manufacturer product code in Shopify (metafield) and get it into your export | TITANTH"><meta property="og:description" content="Where to keep the manufacturer or supplier product code (NS-PID) in Shopify: the MPN column, a variant metafield or a side sheet, and which of them appear in your product CSV export."><meta property="og:url" content="https://titanth.com/guides/shopify-metafield-for-manufacturer-code/"><meta property="og:site_name" content="TITANTH">
+<meta property="og:type" content="article"><meta property="og:title" content="How to store the manufacturer product code in Shopify (metafield) and get it into your export | TITANTH"><meta property="og:description" content="Where to keep the manufacturer or supplier product code (NS-PID) in Shopify: a variant metafield or a side sheet, and what does and does not appear in your product CSV export."><meta property="og:url" content="https://titanth.com/guides/shopify-metafield-for-manufacturer-code/"><meta property="og:site_name" content="TITANTH">
 <meta name="twitter:card" content="summary">
 <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
 <link rel="stylesheet" href="/site.css">
@@ -20,18 +20,18 @@
 <main>
 <p class="crumbs"><a href="/">Home</a> › <a href="/guides/">Guides</a> › Metafield for maker&#x27;s code</p>
 <h1>Storing the maker's code in Shopify</h1>
-<p class="answer"><strong>Short answer:</strong> Keep one maker's code per variant. There are three places for it: the Google Shopping MPN column, which is already in the product CSV (check that your export fills it per variant, not only on each product's first row); a variant metafield, which you edit in the bulk editor but which does not appear in the product CSV; or a side sheet keyed by SKU. A product metafield does appear in the CSV export, but only once per product.</p>
+<p class="answer"><strong>Short answer:</strong> Keep one maker's code per variant. Two places always work: a variant metafield, which you edit in the bulk editor but which does not appear in the product CSV, or a side sheet keyed by SKU. Shopify's sample files also show a Google Shopping MPN column, but our own test export on 25 September 2026 did not include it. Shopify's documentation says a defined product metafield appears in the CSV export; in Shopify's sample file its value sits only on each product's first row.</p>
 <h2>Steps for a variant metafield</h2>
 <ol class="steps">
 <li>Shopify admin → Settings → Custom data → <strong>Variants</strong> → Add definition. Name: "Manufacturer code". Namespace and key: <code>custom.manufacturer_code</code>. Type: single line text. Save.</li>
 <li>Open each product → variant → scroll to Metafields → enter the maker's model or part number exactly as the supplier wrote it.</li>
 <li>For many variants, use Shopify's bulk editor (Products → select → Bulk edit) and add the metafield column.</li>
 <li>Variant metafields are not included in product CSV export or import; Shopify points to the variant bulk editor for editing them in bulk. To keep a copy you can check, use a simple side sheet: columns <code>Variant SKU</code>, <code>Manufacturer code</code>, <code>Source</code>.</li>
-<li>To check the codes, put the column into the CSV you load (the MPN column is already there) and choose it under "Match identifier columns" in the checker.</li>
+<li>To check the codes, add your code column to the CSV you load and choose it under "Match identifier columns" in the checker.</li>
 </ol>
 <h2>What appears in the product CSV</h2>
-<ul><li><strong>Google Shopping MPN column:</strong> yes. Shopify's current sample file fills it per variant row; older sample files fill it once per product, on the first row. Check your own export.</li>
-<li><strong>Product metafield:</strong> yes, once per product, on the product's first row. It suits a product sold in one version only.</li>
+<ul><li><strong>Google Shopping MPN column:</strong> not always. Shopify's help page and sample files show it, but a real export from our own store on 25 September 2026 had no Google Shopping columns at all, even though the test products had MPN values. Open your own export and check the headers.</li>
+<li><strong>Product metafield:</strong> included once defined, according to Shopify's documentation; in Shopify's sample file the value sits on the product's first row only. Check one multi-variant product in your own export before relying on it.</li>
 <li><strong>Variant metafield:</strong> no. Use the variant bulk editor or a side sheet.</li></ul>
 <p>The Commission guidance (section 3.5.3) says each identifier should point to exactly one product variant, so products sold in several sizes or colours usually need a code per variant.</p>
 <h2>Rules of thumb</h2>
