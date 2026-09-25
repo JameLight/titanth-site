@@ -12,23 +12,32 @@
   <title>ช่วยเตรียมข้อความขอความช่วยเหลือน้ำท่วม | KHEM ตัวช่วยข้อความน้ำท่วม</title>
 </head>
 <body>
-  <div class="test-ribbon">ไม่ใช่เว็บของหน่วยงานรัฐ • เว็บนี้ไม่ได้ส่งเรื่องให้ใคร • ใช้เตรียมข้อความ แล้วส่งเข้าช่องทางทางการเอง</div>
+  <div class="test-ribbon">ไม่ใช่เว็บหน่วยงานรัฐ • เว็บนี้ไม่ได้ส่งเรื่องเอง</div>
   <header class="site-header">
     <div class="brand"><img src="./icon.svg" alt="" width="38" height="38"><div><strong>KHEM ตัวช่วยข้อความน้ำท่วม</strong><span>ตัวช่วยเตรียมข้อความ ไม่ใช่ช่องทางแจ้งเหตุ</span></div></div>
     
   </header>
   <main class="layout">
     <section class="primary">
-      <section class="emergency" aria-labelledby="emergency-title">
-        <div><h2 id="emergency-title">ถ้ามีอันตรายทันที ให้โทรตอนนี้</h2><p>แอปนี้ไม่มีเจ้าหน้าที่เฝ้ารับเคส การบันทึกข้อมูลไม่ใช่การแจ้งเหตุ</p></div>
-        <div class="call-actions"><a href="tel:1784" class="call-button">โทร 1784 <small>สาธารณภัย</small></a><a href="tel:1669" class="call-button">โทร 1669 <small>การแพทย์ฉุกเฉิน</small></a><a href="https://lin.ee/MoS2rXU" target="_blank" rel="noopener noreferrer" class="call-button">LINE ปภ. <small>@1784DDPM • กดส่งเอง</small></a><a href="tel:1418" class="call-button">โทร 1418 <small>มูลนิธิป่อเต็กตึ๊ง</small></a></div>
-        <div id="quick-location-row" class="quick-location-row" hidden><button type="button" id="quick-location" class="call-button quick-location">ส่งตำแหน่งของฉันตอนนี้ <small>กดเมื่อคุณติดอยู่ที่จุดนั้นเอง • เลือกผู้รับและกดส่งเอง</small></button><span id="quick-location-status" role="status" aria-live="polite"></span></div>
-        <p class="line-help">LINE ปภ. <strong>@1784DDPM</strong>: กดเพิ่มเพื่อนแล้วเข้าแชท วางข้อความจากหน้านี้ ส่งตำแหน่งตามที่เจ้าหน้าที่ขอ และตอบคำถามในแชทจนทราบว่ามีผู้รับเรื่อง</p>
-        <p class="foundation-help">1418 เป็นสายด่วน 24 ชม. ของมูลนิธิป่อเต็กตึ๊ง ซึ่งเป็นมูลนิธิเอกชน ใช้เป็นช่องทางเพิ่มเมื่อ 1784 หรือ 1669 ติดต่อยาก</p>
+      <section class="emergency sos" aria-labelledby="emergency-title">
+        <h1 id="emergency-title" class="sos-title">ติดน้ำท่วม? <span>ขอความช่วยเหลือได้ทันที</span></h1>
+        <div class="sos-actions">
+          <a href="tel:1784" class="sos-button sos-call">📞 โทร 1784 <small>แจ้งน้ำท่วม กู้ภัย • ปภ. 24 ชม.</small></a>
+          <button type="button" id="quick-location" class="sos-button sos-location" hidden>📍 ส่งตำแหน่งของฉัน <small>เข้า LINE ปภ. • กดเมื่อคุณติดอยู่ตรงนั้น</small></button>
+          <a href="tel:1669" class="sos-button sos-medical">🚑 โทร 1669 <small>เจ็บป่วย บาดเจ็บ ผู้ป่วยติดเตียง</small></a>
+        </div>
+        <div id="quick-location-row" class="quick-location-result" hidden>
+          <p id="quick-location-status" role="status" aria-live="polite"></p>
+          <a id="quick-location-line" class="sos-button sos-line" href="https://lin.ee/MoS2rXU" rel="noopener noreferrer" hidden>ส่งเข้า LINE ปภ. ทันที <small>LINE จะเปิดพร้อมข้อความ แล้วกด "ส่ง" เอง</small></a>
+          <div id="quick-location-more" class="quick-location-more" hidden><button type="button" id="quick-location-share" class="secondary-button">แชร์ให้ญาติหรืออาสา</button><button type="button" id="quick-location-copy" class="secondary-button">คัดลอกข้อความ</button></div>
+        </div>
+        <div class="sos-more"><a href="tel:1418" class="sos-small">โทร 1418 <small>มูลนิธิป่อเต็กตึ๊ง (เอกชน)</small></a><a href="https://lin.ee/MoS2rXU" target="_blank" rel="noopener noreferrer" class="sos-small">แชต LINE ปภ. <small>@1784DDPM</small></a></div>
+        <p class="sos-note">เว็บนี้ไม่ได้ส่งเรื่องเอง ข้อความถึงเจ้าหน้าที่เมื่อคุณกดส่งใน LINE หรือโทรเท่านั้น</p>
+        <a class="sos-form-link" href="#form-title">หรือกรอกรายละเอียดเพื่อเตรียมข้อความครบ ↓</a>
       </section>
       <noscript><p class="error">แบบฟอร์มนี้ใช้ไม่ได้เมื่อปิด JavaScript ให้โทร 1784 หรือแจ้ง LINE @1784DDPM โดยตรง</p></noscript>
       <div class="intro">
-        <h1>เตรียมข้อความขอความช่วยเหลือน้ำท่วม</h1>
+        <h2>เตรียมข้อความขอความช่วยเหลือน้ำท่วม</h2>
         <p>กรอกเท่าที่รู้ หน้านี้จะจัดเป็นข้อความให้ แล้วคุณส่งเองทาง LINE @1784DDPM หรืออ่านให้เจ้าหน้าที่ 1784 ฟัง ข้อมูลอยู่ในอุปกรณ์นี้เท่านั้น</p>
       </div>
       <section class="composer" aria-labelledby="form-title">
