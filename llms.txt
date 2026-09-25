@@ -1,5 +1,5 @@
 # TITANTH
-> TITANTH Catalog Check is a browser-based tool that checks a Shopify product CSV for the product identifiers the EU requires on consumer-parcel customs declarations from 1 November 2026 (merchant code, non-standardised manufacturer code, standardised barcode). It runs locally, does not upload data, and is sold as a one-time US$59 license per store. A free version checks the first 25 rows.
+> TITANTH Catalog Check is a browser-based tool that checks a Shopify product CSV for the product identifiers the EU requires on consumer-parcel customs declarations from 1 November 2026 (merchant code, non-standardised manufacturer code, standardised barcode). It runs locally, does not upload data, and is sold as a one-time US$59 license per store. A free version checks the first 25 CSV data rows (variant and image rows count).
 
 ## Pages
 - https://titanth.com/ : overview
