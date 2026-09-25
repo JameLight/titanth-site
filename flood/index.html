@@ -9,12 +9,12 @@
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./styles.css">
-  <title>ช่วยเตรียมข้อความขอความช่วยเหลือน้ำท่วม | KHEM ตัวช่วยข้อความน้ำท่วม</title>
+  <title>ช่วยเตรียมข้อความขอความช่วยเหลือน้ำท่วม | พร้อมแจ้งน้ำท่วม</title>
 </head>
 <body>
-  <div class="test-ribbon">ไม่ใช่เว็บหน่วยงานรัฐ • เว็บนี้ไม่ได้ส่งเรื่องเอง</div>
+  <div class="test-ribbon" id="service-ribbon">ไม่ใช่เว็บหน่วยงานรัฐ • เว็บนี้ไม่ได้ส่งเรื่องเอง</div>
   <header class="site-header">
-    <div class="brand"><img src="./icon.svg" alt="" width="38" height="38"><div><strong>KHEM ตัวช่วยข้อความน้ำท่วม</strong><span>ตัวช่วยเตรียมข้อความ ไม่ใช่ช่องทางแจ้งเหตุ</span></div></div>
+    <div class="brand"><img src="./icon.svg" alt="" width="38" height="38"><div><strong>พร้อมแจ้งน้ำท่วม</strong><span>ตัวช่วยเตรียมข้อความ ไม่ใช่ช่องทางแจ้งเหตุ</span></div></div>
     
   </header>
   <main class="layout">
@@ -36,16 +36,25 @@
         <p class="sos-note">เว็บนี้ไม่ได้ส่งเรื่องเอง ข้อความถึงเจ้าหน้าที่เมื่อคุณกดส่งใน LINE หรือโทรเท่านั้น</p>
         <a class="sos-form-link" href="#form-title">หรือกรอกรายละเอียดเพื่อเตรียมข้อความครบ ↓</a>
       </section>
+      <section class="bkk-links" aria-labelledby="bkk-links-title">
+        <h2 id="bkk-links-title">กรุงเทพฯ: ตรวจน้ำท่วมถนนและภาพจราจร</h2>
+        <div class="bkk-links-actions">
+          <a href="https://floodbangkok.bangkok.go.th/road-flood" target="_blank" rel="noopener noreferrer">ดูจุดวัดน้ำท่วมถนน <span>สำนักการระบายน้ำ กทม. ↗</span></a>
+          <a href="https://cpudapp.bangkok.go.th/bmatraffic/" target="_blank" rel="noopener noreferrer">ดูกล้องและสภาพจราจร <span>สำนักการจราจรและขนส่ง กทม. ↗</span></a>
+        </div>
+        <p>ลิงก์เปิดเว็บ กทม. โดยตรง ตรวจเวลาและจุดที่แสดงก่อนใช้วางแผนเดินทาง ข้อมูลบนแผนที่ไม่ใช่การยืนยันว่าทุกเส้นทางปลอดภัย หากติดอยู่ในน้ำให้โทร 1784 หรือ 1669 ตามเหตุ</p>
+      </section>
       <noscript><p class="error">แบบฟอร์มนี้ใช้ไม่ได้เมื่อปิด JavaScript ให้โทร 1784 หรือแจ้ง LINE @1784DDPM โดยตรง</p></noscript>
       <div class="intro">
         <h2>เตรียมข้อความขอความช่วยเหลือน้ำท่วม</h2>
-        <p>กรอกเท่าที่รู้ หน้านี้จะจัดเป็นข้อความให้ แล้วคุณส่งเองทาง LINE @1784DDPM หรืออ่านให้เจ้าหน้าที่ 1784 ฟัง ข้อมูลอยู่ในอุปกรณ์นี้เท่านั้น</p>
+        <p id="intro-copy">กรอกเท่าที่รู้ หน้านี้จะจัดเป็นข้อความให้ แล้วคุณส่งเองทาง LINE @1784DDPM หรืออ่านให้เจ้าหน้าที่ 1784 ฟัง ข้อมูลอยู่ในอุปกรณ์นี้เท่านั้น</p>
       </div>
       <section class="composer" aria-labelledby="form-title">
-        <div class="section-heading"><h2 id="form-title">บันทึกข้อมูลเคส</h2><span>เก็บในเครื่องเท่านั้น</span></div>
+        <div class="section-heading"><h2 id="form-title">บันทึกข้อมูลเคส</h2><span id="storage-scope">เก็บในเครื่องเท่านั้น</span></div>
         <form id="case-form" novalidate hidden>
           <fieldset><legend>สถานที่เกิดเหตุ</legend>
-            <div class="field-grid"><label>จังหวัด <span class="required">*</span><input name="province" autocomplete="address-level1" required placeholder="เช่น เชียงราย"></label><label>อำเภอหรือเขต<input name="district" autocomplete="address-level2" placeholder="ถ้าทราบ"></label><label>ตำบลหรือแขวง<input name="subdistrict" placeholder="ถ้าทราบ"></label><label>จุดสังเกต <span class="optional">ควรกรอกเสมอ</span><input name="landmark" placeholder="บ้านเลขที่ ซอย วัด หรืออาคารใกล้เคียง"></label></div>
+            <div class="field-grid"><label>จังหวัด <span class="required">*</span><input name="province" list="province-options" autocomplete="address-level1" required placeholder="เลือกจังหวัดจากรายการ"></label><label>อำเภอหรือเขต<input name="district" autocomplete="address-level2" placeholder="ถ้าทราบ"></label><label>ตำบลหรือแขวง<input name="subdistrict" placeholder="ถ้าทราบ"></label><label>จุดสังเกต <span class="optional">ควรกรอกเสมอ</span><input name="landmark" placeholder="บ้านเลขที่ ซอย วัด หรืออาคารใกล้เคียง"></label></div>
+            <datalist id="province-options"></datalist>
             <div class="gps-row"><button type="button" id="gps-button" class="secondary-button">ใช้ตำแหน่งของโทรศัพท์นี้</button><span id="gps-status">กดเฉพาะเมื่ออยู่ที่จุดเกิดเหตุ ถ้าแจ้งแทนคนอื่น ให้กรอกจุดสังเกตแทน</span></div>
             <input type="hidden" name="lat"><input type="hidden" name="lon"><input type="hidden" name="accuracyMeters">
           </fieldset>
@@ -55,7 +64,7 @@
             <div id="needs-list" class="needs-list"></div>
             <label class="full-label">รายละเอียดเพิ่มเติม<textarea name="details" rows="3" maxlength="1000" placeholder="เช่น น้ำสูงระดับใด มีผู้ป่วยหรือจุดเข้าถึงยากอย่างไร"></textarea></label>
           </fieldset>
-          <p class="privacy-note">ข้อมูลเก็บในเบราว์เซอร์ของอุปกรณ์นี้ ใครเปิดหน้านี้ในอุปกรณ์เดียวกันอาจเห็นเคสได้ ถ้าใช้เครื่องร่วมกับผู้อื่น ให้ลบเคสหลังส่งต่อ</p>
+          <p class="privacy-note" id="privacy-copy">ข้อมูลเก็บในเบราว์เซอร์ของอุปกรณ์นี้ ใครเปิดหน้านี้ในอุปกรณ์เดียวกันอาจเห็นเคสได้ ถ้าใช้เครื่องร่วมกับผู้อื่น ให้ลบเคสหลังส่งต่อ</p>
           <div id="form-error" class="error" role="alert" hidden></div>
           <button type="submit" class="primary-button">บันทึกเคสในเครื่อง</button>
         </form>
@@ -66,14 +75,16 @@
       </section>
     </section>
     <aside class="side" aria-label="สถานะและข้อควรรู้">
-      <div class="status-guide"><h2>อ่านสถานะก่อนส่งต่อ</h2><ol><li><strong>เก็บในเครื่อง</strong><span>ยังไม่มีหน่วยงานหรือทีมใดได้รับข้อมูล</span></li><li><strong>ผู้ใช้ระบุว่าส่งต่อแล้ว</strong><span>เป็นบันทึกจากผู้ใช้ ยังไม่มีหลักฐานว่าผู้รับเห็นข้อความ</span></li><li><strong>เจ้าหน้าที่ตอบรับ</strong><span>ตรวจจากคำตอบใน LINE หรือการโทรกลับ หน้านี้ไม่รู้ว่ามีผู้รับเรื่องหรือยัง</span></li></ol></div>
+      <div class="status-guide"><h2>อ่านสถานะก่อนส่งต่อ</h2><ol><li><strong>เก็บในเครื่อง</strong><span>ยังไม่มีหน่วยงานหรือทีมใดได้รับข้อมูล</span></li><li><strong>ผู้ใช้ระบุว่าส่งต่อแล้ว</strong><span>เป็นบันทึกจากผู้ใช้ ยังไม่มีหลักฐานว่าผู้รับเห็นข้อความ</span></li><li><strong>เจ้าหน้าที่ตอบรับ</strong><span>กรณีโทรหรือส่ง LINE ให้ตรวจจากคำตอบปลายทาง หน้านี้ไม่รู้ว่าผู้รับช่องทางนั้นเห็นข้อความหรือยัง</span></li></ol></div>
       <div class="side-block"><h2>ข้อมูลที่ควรแจ้ง</h2><p>สถานที่และจุดสังเกต จำนวนคน ความต้องการ เวลาที่ข้อมูลยังเป็นปัจจุบัน และเบอร์ที่ติดต่อกลับได้</p></div>
       <div class="side-block" hidden><h2>สำหรับผู้ประสานงาน</h2><p>ไฟล์ส่งออกมีเบอร์โทรและพิกัดละเอียด ห้ามนำขึ้นแผนที่สาธารณะหรือส่งต่อเกินจำเป็น</p><div class="export-actions"><button id="export-json" type="button" class="text-button">ส่งออก JSON</button><button id="export-csv" type="button" class="text-button">ส่งออก CSV</button></div></div>
     </aside>
   </main>
-  <footer>ต้นแบบสำหรับการทดสอบขั้นตอนทำงาน • ไม่มีระบบรับเคสส่วนกลาง • ไม่มีการส่งข้อมูลจากเว็บไซต์นี้โดยอัตโนมัติ • <a href="/?home=1">หน้าแรก TITANTH (ภาษาอังกฤษ)</a></footer>
+  <footer id="service-footer">ต้นแบบสำหรับการทดสอบขั้นตอนทำงาน • ไม่มีระบบรับเคสส่วนกลาง • ไม่มีการส่งข้อมูลจากเว็บไซต์นี้โดยอัตโนมัติ • <a href="/?home=1">หน้าแรก TITANTH (ภาษาอังกฤษ)</a></footer>
   <dialog id="handoff-dialog" aria-labelledby="handoff-title"><form id="handoff-form"><h2 id="handoff-title">บันทึกการพยายามส่งต่อ</h2><p>บันทึกนี้เป็นคำบอกของคุณ ระบบไม่มีหลักฐานว่าปลายทางได้รับหรือรับเคสแล้ว</p><label>ช่องทางที่ใช้<select name="channel" required><option value="">เลือกช่องทาง</option><option value="phone">โทรศัพท์</option><option value="line">LINE</option><option value="sms">SMS</option><option value="other">ช่องทางอื่น</option></select></label><label class="confirm-line"><input name="understand" type="checkbox" required> ฉันเข้าใจว่ายังไม่มีการยืนยันจากผู้รับ</label><div class="dialog-actions"><button type="button" id="handoff-cancel" class="text-button">ยกเลิก</button><button type="submit" class="primary-button">บันทึกคำยืนยันของฉัน</button></div></form></dialog>
   <dialog id="confirm-dialog" aria-labelledby="confirm-title"><h2 id="confirm-title">ยืนยันการทำรายการ</h2><p id="confirm-message"></p><div class="dialog-actions"><button type="button" id="confirm-cancel" class="text-button">ยกเลิก</button><button type="button" id="confirm-accept" class="primary-button">ยืนยัน</button></div></dialog>
+  <dialog id="intake-dialog" aria-labelledby="intake-title"><h2 id="intake-title">ส่งเคสเข้าทีมอาสา</h2><p>ข้อมูลตำแหน่ง จำนวนคน ความต้องการ รายละเอียด และเบอร์โทร (ถ้ากรอก) จะถูกส่งไปยังระบบที่ทีมอาสาเข้าถึงได้ การส่งถึงระบบยังไม่เท่ากับมีทีมรับเคส</p><p><a id="intake-policy" href="#" target="_blank" rel="noopener noreferrer">อ่านข้อมูลการใช้และเก็บข้อมูล</a> ก่อนตัดสินใจ</p><label class="confirm-line"><input id="intake-consent" type="checkbox"> ฉันอ่านข้อมูลแล้วและยินยอมให้ส่งเคสนี้เข้าระบบทีมอาสา</label><div class="dialog-actions"><button type="button" id="intake-cancel" class="text-button">ยกเลิก</button><button type="button" id="intake-accept" class="primary-button">ส่งเข้าระบบ</button></div></dialog>
+  <dialog id="receipt-recovery-dialog" aria-labelledby="receipt-recovery-title"><h2 id="receipt-recovery-title">ระบบรับเคสแล้ว แต่เครื่องเก็บรหัสไม่ได้</h2><p>คัดลอกรหัสนี้เก็บไว้เพื่ออ่านสถานะภายหลัง อย่าส่งรหัสลับให้คนอื่น</p><textarea id="receipt-recovery-text" readonly rows="4"></textarea><div class="dialog-actions"><button type="button" id="receipt-recovery-close" class="primary-button">ปิดหลังเก็บรหัสแล้ว</button></div></dialog>
   <div id="toast" role="status" aria-live="polite" class="toast" hidden></div>
   <script type="module" src="./app.js"></script>
 </body>
