@@ -183,6 +183,7 @@ $("#load-official-alerts").addEventListener("click", async () => {
   const province = canonicalProvince(chosen);
   if (!province) { $("#official-alerts-status").textContent = "กรุณาเลือกจังหวัดก่อนดูคำเตือนภัย"; return; }
   $("#alert-province").value = province;
+  updateForecastLink();
   const button = $("#load-official-alerts");
   button.disabled = true;
   $("#official-alerts-status").textContent = `กำลังดึงข้อมูลจาก ศภช. สำหรับ ${province}…`;
@@ -656,6 +657,19 @@ for (const province of PROVINCES) {
   alertOption.textContent = province;
   $("#alert-province").append(alertOption);
 }
+function updateForecastLink() {
+  const province = canonicalProvince($("#alert-province").value || form.elements.province.value);
+  const link = $("#tmd-forecast-link");
+  link.href = province
+    ? `https://www.tmd.go.th/weatherForecast7DaysWidget?province=${encodeURIComponent(province)}`
+    : "https://www.tmd.go.th/";
+  link.textContent = province
+    ? `พยากรณ์อากาศ 7 วัน จังหวัด${province} — กรมอุตุนิยมวิทยา ↗`
+    : "พยากรณ์อากาศ 7 วัน (เลือกจังหวัดด้านบนก่อน) — กรมอุตุนิยมวิทยา ↗";
+}
+$("#alert-province").addEventListener("change", updateForecastLink);
+form.elements.province.addEventListener("input", updateForecastLink);
+updateForecastLink();
 renderNeeds();
 form.addEventListener("change", event => { if (event.target.name === "urgentNow") updateTriage(); });
 updateTriage();
