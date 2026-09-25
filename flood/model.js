@@ -148,6 +148,59 @@ export function quickLocationText({ latitude, longitude, accuracy }, now = new D
   return `ขอความช่วยเหลือด่วน น้ำท่วม (ข้อมูลจากผู้แจ้ง ยังไม่ยืนยัน)\nตำแหน่งจากโทรศัพท์ผู้แจ้ง: ${lat}, ${lon} (คลาดเคลื่อนประมาณ ${Math.round(accuracy)} เมตร)\nแผนที่: https://maps.google.com/?q=${lat},${lon}\nข้อมูล ณ (เวลาไทย): ${thaiTime}\nกรุณาตอบกลับเพื่อยืนยันว่าได้รับข้อมูลแล้ว`;
 }
 
+export function ddpmLinePrefillUrl(message) {
+  if (typeof message !== "string" || !message.trim()) throw new Error("ไม่มีข้อความตำแหน่งให้ส่ง");
+  const url = `https://line.me/R/oaMessage/%40155zwaue/?${encodeURIComponent(message)}`;
+  if (url.length > 4000) throw new Error("ข้อความยาวเกินกว่าจะเปิดใน LINE ได้");
+  return url;
+}
+
+// QR เป็นข้อความสั้นสำหรับให้คนที่มีสัญญาณส่งต่อเอง ไม่ใช่หลักฐานการส่งหรือ ACK.
+export const QR_MAX_BYTES = 350;
+const QR_NEEDS = Object.freeze({
+  trapped: "ติดอยู่", medical: "ป่วย/บาดเจ็บ", immobile: "เคลื่อนย้ายไม่ได้",
+  fast_water: "น้ำขึ้นเร็ว", boat: "เรือ/อพยพ", medicine: "ขาดยา",
+  food_water: "อาหาร/น้ำ", other: "อื่นๆ"
+});
+const qrBounded = message => {
+  if (new TextEncoder().encode(message).length > QR_MAX_BYTES) {
+    throw new Error("ข้อมูลยาวเกินสำหรับ QR ที่สแกนง่าย ให้คัดลอกหรือแชร์ข้อความเต็มแทน");
+  }
+  return message;
+};
+
+export function quickLocationQrText(coords, now = new Date()) {
+  quickLocationText(coords, now); // ใช้การตรวจช่วงพิกัดเดียวกับข้อความส่งหลัก
+  const lat = coords.latitude.toFixed(6);
+  const lon = coords.longitude.toFixed(6);
+  const time = new Intl.DateTimeFormat("th-TH", {
+    dateStyle: "short", timeStyle: "short", timeZone: "Asia/Bangkok"
+  }).format(now);
+  return qrBounded(`น้ำท่วม ขอช่วย (ยังไม่ยืนยัน)\n${lat},${lon} ±${Math.round(coords.accuracy)}ม.\nhttps://maps.google.com/?q=${lat},${lon}\n${time} เวลาไทย\nโปรดตอบรับ`);
+}
+
+export function caseQrText(item) {
+  const loc = item?.location;
+  if (!loc || !item?.createdAt || !Number.isInteger(item.peopleCount) || item.peopleCount < 1 || item.peopleCount > 999 ||
+      !Array.isArray(item.needs) || !item.needs.length || !item.needs.every(n => has(NEEDS, n)) ||
+      ((loc.lat == null) !== (loc.lon == null)) ||
+      (loc.lat !== null && loc.lat !== undefined && (!Number.isFinite(loc.lat) || loc.lat < -90 || loc.lat > 90)) ||
+      (loc.lon !== null && loc.lon !== undefined && (!Number.isFinite(loc.lon) || loc.lon < -180 || loc.lon > 180))) {
+    throw new Error("ข้อมูลเคสไม่ครบสำหรับ QR ให้คัดลอกข้อความเต็มแทน");
+  }
+  const place = [loc.province, loc.district, loc.subdistrict, loc.landmark].filter(Boolean).join("/");
+  const coords = Number.isFinite(loc.lat) && Number.isFinite(loc.lon)
+    ? `\nพิกัด ${loc.lat},${loc.lon}${Number.isFinite(loc.accuracyMeters) ? ` ±${Math.round(loc.accuracyMeters)}ม.` : ""}` : "";
+  const needs = item.needs.map(n => QR_NEEDS[n] || "อื่นๆ").join(",");
+  const time = new Intl.DateTimeFormat("th-TH", {
+    dateStyle: "short", timeStyle: "short", timeZone: "Asia/Bangkok"
+  }).format(new Date(item.createdAt));
+  if (!place || !needs || !Number.isFinite(new Date(item.createdAt).getTime())) {
+    throw new Error("ข้อมูลเคสไม่ครบสำหรับ QR ให้คัดลอกข้อความเต็มแทน");
+  }
+  return qrBounded(`น้ำท่วม ขอช่วย (ยังไม่ยืนยัน)\n${place}${coords}\n${item.peopleCount}คน ${needs}\nโทร ${item.contactPhone || "-"}\n${time} เวลาไทย\nโปรดตอบรับ`);
+}
+
 const csvCell = value => {
   let text = String(value ?? "");
   if (/^[\s]*[=+\-@\t\r]/.test(text)) text = `'${text}`;

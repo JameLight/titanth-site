@@ -1,6 +1,6 @@
-const CACHE = "khem-flood-rescue-public-v7";
+const CACHE = "khem-flood-rescue-public-v8";
 const CACHE_FAMILY = CACHE.replace(/v\d+$/, "");
-const SHELL = ["./", "./index.html", "./styles.css", "./app.js", "./model.js", "./storage.js", "./manifest.webmanifest", "./icon.svg"];
+const SHELL = ["./", "./index.html", "./styles.css", "./app.js", "./model.js", "./storage.js", "./qr.js", "./vendor/qrcode.mjs", "./manifest.webmanifest", "./icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL.map(path => new Request(path, { cache: "reload" })))).then(() => self.skipWaiting()));
 });
