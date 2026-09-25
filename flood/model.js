@@ -7,7 +7,12 @@ export const NEEDS = Object.freeze({
   boat: "ต้องการเรือหรืออพยพ",
   medicine: "ขาดยาจำเป็น",
   food_water: "ต้องการอาหารหรือน้ำดื่ม",
-  other: "ความช่วยเหลืออื่น"
+  other: "ความช่วยเหลืออื่น",
+  dialysis_oxygen: "ต้องฟอกไตหรือใช้ออกซิเจน",
+  pregnant: "มีหญิงตั้งครรภ์",
+  infant: "มีเด็กเล็ก",
+  elderly: "มีผู้สูงอายุ",
+  disabled: "มีผู้พิการ"
 });
 export const CHANNELS = Object.freeze({
   phone: "โทรศัพท์",
@@ -35,9 +40,16 @@ export function createCaseId(cryptoSource = globalThis.crypto) {
 }
 
 export function routingHint(needs) {
-  if (needs.some(n => ["trapped", "medical", "immobile", "fast_water"].includes(n))) return "RED";
-  if (needs.some(n => ["boat", "medicine"].includes(n))) return "ORANGE";
+  if (needs.some(n => ["trapped", "medical", "immobile", "fast_water", "dialysis_oxygen"].includes(n))) return "RED";
+  if (needs.some(n => ["boat", "medicine", "pregnant", "infant", "elderly", "disabled"].includes(n))) return "ORANGE";
   return "YELLOW";
+}
+
+export function validateTriage(urgentNow, needs) {
+  if (urgentNow !== "yes" && urgentNow !== "no") throw new Error("กรุณาเลือกว่าตอนนี้ต้องอพยพด่วนหรือมีผู้ป่วยไหม");
+  if (urgentNow === "yes" && !needs.some(need => ["trapped", "immobile", "medical", "fast_water", "dialysis_oxygen"].includes(need))) {
+    throw new Error("กรุณาเลือกเหตุเร่งด่วนที่ตรงกับสถานการณ์อย่างน้อยหนึ่งข้อ");
+  }
 }
 
 export function makeCase(input, { now = new Date(), id = createCaseId() } = {}) {
@@ -160,7 +172,8 @@ export const QR_MAX_BYTES = 350;
 const QR_NEEDS = Object.freeze({
   trapped: "ติดอยู่", medical: "ป่วย/บาดเจ็บ", immobile: "เคลื่อนย้ายไม่ได้",
   fast_water: "น้ำขึ้นเร็ว", boat: "เรือ/อพยพ", medicine: "ขาดยา",
-  food_water: "อาหาร/น้ำ", other: "อื่นๆ"
+  food_water: "อาหาร/น้ำ", other: "อื่นๆ", dialysis_oxygen: "ฟอกไต/ออกซิเจน",
+  pregnant: "ตั้งครรภ์", infant: "เด็กเล็ก", elderly: "สูงอายุ", disabled: "พิการ"
 });
 const qrBounded = message => {
   if (new TextEncoder().encode(message).length > QR_MAX_BYTES) {

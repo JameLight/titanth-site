@@ -1,10 +1,11 @@
 import { NEEDS, CHANNELS, STATUS, makeCase, recordHandoffAttempt, isStale,
-  possibleDuplicates, shareText, quickLocationText, ddpmLinePrefillUrl,
+  possibleDuplicates, shareText, quickLocationText, ddpmLinePrefillUrl, validateTriage,
   quickLocationQrText, caseQrText, casesCsv } from "./model.js";
 import { listCases, putCase, deleteCase } from "./storage.js";
 import { qrSvg } from "./qr.js";
 import { loadIntakeConfig, makeIntakeClient, caseStatusText, stripIntakeSecrets } from "./intake_client.js";
 import { PROVINCES, canonicalProvince } from "./provinces.js";
+import { NDWC_ALERTS_URL, alertsForProvince, newestAlertTime } from "./official_alerts.js";
 
 const $ = selector => document.querySelector(selector);
 const DDPM_LINE_URL = "https://lin.ee/MoS2rXU";
@@ -126,19 +127,87 @@ function reloadWhenSafe() {
 
 function renderNeeds() {
   for (const [key, label] of Object.entries(NEEDS)) {
+    if (["trapped", "immobile", "medical", "fast_water", "dialysis_oxygen"].includes(key)) continue;
     const wrapper = node("label", "need");
     const input = document.createElement("input");
     input.type = "checkbox";
     input.name = "needs";
     input.value = key;
     wrapper.append(input, node("span", "", label));
-    $("#needs-list").append(wrapper);
+    const target = ["pregnant", "infant", "elderly", "disabled"].includes(key) ? "#vulnerable-needs-list" : "#needs-list";
+    $(target).append(wrapper);
+  }
+}
+
+function updateTriage() {
+  const urgent = form.elements.urgentNow.value === "yes";
+  const panel = $("#urgent-needs");
+  panel.hidden = !urgent;
+  for (const box of panel.querySelectorAll('input[type="checkbox"]')) {
+    if (!urgent) box.checked = false;
+    box.disabled = !urgent;
   }
 }
 
 function dateText(value) {
   return new Intl.DateTimeFormat("th-TH", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok" }).format(new Date(value));
 }
+
+function safeDateText(value) {
+  return value && Number.isFinite(new Date(value).getTime()) ? dateText(value) : "ไม่ทราบเวลา";
+}
+
+const ALERT_CACHE_PREFIX = "promjaeng-official-alerts-v1:";
+
+function renderOfficialAlerts(province, result, fromCache = false) {
+  const target = $("#official-alerts-list");
+  target.replaceChildren();
+  const { alerts, fetchedAt, newest } = result;
+  const cacheAge = Date.now() - new Date(fetchedAt).getTime();
+  const cacheWarning = fromCache && cacheAge > 24 * 60 * 60 * 1000 ? " • สำเนาเก่าเกิน 24 ชั่วโมง ห้ามใช้แทนประกาศปัจจุบัน" : "";
+  $("#official-alerts-status").textContent = `${fromCache ? "แสดงข้อมูลที่เคยดึงไว้ในเครื่อง (อาจเก่า)" : "ดึงข้อมูลแล้ว"} สำหรับ ${province} • ดึงเมื่อ ${safeDateText(fetchedAt)} • ประกาศล่าสุดในไฟล์ ${safeDateText(newest)}${cacheWarning}`;
+  if (!alerts.length) {
+    target.append(node("p", "alert-empty", "ไม่พบประกาศในข้อมูลย้อนหลัง 7 วันสำหรับจังหวัดนี้ ไม่ใช่การยืนยันว่าพื้นที่ปลอดภัย"));
+    return;
+  }
+  for (const alert of alerts) {
+    const card = node("article", "official-alert-card");
+    card.append(node("h3", "", alert.title || alert.typeLabel), node("p", "alert-meta", `${safeDateText(alert.at)} • ${alert.typeLabel}`));
+    if (alert.message) card.append(node("p", "", alert.message));
+    target.append(card);
+  }
+}
+
+$("#load-official-alerts").addEventListener("click", async () => {
+  const chosen = $("#alert-province").value || canonicalProvince(form.elements.province.value);
+  const province = canonicalProvince(chosen);
+  if (!province) { $("#official-alerts-status").textContent = "กรุณาเลือกจังหวัดก่อนดูคำเตือนภัย"; return; }
+  $("#alert-province").value = province;
+  const button = $("#load-official-alerts");
+  button.disabled = true;
+  $("#official-alerts-status").textContent = `กำลังดึงข้อมูลจาก ศภช. สำหรับ ${province}…`;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+  try {
+    const response = await fetch(NDWC_ALERTS_URL, { cache: "no-store", signal: controller.signal });
+    if (!response.ok) throw new Error("โหลดข้อมูลไม่ได้");
+    const data = await response.json();
+    const result = { alerts: alertsForProvince(data, province), newest: newestAlertTime(data), fetchedAt: new Date().toISOString() };
+    renderOfficialAlerts(province, result);
+    try { localStorage.setItem(ALERT_CACHE_PREFIX + province, JSON.stringify(result)); } catch { /* offline copy is optional */ }
+  } catch {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(ALERT_CACHE_PREFIX + province) || "null"); } catch { /* no valid copy */ }
+    if (saved?.fetchedAt && Array.isArray(saved.alerts)) renderOfficialAlerts(province, saved, true);
+    else {
+      $("#official-alerts-list").replaceChildren();
+      $("#official-alerts-status").textContent = "ยังดึงข้อมูลคำเตือนไม่ได้ กรุณาเปิดหน้า ศภช. จากลิงก์ด้านล่าง หรือโทร 1784 หากมีอันตราย";
+    }
+  } finally {
+    clearTimeout(timeout);
+    button.disabled = false;
+  }
+});
 
 function button(label, className, onClick) {
   const b = node("button", className, label);
@@ -197,6 +266,8 @@ function renderCase(item) {
   if (item.intake?.code && item.intake?.secret) {
     const statusText = node("p", "intake-status", "สถานะล่าสุดยังไม่ได้อ่านจากระบบ");
     actions.append(button("อ่านสถานะจากระบบ", "secondary-button", () => readIntakeStatus(item, statusText)));
+    const withdrawButton = button("ยกเลิกเคส/ลบข้อมูลของฉัน", "danger-button", () => withdrawSubmittedCase(item, withdrawButton));
+    actions.append(withdrawButton);
     card.append(statusText);
   } else {
     const sendButton = button("ส่งเข้าทีมอาสา", "primary-button", () => sendToTeam(item, sendButton));
@@ -284,6 +355,26 @@ async function readIntakeStatus(item, target) {
   } catch { target.textContent = "ยังอ่านสถานะจากระบบไม่ได้ ถ้าอันตรายโทร 1784 หรือ 1669"; }
 }
 
+async function withdrawSubmittedCase(item, control) {
+  if (!await askConfirm("ระบบจะลบเบอร์ พิกัดละเอียด และรายละเอียดที่ระบุตัวคุณอย่างถาวร เคสที่ยังเปิดอยู่จะเปลี่ยนเป็นยกเลิก เมื่อระบบยืนยันแล้วจะลบสำเนาเคสในอุปกรณ์นี้ด้วย", "ยกเลิกเคสและลบข้อมูล")) return;
+  const client = await intakeClientPromise;
+  if (!client) { toast("ยังเชื่อมระบบไม่ได้ จึงยังยืนยันการลบข้อมูลไม่ได้"); return; }
+  control.disabled = true;
+  try {
+    const result = await client.withdrawCase(item.intake);
+    try {
+      await deleteCase(item.caseId);
+      clearManualCopy();
+      await refresh();
+      toast(result.status === "WITHDRAWN" ? "ระบบยืนยันยกเลิกเคสและลบข้อมูลที่ระบุตัวแล้ว สำเนาในอุปกรณ์นี้ลบแล้ว" : "ระบบยืนยันลบข้อมูลที่ระบุตัวแล้ว เคสที่ปิดไว้คงสถานะเดิม สำเนาในอุปกรณ์นี้ลบแล้ว");
+    } catch {
+      toast("ระบบยืนยันลบข้อมูลที่ระบุตัวแล้ว แต่ลบสำเนาในอุปกรณ์นี้ไม่สำเร็จ กรุณาลบเคสในเครื่องอีกครั้ง");
+    }
+  } catch (error) {
+    toast(error.definitive ? error.message : "ยังยืนยันไม่ได้ว่าระบบยกเลิกหรือลบข้อมูลแล้วหรือไม่ กรุณาอ่านสถานะจากระบบก่อนลองอีกครั้ง");
+  } finally { control.disabled = false; }
+}
+
 function render() {
   cases.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   $("#case-count").textContent = `${cases.length} เคส`;
@@ -306,6 +397,7 @@ form.addEventListener("submit", async event => {
   $("#form-error").hidden = true;
   try {
     const values = new FormData(form);
+    validateTriage(values.get("urgentNow"), values.getAll("needs"));
     const item = makeCase({
       province: values.get("province"), district: values.get("district"),
       subdistrict: values.get("subdistrict"), landmark: values.get("landmark"),
@@ -317,6 +409,7 @@ form.addEventListener("submit", async event => {
     if (duplicates.length && !await askConfirm(`พบเคสคล้ายกัน ${duplicates.length} เคสในช่วง 2 ชั่วโมงที่ผ่านมา ต้องการบันทึกอีกเคสหรือไม่`, "พบเคสคล้ายกัน")) return;
     await putCase(item);
     form.reset();
+    updateTriage();
     clearGpsFields();
     draftTouched = false;
     $("#gps-status").textContent = GPS_HINT;
@@ -523,7 +616,7 @@ $("#handoff-form").addEventListener("submit", async event => {
 
 async function removeCase(item) {
   if (!await askConfirm(item.intake
-    ? "การลบในอุปกรณ์จะลบรหัสลับสำหรับอ่านสถานะ แต่ไม่ลบข้อมูลที่ส่งถึงระบบทีมอาสาแล้ว หากต้องขอลบข้อมูลในระบบให้ใช้ช่องทางในประกาศความเป็นส่วนตัว"
+    ? "การลบในอุปกรณ์จะลบรหัสลับสำหรับอ่านสถานะ แต่ไม่ลบข้อมูลที่ส่งถึงระบบทีมอาสาแล้ว หากต้องลบข้อมูลในระบบให้กด ‘ยกเลิกเคส/ลบข้อมูลของฉัน’ ก่อน"
     : "หากเคยส่งข้อความไปช่องทางอื่น ข้อมูลปลายทางจะไม่ถูกลบ", "ลบเคสนี้ออกจากอุปกรณ์")) return;
   try { await deleteCase(item.caseId); clearManualCopy(); await refresh(); toast("ลบเคสในอุปกรณ์นี้แล้ว"); }
   catch (error) { toast(error.message); }
@@ -558,8 +651,14 @@ for (const province of PROVINCES) {
   const option = document.createElement("option");
   option.value = province;
   $("#province-options").append(option);
+  const alertOption = document.createElement("option");
+  alertOption.value = province;
+  alertOption.textContent = province;
+  $("#alert-province").append(alertOption);
 }
 renderNeeds();
+form.addEventListener("change", event => { if (event.target.name === "urgentNow") updateTriage(); });
+updateTriage();
 form.addEventListener("input", () => { draftTouched = true; });
 form.addEventListener("change", () => { draftTouched = true; });
 clearGpsFields();
