@@ -47,7 +47,8 @@ let acting = false;
 let state = freshState();
 
 function freshState() {
-  return { account: null, team: null, areas: [], members: [], cases: [], duplicates: new Map(), seenOpen: null, phones: new Map(), openHistory: new Set() };
+  return { account: null, team: null, areas: [], members: [], cases: [], duplicates: new Map(), seenOpen: null, seenMine: null,
+    lateCount: 0, lastLateBuzz: 0, phones: new Map(), openHistory: new Set() };
 }
 
 const clock = new Intl.DateTimeFormat("th-TH", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
@@ -214,6 +215,9 @@ function renderTeam() {
   $("#count-mine").textContent = `(${mine.length})`;
   $("#count-closed").textContent = `(${closed.length})`;
   alertNewCases(open);
+  alertLateCases(open);
+  alertWithdrawn(mine, closed);
+  forgetPhones(mine);
   renderMembers(members, coordinator, account);
 }
 
@@ -333,6 +337,40 @@ function alertNewCases(open) {
   }
   state.seenOpen = ids;
   document.title = open.length ? `(${open.length}) หน้าทีมอาสา — พร้อมแจ้งน้ำท่วม` : "หน้าทีมอาสา — พร้อมแจ้งน้ำท่วม";
+}
+
+// A case nobody has taken for 10 minutes keeps a banner up until someone takes it, and the phone buzzes again
+// when the count grows or once a minute (KFR-19). The reporter is told to call 1784/1669 at 10 minutes.
+function alertLateCases(open) {
+  const late = open.filter(item => Date.now() - new Date(item.created_at).getTime() > LATE_MS);
+  const banner = $("#late-banner");
+  banner.hidden = !late.length;
+  if (!late.length) { state.lateCount = 0; return; }
+  banner.textContent = `มีเคสรอเกิน 10 นาที ${late.length} เคส — รีบรับเคส หรือโทรตามเพื่อนในทีมมาช่วยรับ (แตะเพื่อดูรายการ)`;
+  if (late.length > state.lateCount || Date.now() - state.lastLateBuzz > 60_000) {
+    try { navigator.vibrate?.([400, 150, 400]); } catch { /* not supported */ }
+    state.lastLateBuzz = Date.now();
+  }
+  state.lateCount = late.length;
+}
+
+// The reporter may cancel while the team is on the way (KFR-19): say so once per case, loudly.
+function alertWithdrawn(mine, closed) {
+  const before = state.seenMine;
+  state.seenMine = new Set(mine.map(item => item.id));
+  if (!before) return;
+  const gone = closed.filter(item => item.status === "WITHDRAWN" && before.has(item.id));
+  if (!gone.length) return;
+  $("#withdrawn-banner").textContent = `ผู้แจ้งยกเลิกเคส ${gone.map(item => item.code).join(", ")} แล้ว ระบบลบเบอร์และรายละเอียดแล้ว ` +
+    "ถ้ากำลังเดินทาง ให้ตัดสินใจตามสถานการณ์หน้างาน (แตะเพื่อซ่อน)";
+  $("#withdrawn-banner").hidden = false;
+  try { navigator.vibrate?.([200, 100, 200, 100, 200]); } catch { /* not supported */ }
+}
+
+// A phone number stays in memory only while its case is still one of the team's open cases.
+function forgetPhones(mine) {
+  const keep = new Set(mine.map(item => item.id));
+  for (const id of state.phones.keys()) if (!keep.has(id)) state.phones.delete(id);
 }
 
 function renderMembers(members, coordinator, account) {
@@ -467,6 +505,8 @@ function wire() {
   });
   $("#refresh").addEventListener("click", () => tick());
   $("#new-banner").addEventListener("click", () => { $("#new-banner").hidden = true; });
+  $("#late-banner").addEventListener("click", () => { $("#list-open").scrollIntoView({ behavior: "smooth", block: "start" }); });
+  $("#withdrawn-banner").addEventListener("click", () => { $("#withdrawn-banner").hidden = true; });
   for (const dutyButton of document.querySelectorAll("[data-duty]")) {
     dutyButton.addEventListener("click", async () => {
       const hours = Number(dutyButton.dataset.duty);
