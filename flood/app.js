@@ -71,7 +71,7 @@ function askConfirm(message, title = "ยืนยันการทำราย
 }
 
 function hasUnsavedDraft() {
-  if (!casesLoaded || cases.length || draftTouched || quickLocationInProgress || pendingHandoff ||
+  if (!casesLoaded || cases.length || draftTouched || quickLocationInProgress || lastQuickLocationText || pendingHandoff ||
       $("#confirm-dialog").open || $("#handoff-dialog").open) return true;
   const manualCopy = $("#manual-copy");
   if (manualCopy && !manualCopy.hidden) return true;
@@ -215,56 +215,67 @@ $("#gps-button").addEventListener("click", () => {
   { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
 });
 
+// KFR-10: find the location, then let the person send it straight into the DDPM LINE chat (one tap on a real link).
+const DDPM_OA_MESSAGE_URL = text => `https://line.me/R/oaMessage/%40155zwaue/?${encodeURIComponent(text)}`;
+let lastQuickLocationText = "";
+
+function showQuickLocationResult(content, accuracy) {
+  lastQuickLocationText = content;
+  const line = $("#quick-location-line");
+  line.href = DDPM_OA_MESSAGE_URL(content);
+  line.hidden = false;
+  $("#quick-location-more").hidden = false;
+  $("#quick-location-row").hidden = false;
+  $("#quick-location-status").textContent = `ได้ตำแหน่งแล้ว (คลาดเคลื่อนประมาณ ${Math.round(accuracy)} เมตร) กด "ส่งเข้า LINE ปภ. ทันที" แล้วกดส่งใน LINE ข้อความยังไม่ถึงใครจนกว่าคุณจะกดส่ง ถ้าอันตรายให้โทร 1784 ด้วย`;
+}
+
+function showQuickLocationProblem(message) {
+  $("#quick-location-line").hidden = true;
+  $("#quick-location-more").hidden = true;
+  $("#quick-location-row").hidden = false;
+  $("#quick-location-status").textContent = message;
+}
+
 $("#quick-location").addEventListener("click", () => {
   if (quickLocationInProgress) return;
   const button = $("#quick-location");
-  const status = $("#quick-location-status");
-  if (!navigator.geolocation) {
-    status.textContent = "อุปกรณ์นี้ขอตำแหน่งไม่ได้ ให้โทร 1784 หรือ 1669 แล้วบอกจุดสังเกต";
-    return;
-  }
+  if (!navigator.geolocation) { showQuickLocationProblem("อุปกรณ์นี้ขอตำแหน่งไม่ได้ ให้โทร 1784 หรือ 1669 แล้วบอกจุดสังเกต"); return; }
   quickLocationInProgress = true;
   button.disabled = true;
-  status.textContent = "กำลังขอตำแหน่งจากโทรศัพท์นี้…";
-  try { navigator.geolocation.getCurrentPosition(async position => {
-    try {
-      const content = quickLocationText(position.coords);
-      if (typeof navigator.share === "function") {
-        try {
-          await navigator.share({ title: "ขอความช่วยเหลือน้ำท่วม", text: content });
-          status.textContent = "เปิดการแชร์แล้ว หน้านี้ไม่รู้ว่าปลายทางได้รับข้อความหรือยัง โทร 1784 ด้วย";
-          return;
-        } catch (error) {
-          if (error?.name === "AbortError") {
-            status.textContent = "ยกเลิกการแชร์แล้ว ยังไม่มีข้อมูลส่งจากหน้านี้";
-            return;
-          }
-        }
-      }
-      if (await copyText(content)) {
-        status.textContent = "คัดลอกข้อความแล้ว วางใน LINE ปภ. หรือส่งให้ญาติ แล้วโทร 1784 ด้วย การคัดลอกยังไม่ใช่การส่ง";
-      } else {
-        showManualCopy(content);
-        status.textContent = "ข้อความอยู่ในกล่องคัดลอกด้านบน ยังไม่มีข้อมูลส่งจากหน้านี้";
-      }
-    } catch (error) {
-      status.textContent = error.message;
-    } finally {
-      quickLocationInProgress = false;
-      button.disabled = false;
-    }
-  }, () => {
-    status.textContent = "ไม่ได้รับตำแหน่ง ให้โทร 1784 หรือ 1669 แล้วบอกจุดสังเกตที่ใกล้ที่สุด";
-    quickLocationInProgress = false;
-    button.disabled = false;
-  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }); }
-  catch {
-    status.textContent = "ขอตำแหน่งไม่ได้ ให้โทร 1784 หรือ 1669 แล้วบอกจุดสังเกตที่ใกล้ที่สุด";
-    quickLocationInProgress = false;
-    button.disabled = false;
+  showQuickLocationProblem("กำลังขอตำแหน่งจากโทรศัพท์นี้…");
+  const done = () => { quickLocationInProgress = false; button.disabled = false; };
+  try {
+    navigator.geolocation.getCurrentPosition(position => {
+      try { showQuickLocationResult(quickLocationText(position.coords), position.coords.accuracy); }
+      catch (error) { showQuickLocationProblem(error.message); }
+      finally { done(); }
+    }, () => { showQuickLocationProblem("ไม่ได้รับตำแหน่ง ให้โทร 1784 หรือ 1669 แล้วบอกจุดสังเกตที่ใกล้ที่สุด"); done(); },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+  } catch { showQuickLocationProblem("ขอตำแหน่งไม่ได้ ให้โทร 1784 หรือ 1669 แล้วบอกจุดสังเกตที่ใกล้ที่สุด"); done(); }
+});
+
+async function copyQuickLocation() {
+  if (!lastQuickLocationText) return;
+  if (await copyText(lastQuickLocationText)) {
+    $("#quick-location-status").textContent = "คัดลอกข้อความแล้ว วางใน LINE ปภ. หรือส่งให้ญาติ แล้วโทร 1784 ด้วย การคัดลอกยังไม่ใช่การส่ง";
+  } else {
+    showManualCopy(lastQuickLocationText);
+    $("#quick-location-status").textContent = "ข้อความอยู่ในกล่องคัดลอกด้านบน ยังไม่มีข้อมูลส่งจากหน้านี้";
+  }
+}
+
+$("#quick-location-share").addEventListener("click", async () => {
+  if (!lastQuickLocationText) return;
+  if (typeof navigator.share !== "function") return copyQuickLocation();
+  try {
+    await navigator.share({ title: "ขอความช่วยเหลือน้ำท่วม", text: lastQuickLocationText });
+    $("#quick-location-status").textContent = "เปิดการแชร์แล้ว หน้านี้ไม่รู้ว่าปลายทางได้รับข้อความหรือยัง โทร 1784 ด้วย";
+  } catch (error) {
+    if (error?.name !== "AbortError") copyQuickLocation();
   }
 });
-$("#quick-location-row").hidden = false;
+$("#quick-location-copy").addEventListener("click", () => copyQuickLocation());
+$("#quick-location").hidden = false;
 
 async function copyCase(item) {
   const content = shareText(item);
