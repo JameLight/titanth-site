@@ -3,6 +3,8 @@ import { NEEDS, CHANNELS, STATUS, makeCase, recordHandoffAttempt, isStale,
   quickLocationQrText, caseQrText, casesCsv } from "./model.js";
 import { listCases, putCase, deleteCase } from "./storage.js";
 import { qrSvg } from "./qr.js";
+import { loadIntakeConfig, makeIntakeClient, caseStatusText, stripIntakeSecrets } from "./intake_client.js";
+import { PROVINCES, canonicalProvince } from "./provinces.js";
 
 const $ = selector => document.querySelector(selector);
 const DDPM_LINE_URL = "https://lin.ee/MoS2rXU";
@@ -16,6 +18,15 @@ let draftTouched = false;
 let updateAvailable = false;
 let casesLoaded = false;
 let quickLocationInProgress = false;
+const intakeClientPromise = loadIntakeConfig().then(config => config ? makeIntakeClient(config) : null).catch(() => null);
+intakeClientPromise.then(client => {
+  if (!client) return;
+  $("#service-ribbon").textContent = "ไม่ใช่เว็บหน่วยงานรัฐ • ข้อมูลจะถึงระบบทีมอาสาเฉพาะเมื่อคุณกดส่งและยินยอม • ถ้าอันตรายโทร 1784 หรือ 1669";
+  $("#intro-copy").textContent = "กรอกเท่าที่รู้แล้วบันทึกในเครื่อง คุณยังส่งข้อความเองทาง LINE ปภ. หรือโทร 1784 ได้ ถ้าพื้นที่นี้มีทีมอาสาเฝ้า ระบบจะแสดงปุ่มส่งเข้าทีมแยกต่างหาก";
+  $("#storage-scope").textContent = "บันทึกในเครื่องก่อน";
+  $("#privacy-copy").textContent = "ข้อมูลเริ่มต้นเก็บในเบราว์เซอร์ของอุปกรณ์นี้ หากกดส่งเข้าทีมอาสาและยินยอม ข้อมูลเคสจะส่งไปยังระบบทีมอาสาด้วย ใครเปิดอุปกรณ์เดียวกันอาจเห็นเคสและรหัสอ่านสถานะ";
+  $("#service-footer").textContent = "ไม่มีการส่งข้อมูลอัตโนมัติ • การส่งเข้าทีมอาสาต้องกดยืนยันแยก • การส่งถึงระบบยังไม่เท่ากับมีทีมรับเคส";
+});
 
 function clearGpsFields() {
   gpsRequestGeneration += 1;
@@ -153,8 +164,9 @@ function renderCase(item) {
   head.append(time);
   card.append(head);
   const badges = node("div", "badges");
-  badges.append(node("span", `badge ${item.status === STATUS.LOCAL_ONLY ? "local" : "attempt"}`,
-    item.status === STATUS.LOCAL_ONLY ? "เก็บในเครื่องเท่านั้น" : "ผู้ใช้ระบุว่าส่งต่อแล้ว • ยังไม่ยืนยันผู้รับ"));
+  badges.append(node("span", `badge ${item.intake ? "attempt" : item.status === STATUS.LOCAL_ONLY ? "local" : "attempt"}`,
+    item.intake ? "ระบบทีมอาสารับข้อมูลแล้ว • ยังไม่ยืนยันว่ามีทีมรับเคส" :
+      item.status === STATUS.LOCAL_ONLY ? "เก็บในเครื่องเท่านั้น" : "ผู้ใช้ระบุว่าส่งต่อแล้ว • ยังไม่ยืนยันผู้รับ"));
   card.append(badges);
   card.append(node("p", "", `${item.peopleCount} คน · ${item.needs.map(n => NEEDS[n]).join(", ")}`));
   if (isStale(item)) card.append(node("p", "case-warning", "ข้อมูลสถานการณ์นี้บันทึกเกิน 6 ชั่วโมงแล้ว ควรตรวจใหม่ก่อนส่งต่อ"));
@@ -162,9 +174,11 @@ function renderCase(item) {
   if (Number.isFinite(item.location.accuracyMeters) && item.location.accuracyMeters > 500) {
     card.append(node("p", "case-warning", `GPS คลาดเคลื่อนประมาณ ${Math.round(item.location.accuracyMeters)} เมตร กรุณาตรวจจุดสังเกตก่อนส่งต่อ`));
   }
-  card.append(node("p", "case-warning", item.status === STATUS.LOCAL_ONLY
-    ? "เคสนี้ยังอยู่ในอุปกรณ์นี้ ไม่มีผู้รับเคสอัตโนมัติ"
-    : "คุณระบุว่าส่งต่อแล้ว แต่ยังไม่มีหลักฐานว่ามีผู้รับเคส ถ้าไม่มีการตอบกลับ ให้โทร 1784 หรือ 1669 ตามเหตุ"));
+  card.append(node("p", "case-warning", item.intake
+    ? `รหัสอ้างอิง ${item.intake.code} ส่งถึงระบบแล้ว ตรวจสถานะเพื่อดูคำรายงานของทีม ถ้าอันตรายให้โทร 1784 หรือ 1669 ทันที`
+    : item.status === STATUS.LOCAL_ONLY
+      ? "เคสนี้ยังอยู่ในอุปกรณ์นี้ ไม่มีผู้รับเคสอัตโนมัติ"
+      : "คุณระบุว่าส่งต่อแล้ว แต่ยังไม่มีหลักฐานว่ามีผู้รับเคส ถ้าไม่มีการตอบกลับ ให้โทร 1784 หรือ 1669 ตามเหตุ"));
   card.append(node("p", "shared-device-note", "ถ้าใช้เครื่องร่วมกับผู้อื่น ให้ลบเคสหลังส่งต่อและเก็บหลักฐานการตอบรับไว้ต่างหาก ข้อความที่คัดลอกอาจค้างในคลิปบอร์ดของเครื่อง"));
   const preview = node("details", "message-preview");
   preview.append(node("summary", "", "ดูข้อความที่จะส่ง (อ่านให้เจ้าหน้าที่ 1784 ฟังได้)"), node("pre", "", shareText(item)));
@@ -180,9 +194,94 @@ function renderCase(item) {
     catch (error) { qrPanel.replaceChildren(node("p", "qr-error", error.message)); qrPanel.hidden = false; }
   }));
   actions.append(button("บันทึกว่าฉันพยายามส่งต่อแล้ว", "text-button", () => handoffCase(item)));
+  if (item.intake?.code && item.intake?.secret) {
+    const statusText = node("p", "intake-status", "สถานะล่าสุดยังไม่ได้อ่านจากระบบ");
+    actions.append(button("อ่านสถานะจากระบบ", "secondary-button", () => readIntakeStatus(item, statusText)));
+    card.append(statusText);
+  } else {
+    const sendButton = button("ส่งเข้าทีมอาสา", "primary-button", () => sendToTeam(item, sendButton));
+    sendButton.hidden = true;
+    actions.append(sendButton);
+    intakeClientPromise.then(async client => {
+      if (!client || !navigator.onLine) return;
+      if (!canonicalProvince(item.location.province)) {
+        actions.append(node("p", "intake-status", "ชื่อจังหวัดไม่ตรงรายการ 77 จังหวัด เคสนี้ยังส่งเข้าทีมอาสาไม่ได้ กรุณาสร้างเคสใหม่โดยเลือกจังหวัดจากรายการ หรือส่งข้อความเอง"));
+        return;
+      }
+      try {
+        const onDuty = await client.dutyStatus(item.location.province);
+        if (onDuty && card.isConnected) sendButton.hidden = false;
+      } catch { /* A missing or mismatched backend contract keeps intake hidden. */ }
+    });
+  }
   actions.append(button("ลบเคส", "danger-button", () => removeCase(item)));
   card.append(actions, qrPanel);
   return card;
+}
+
+function intakeConsent(client) {
+  const dialog = $("#intake-dialog");
+  if (typeof dialog.showModal !== "function") return Promise.resolve(false);
+  $("#intake-policy").href = client.config.privacyNoticeUrl;
+  $("#intake-consent").checked = false;
+  return new Promise(resolve => {
+    let done = false;
+    function finish(accepted) {
+      if (done) return;
+      done = true;
+      dialog.removeEventListener("close", onClose);
+      dialog.removeEventListener("cancel", onCancel);
+      if (dialog.open) dialog.close();
+      resolve(accepted);
+    }
+    const onClose = () => finish(false);
+    const onCancel = event => { event.preventDefault(); finish(false); };
+    $("#intake-cancel").onclick = () => finish(false);
+    $("#intake-accept").onclick = () => {
+      if (!$("#intake-consent").checked) { $("#intake-consent").focus(); return; }
+      finish(true);
+    };
+    dialog.addEventListener("close", onClose);
+    dialog.addEventListener("cancel", onCancel);
+    dialog.showModal();
+  });
+}
+
+function showReceiptRecovery(receipt) {
+  const value = `รหัสเคส: ${receipt.code}\nรหัสลับสำหรับดูสถานะ: ${receipt.secret}`;
+  const dialog = $("#receipt-recovery-dialog");
+  if (typeof dialog.showModal !== "function") { window.prompt("คัดลอกรหัสนี้เก็บไว้: ระบบรับเคสแล้ว แต่เครื่องบันทึกไม่ได้", value); return; }
+  $("#receipt-recovery-text").value = value;
+  $("#receipt-recovery-close").onclick = () => { dialog.close(); $("#receipt-recovery-text").value = ""; };
+  dialog.showModal();
+}
+
+async function sendToTeam(item, sendButton) {
+  const client = await intakeClientPromise;
+  if (!client || !await intakeConsent(client)) return;
+  sendButton.disabled = true;
+  try {
+    const receipt = await client.submitCase(item);
+    try {
+      await putCase({ ...item, intake: receipt });
+    } catch {
+      showReceiptRecovery(receipt);
+      return;
+    }
+    await refresh();
+    toast(`ระบบบันทึกเคส ${receipt.code} แล้ว ยังไม่มีหลักฐานว่าทีมรับเคส ถ้าอันตรายโทร 1784 หรือ 1669`);
+  } catch (error) {
+    showError(error.definitive ? error.message : "ยังยืนยันไม่ได้ว่าระบบรับเคสหรือไม่ อย่ากดส่งซ้ำทันที ถ้าอันตรายโทร 1784 หรือ 1669 หรือส่ง LINE ปภ.");
+  } finally { sendButton.disabled = false; }
+}
+
+async function readIntakeStatus(item, target) {
+  const client = await intakeClientPromise;
+  if (!client) { target.textContent = "ยังเชื่อมระบบสถานะไม่ได้ ถ้าอันตรายโทร 1784 หรือ 1669"; return; }
+  try {
+    const result = await client.caseStatus(item.intake);
+    target.textContent = caseStatusText(result);
+  } catch { target.textContent = "ยังอ่านสถานะจากระบบไม่ได้ ถ้าอันตรายโทร 1784 หรือ 1669"; }
 }
 
 function render() {
@@ -423,7 +522,9 @@ $("#handoff-form").addEventListener("submit", async event => {
 });
 
 async function removeCase(item) {
-  if (!await askConfirm("หากเคยส่งข้อความไปช่องทางอื่น ข้อมูลปลายทางจะไม่ถูกลบ", "ลบเคสนี้ออกจากอุปกรณ์")) return;
+  if (!await askConfirm(item.intake
+    ? "การลบในอุปกรณ์จะลบรหัสลับสำหรับอ่านสถานะ แต่ไม่ลบข้อมูลที่ส่งถึงระบบทีมอาสาแล้ว หากต้องขอลบข้อมูลในระบบให้ใช้ช่องทางในประกาศความเป็นส่วนตัว"
+    : "หากเคยส่งข้อความไปช่องทางอื่น ข้อมูลปลายทางจะไม่ถูกลบ", "ลบเคสนี้ออกจากอุปกรณ์")) return;
   try { await deleteCase(item.caseId); clearManualCopy(); await refresh(); toast("ลบเคสในอุปกรณ์นี้แล้ว"); }
   catch (error) { toast(error.message); }
 }
@@ -441,17 +542,23 @@ function download(filename, content, mime) {
 
 async function exportCases(format) {
   if (!cases.length) { toast("ยังไม่มีเคสให้ส่งออก"); return; }
-  if (!await askConfirm("ไฟล์นี้มีเบอร์โทรและพิกัดละเอียด ถ้ามี กรุณาเก็บและส่งต่อเฉพาะผู้ที่จำเป็น", "ส่งออกข้อมูลส่วนบุคคล")) return;
+  if (!await askConfirm("ไฟล์นี้มีเบอร์โทรและพิกัดละเอียด ถ้ามี กรุณาเก็บและส่งต่อเฉพาะผู้ที่จำเป็น รหัสลับสำหรับอ่านสถานะจากระบบจะไม่ถูกส่งออก", "ส่งออกข้อมูลส่วนบุคคล")) return;
   const date = new Date().toISOString().slice(0, 10);
-  if (format === "json") download(`khem-flood-cases-${date}.json`,
-    JSON.stringify({ schemaVersion: 1, exportedAt: new Date().toISOString(), cases }, null, 2), "application/json;charset=utf-8");
-  else download(`khem-flood-cases-${date}.csv`, casesCsv(cases), "text/csv;charset=utf-8");
+  const exportableCases = stripIntakeSecrets(cases);
+  if (format === "json") download(`promjaeng-flood-cases-${date}.json`,
+    JSON.stringify({ schemaVersion: 1, exportedAt: new Date().toISOString(), cases: exportableCases }, null, 2), "application/json;charset=utf-8");
+  else download(`promjaeng-flood-cases-${date}.csv`, casesCsv(exportableCases), "text/csv;charset=utf-8");
   toast("สร้างไฟล์แล้ว โปรดระวังข้อมูลส่วนบุคคลในไฟล์");
 }
 
 $("#export-json").addEventListener("click", () => exportCases("json"));
 $("#export-csv").addEventListener("click", () => exportCases("csv"));
 
+for (const province of PROVINCES) {
+  const option = document.createElement("option");
+  option.value = province;
+  $("#province-options").append(option);
+}
 renderNeeds();
 form.addEventListener("input", () => { draftTouched = true; });
 form.addEventListener("change", () => { draftTouched = true; });

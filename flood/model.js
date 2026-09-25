@@ -198,7 +198,28 @@ export function caseQrText(item) {
   if (!place || !needs || !Number.isFinite(new Date(item.createdAt).getTime())) {
     throw new Error("ข้อมูลเคสไม่ครบสำหรับ QR ให้คัดลอกข้อความเต็มแทน");
   }
-  return qrBounded(`น้ำท่วม ขอช่วย (ยังไม่ยืนยัน)\n${place}${coords}\n${item.peopleCount}คน ${needs}\nโทร ${item.contactPhone || "-"}\n${time} เวลาไทย\nโปรดตอบรับ`);
+  const message = placeText => `น้ำท่วม ขอช่วย (ยังไม่ยืนยัน)\n${placeText}${coords}\n${item.peopleCount}คน ${needs}\nโทร ${item.contactPhone || "-"}\n${time} เวลาไทย\nโปรดตอบรับ`;
+  const full = message(place);
+  if (new TextEncoder().encode(full).length <= QR_MAX_BYTES) return full;
+  // Keep coordinates, province, headcount, all needs, phone and time. Show that place text was shortened.
+  // Without GPS, shortening the place could remove the only usable location, so use the full-copy fallback.
+  if (!coords || !loc.province) return qrBounded(full);
+  const compactMessage = placeText => `น้ำท่วม(ยังไม่ยืนยัน)\n${placeText}${coords}\n${item.peopleCount}คน ${needs}\nโทร ${item.contactPhone || "-"}\n${time} ไทย\nโปรดตอบรับ`;
+  const compactFull = compactMessage(place);
+  if (new TextEncoder().encode(compactFull).length <= QR_MAX_BYTES) return compactFull;
+  const landmarkChars = Array.from(String(loc.landmark || ""));
+  const alternatives = [
+    [loc.province, loc.district, "…", loc.landmark],
+    [loc.province, "…", loc.landmark],
+    ...[24, 16, 12, 8, 4].filter(length => landmarkChars.length > length)
+      .map(length => [loc.province, "…", `${landmarkChars.slice(0, length).join("")}…`]),
+    [loc.province, "…"]
+  ];
+  for (const segments of alternatives) {
+    const candidate = compactMessage(segments.filter(Boolean).join("/"));
+    if (new TextEncoder().encode(candidate).length <= QR_MAX_BYTES) return candidate;
+  }
+  return qrBounded(full);
 }
 
 const csvCell = value => {
