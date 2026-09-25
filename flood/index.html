@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://academicndwc.github.io; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#103b50">
   <meta name="description" content="ช่วยเตรียมข้อความขอความช่วยเหลือน้ำท่วมให้ครบ แล้วส่งเข้าช่องทางทางการเอง: โทร 1784, LINE @1784DDPM หรือ 1669 เว็บนี้ไม่ได้ส่งเรื่องให้ใคร">
@@ -21,10 +21,12 @@
     <section class="primary">
       <section class="emergency sos" aria-labelledby="emergency-title">
         <h1 id="emergency-title" class="sos-title">ติดน้ำท่วม? <span>ขอความช่วยเหลือได้ทันที</span></h1>
+        <p class="sos-coverage">หน้านี้ใช้เตรียมข้อมูลได้ทุกจังหวัดทั่วประเทศ</p>
         <div class="sos-actions">
           <a href="tel:1784" class="sos-button sos-call">📞 โทร 1784 <small>แจ้งน้ำท่วม กู้ภัย • ปภ. 24 ชม.</small></a>
           <button type="button" id="quick-location" class="sos-button sos-location" hidden>📍 ส่งตำแหน่งของฉัน <small>เข้า LINE ปภ. • กดเมื่อคุณติดอยู่ตรงนั้น</small></button>
           <a href="tel:1669" class="sos-button sos-medical">🚑 โทร 1669 <small>เจ็บป่วย บาดเจ็บ ผู้ป่วยติดเตียง</small></a>
+          <a href="tel:199" class="sos-button sos-fire">🚒 โทร 199 <small>ดับเพลิงและกู้ภัยท้องถิ่น • ผู้รับสายขึ้นกับพื้นที่</small></a>
         </div>
         <div id="quick-location-row" class="quick-location-result" hidden>
           <p id="quick-location-status" role="status" aria-live="polite"></p>
@@ -34,6 +36,7 @@
         </div>
         <div class="sos-more"><a href="tel:1418" class="sos-small">โทร 1418 <small>มูลนิธิป่อเต็กตึ๊ง (เอกชน)</small></a><a href="https://lin.ee/MoS2rXU" target="_blank" rel="noopener noreferrer" class="sos-small">แชต LINE ปภ. <small>@1784DDPM</small></a></div>
         <p class="sos-note">เว็บนี้ไม่ได้ส่งเรื่องเอง ข้อความถึงเจ้าหน้าที่เมื่อคุณกดส่งใน LINE หรือโทรเท่านั้น</p>
+        <div class="delivery-explainer" aria-label="ข้อมูลไปถึงใคร"><strong>ข้อมูลไปถึงใคร</strong><p>เมื่อโทรหรือกดส่งใน LINE คุณติดต่อปลายทางนั้นด้วยตัวเอง เว็บนี้ไม่ส่งเรื่องให้ใครอัตโนมัติ</p><p>หากเปิดระบบทีมอาสาในอนาคต ทีมที่ลงทะเบียนและเฝ้าจังหวัดของคุณจะดูเคสได้เฉพาะเมื่อคุณกดยินยอมส่งเข้าระบบแยกต่างหาก</p></div>
         <a class="sos-form-link" href="#form-title">หรือกรอกรายละเอียดเพื่อเตรียมข้อความครบ ↓</a>
       </section>
       <section class="bkk-links" aria-labelledby="bkk-links-title">
@@ -44,6 +47,16 @@
         </div>
         <p>ลิงก์เปิดเว็บ กทม. โดยตรง ตรวจเวลาและจุดที่แสดงก่อนใช้วางแผนเดินทาง ข้อมูลบนแผนที่ไม่ใช่การยืนยันว่าทุกเส้นทางปลอดภัย หากติดอยู่ในน้ำให้โทร 1784 หรือ 1669 ตามเหตุ</p>
       </section>
+      <section class="official-alerts" aria-labelledby="official-alerts-title">
+        <h2 id="official-alerts-title">ติดตามคำเตือนภัยจากหน่วยงานรัฐ</h2>
+        <p>เว็บนี้ส่ง Cell Broadcast ไปยังโทรศัพท์ไม่ได้ การแจ้งเตือนบนมือถือออกโดยหน่วยงานที่มีสิทธิ์ผ่านเครือข่ายโทรศัพท์ และอาจไม่ถึงเครื่องที่ปิดหรือไม่มีสัญญาณ</p>
+        <details><summary>เปิดรับการแจ้งเตือนภัยบนมือถือ</summary><ul><li>iPhone: การตั้งค่า → การแจ้งเตือน → เลื่อนลงล่างสุด → ข้อความแจ้งเตือนจากรัฐบาล <a href="https://support.apple.com/th-th/102516" target="_blank" rel="noopener noreferrer">ดูคู่มือ Apple ↗</a></li><li>Android: การตั้งค่า → การแจ้งเตือน → การแจ้งเหตุฉุกเฉินแบบไร้สาย (ชื่อเมนูอาจต่างกันตามรุ่น) <a href="https://support.google.com/android/answer/9319337?hl=th" target="_blank" rel="noopener noreferrer">ดูคู่มือ Android ↗</a></li></ul></details>
+        <div class="alert-lookup"><label for="alert-province">ดูคำเตือนย้อนหลัง 7 วันตามจังหวัด</label><div class="alert-lookup-controls"><select id="alert-province"><option value="">เลือกจังหวัด</option></select><button id="load-official-alerts" type="button" class="secondary-button">ดูข้อมูลล่าสุด</button></div></div>
+        <p id="official-alerts-status" role="status" aria-live="polite">ดึงข้อมูลเมื่อคุณกดปุ่มเท่านั้น ต้องใช้อินเทอร์เน็ต</p>
+        <div id="official-alerts-list" class="official-alerts-list" aria-live="polite"></div>
+        <p class="alert-source">ข้อมูลจาก <a href="https://catalog.disaster.go.th/th/dataset/cell-broadcast" target="_blank" rel="noopener noreferrer">ชุดข้อมูล Cell Broadcast ของ ปภ. ↗</a> ผ่านไฟล์ของ <a href="https://academicndwc.github.io/CBS-DashBoard/" target="_blank" rel="noopener noreferrer">ศูนย์เตือนภัยพิบัติแห่งชาติ ↗</a> ไฟล์นี้อาจอัปเดตช้าหรือเปลี่ยนรูปแบบ ไม่พบประกาศไม่ได้แปลว่าปลอดภัย หากมีอันตรายให้โทร 1784 หรือ 1669 ตามเหตุ</p>
+        <details><summary>ดูแหล่งข้อมูลทางการอื่น</summary><ul><li><a href="https://tmd.go.th/warning-and-events/warning-storm" target="_blank" rel="noopener noreferrer">ประกาศเตือนภัยลักษณะอากาศ กรมอุตุนิยมวิทยา ↗</a></li><li><a href="https://disaster.gistda.or.th/flood" target="_blank" rel="noopener noreferrer">ข้อมูลน้ำท่วม GISTDA ↗</a></li><li>แอป Thai Disaster Alert ของ ปภ.: <a href="https://apps.apple.com/th/app/thai-disaster-alert/id1593150344" target="_blank" rel="noopener noreferrer">iPhone ↗</a> · <a href="https://play.google.com/store/apps/details?id=com.THAIDAlert.DPM" target="_blank" rel="noopener noreferrer">Android ↗</a> (เป็นแอปผ่านอินเทอร์เน็ต ไม่ใช่ Cell Broadcast)</li></ul></details>
+      </section>
       <noscript><p class="error">แบบฟอร์มนี้ใช้ไม่ได้เมื่อปิด JavaScript ให้โทร 1784 หรือแจ้ง LINE @1784DDPM โดยตรง</p></noscript>
       <div class="intro">
         <h2>เตรียมข้อความขอความช่วยเหลือน้ำท่วม</h2>
@@ -52,6 +65,11 @@
       <section class="composer" aria-labelledby="form-title">
         <div class="section-heading"><h2 id="form-title">บันทึกข้อมูลเคส</h2><span id="storage-scope">เก็บในเครื่องเท่านั้น</span></div>
         <form id="case-form" novalidate hidden>
+          <fieldset class="triage" aria-describedby="triage-help"><legend>ตอนนี้ต้องอพยพด่วนหรือมีผู้ป่วยไหม <span class="required">*</span></legend>
+            <p id="triage-help">เลือกตามสถานการณ์จริง หากอันตรายให้โทร 1784 หรือ 1669 ตามเหตุก่อนกรอกแบบฟอร์ม</p>
+            <div class="triage-choices"><label><input type="radio" name="urgentNow" value="yes"> ใช่ ด่วน</label><label><input type="radio" name="urgentNow" value="no"> ยังปลอดภัย ต้องการของหรือข้อมูล</label></div>
+            <div id="urgent-needs" class="triage-urgent" hidden><p>เลือกเหตุที่ตรงกับสถานการณ์อย่างน้อยหนึ่งข้อ</p><div class="needs-list"><label class="need"><input type="checkbox" name="needs" value="trapped"><span>มีคนติดอยู่</span></label><label class="need"><input type="checkbox" name="needs" value="immobile"><span>มีผู้ป่วยติดเตียงหรือคนเคลื่อนย้ายเองไม่ได้</span></label><label class="need"><input type="checkbox" name="needs" value="medical"><span>ต้องการความช่วยเหลือทางการแพทย์</span></label><label class="need"><input type="checkbox" name="needs" value="fast_water"><span>ระดับน้ำเพิ่มเร็ว</span></label><label class="need"><input type="checkbox" name="needs" value="dialysis_oxygen"><span>ต้องฟอกไตหรือใช้ออกซิเจน</span></label></div><p class="triage-warning">โทร 1784 เพื่อแจ้งน้ำท่วม หรือ 1669 เมื่อมีผู้ป่วย/บาดเจ็บ การบันทึกในเว็บไม่ใช่การแจ้งเหตุ</p></div>
+          </fieldset>
           <fieldset><legend>สถานที่เกิดเหตุ</legend>
             <div class="field-grid"><label>จังหวัด <span class="required">*</span><input name="province" list="province-options" autocomplete="address-level1" required placeholder="เลือกจังหวัดจากรายการ"></label><label>อำเภอหรือเขต<input name="district" autocomplete="address-level2" placeholder="ถ้าทราบ"></label><label>ตำบลหรือแขวง<input name="subdistrict" placeholder="ถ้าทราบ"></label><label>จุดสังเกต <span class="optional">ควรกรอกเสมอ</span><input name="landmark" placeholder="บ้านเลขที่ ซอย วัด หรืออาคารใกล้เคียง"></label></div>
             <datalist id="province-options"></datalist>
@@ -60,8 +78,10 @@
           </fieldset>
           <fieldset><legend>ผู้ที่ต้องการความช่วยเหลือ</legend>
             <div class="field-grid"><label>จำนวนคน <span class="required">*</span><input name="peopleCount" type="number" inputmode="numeric" min="1" max="999" value="1" required></label><label>เบอร์โทรกลับ <span class="optional">ถ้ามี</span><input name="contactPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="เก็บในเครื่องและอยู่ในข้อความที่แชร์"></label></div>
-            <div class="choice-label">ต้องการความช่วยเหลือเรื่องใด <span class="required">*</span></div>
+            <div class="choice-label">ต้องการความช่วยเหลือเพิ่มเติมเรื่องใด (เลือกได้หลายข้อ)</div>
             <div id="needs-list" class="needs-list"></div>
+            <div class="choice-label">มีกลุ่มที่ต้องดูแลเป็นพิเศษหรือไม่</div>
+            <div id="vulnerable-needs-list" class="needs-list"></div>
             <label class="full-label">รายละเอียดเพิ่มเติม<textarea name="details" rows="3" maxlength="1000" placeholder="เช่น น้ำสูงระดับใด มีผู้ป่วยหรือจุดเข้าถึงยากอย่างไร"></textarea></label>
           </fieldset>
           <p class="privacy-note" id="privacy-copy">ข้อมูลเก็บในเบราว์เซอร์ของอุปกรณ์นี้ ใครเปิดหน้านี้ในอุปกรณ์เดียวกันอาจเห็นเคสได้ ถ้าใช้เครื่องร่วมกับผู้อื่น ให้ลบเคสหลังส่งต่อ</p>
@@ -80,7 +100,7 @@
       <div class="side-block" hidden><h2>สำหรับผู้ประสานงาน</h2><p>ไฟล์ส่งออกมีเบอร์โทรและพิกัดละเอียด ห้ามนำขึ้นแผนที่สาธารณะหรือส่งต่อเกินจำเป็น</p><div class="export-actions"><button id="export-json" type="button" class="text-button">ส่งออก JSON</button><button id="export-csv" type="button" class="text-button">ส่งออก CSV</button></div></div>
     </aside>
   </main>
-  <footer id="service-footer">ต้นแบบสำหรับการทดสอบขั้นตอนทำงาน • ไม่มีระบบรับเคสส่วนกลาง • ไม่มีการส่งข้อมูลจากเว็บไซต์นี้โดยอัตโนมัติ • <a href="/?home=1">หน้าแรก TITANTH (ภาษาอังกฤษ)</a></footer>
+  <footer id="service-footer">หน้านี้ยังไม่เปิดรับเคสเข้าสู่ระบบทีมอาสา • ไม่มีการส่งข้อมูลจากเว็บไซต์นี้โดยอัตโนมัติ • <a href="/?home=1">หน้าแรก TITANTH (ภาษาอังกฤษ)</a></footer>
   <dialog id="handoff-dialog" aria-labelledby="handoff-title"><form id="handoff-form"><h2 id="handoff-title">บันทึกการพยายามส่งต่อ</h2><p>บันทึกนี้เป็นคำบอกของคุณ ระบบไม่มีหลักฐานว่าปลายทางได้รับหรือรับเคสแล้ว</p><label>ช่องทางที่ใช้<select name="channel" required><option value="">เลือกช่องทาง</option><option value="phone">โทรศัพท์</option><option value="line">LINE</option><option value="sms">SMS</option><option value="other">ช่องทางอื่น</option></select></label><label class="confirm-line"><input name="understand" type="checkbox" required> ฉันเข้าใจว่ายังไม่มีการยืนยันจากผู้รับ</label><div class="dialog-actions"><button type="button" id="handoff-cancel" class="text-button">ยกเลิก</button><button type="submit" class="primary-button">บันทึกคำยืนยันของฉัน</button></div></form></dialog>
   <dialog id="confirm-dialog" aria-labelledby="confirm-title"><h2 id="confirm-title">ยืนยันการทำรายการ</h2><p id="confirm-message"></p><div class="dialog-actions"><button type="button" id="confirm-cancel" class="text-button">ยกเลิก</button><button type="button" id="confirm-accept" class="primary-button">ยืนยัน</button></div></dialog>
   <dialog id="intake-dialog" aria-labelledby="intake-title"><h2 id="intake-title">ส่งเคสเข้าทีมอาสา</h2><p>ข้อมูลตำแหน่ง จำนวนคน ความต้องการ รายละเอียด และเบอร์โทร (ถ้ากรอก) จะถูกส่งไปยังระบบที่ทีมอาสาเข้าถึงได้ การส่งถึงระบบยังไม่เท่ากับมีทีมรับเคส</p><p><a id="intake-policy" href="#" target="_blank" rel="noopener noreferrer">อ่านข้อมูลการใช้และเก็บข้อมูล</a> ก่อนตัดสินใจ</p><label class="confirm-line"><input id="intake-consent" type="checkbox"> ฉันอ่านข้อมูลแล้วและยินยอมให้ส่งเคสนี้เข้าระบบทีมอาสา</label><div class="dialog-actions"><button type="button" id="intake-cancel" class="text-button">ยกเลิก</button><button type="button" id="intake-accept" class="primary-button">ส่งเข้าระบบ</button></div></dialog>

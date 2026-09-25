@@ -1,14 +1,15 @@
 // Supabase public RPC client. Disabled unless a reviewed public config is installed.
 // No service-role key belongs in a browser bundle.
 import { canonicalProvince } from "./provinces.js";
-const ALLOWED_NEEDS = new Set(["trapped", "medical", "immobile", "fast_water", "boat", "medicine", "food_water", "other"]);
+const ALLOWED_NEEDS = new Set(["trapped", "medical", "immobile", "fast_water", "boat", "medicine", "food_water", "other", "dialysis_oxygen", "pregnant", "infant", "elderly", "disabled"]);
 const STATUS_TEXT = Object.freeze({
   SENT: "ระบบรับข้อมูลแล้ว ยังไม่มีทีมอาสากดรับเคส",
   ACKNOWLEDGED: "ทีมอาสาแจ้งว่ารับเคสแล้ว",
   EN_ROUTE: "ทีมอาสาแจ้งว่ากำลังเดินทาง",
   RESOLVED: "ทีมอาสาแจ้งว่าปิดเคสแล้ว",
   HANDED_TO_OFFICIAL: "ทีมอาสาแจ้งว่าส่งต่อหน่วยงานแล้ว",
-  NEED_INFO: "ทีมอาสาแจ้งว่าต้องการข้อมูลเพิ่ม"
+  NEED_INFO: "ทีมอาสาแจ้งว่าต้องการข้อมูลเพิ่ม",
+  WITHDRAWN: "คุณยกเลิกเคสนี้แล้ว และขอลบข้อมูลที่ระบุตัวคุณแล้ว"
 });
 const REJECTED_TEXT = Object.freeze({
   UNKNOWN_PROVINCE: "ชื่อจังหวัดไม่อยู่ในรายการ กรุณาเลือกจังหวัดใหม่ก่อนส่ง",
@@ -16,7 +17,8 @@ const REJECTED_TEXT = Object.freeze({
   TOO_MANY_CASES: "ระบบจำกัดจำนวนเคสที่ส่งจากเครื่องนี้ ถ้าอันตรายโทร 1784",
   SYSTEM_BUSY: "ระบบรับเคสเต็ม ถ้าอันตรายโทร 1784 หรือส่ง LINE ปภ.",
   BAD_NEEDS: "ข้อมูลความช่วยเหลือไม่ถูกต้อง กรุณากรอกใหม่",
-  BAD_LOCATION: "ข้อมูลสถานที่ไม่ถูกต้อง กรุณากรอกใหม่"
+  BAD_LOCATION: "ข้อมูลสถานที่ไม่ถูกต้อง กรุณากรอกใหม่",
+  CASE_NOT_FOUND: "ไม่พบเคสที่ตรงกับรหัสนี้ กรุณาตรวจรหัสอ้างอิงและรหัสลับ"
 });
 
 export function validIntakeConfig(value) {
@@ -93,7 +95,17 @@ export function makeIntakeClient(config, fetchImpl = globalThis.fetch) {
     return result;
   }
 
-  return { dutyStatus, submitCase, caseStatus, config };
+  async function withdrawCase(receipt) {
+    if (!receipt?.code || !receipt?.secret) throw new Error("ไม่มีรหัสสำหรับยกเลิกเคส");
+    // Never retry automatically: a failed network response can follow a successful purge.
+    const result = await rpc("withdraw_case", { p_code: receipt.code, p_secret: receipt.secret });
+    if (result.code !== receipt.code || !["WITHDRAWN", "RESOLVED", "HANDED_TO_OFFICIAL"].includes(result.status)) {
+      throw new Error("ยังยืนยันผลการยกเลิกเคสไม่ได้");
+    }
+    return result;
+  }
+
+  return { dutyStatus, submitCase, caseStatus, withdrawCase, config };
 }
 
 export function mapCaseForSubmit(item, consentVersion) {
@@ -110,7 +122,7 @@ export function mapCaseForSubmit(item, consentVersion) {
   if (district.length > 80 || subdistrict.length > 80 ||
       landmark.length > 200 || details.length > 1000 || phone.length > 40 ||
       !Number.isInteger(item.peopleCount) || item.peopleCount < 1 || item.peopleCount > 999 ||
-      !needs.length || needs.length > 8 || needs.some(value => !ALLOWED_NEEDS.has(value))) {
+      !needs.length || needs.length > ALLOWED_NEEDS.size || needs.some(value => !ALLOWED_NEEDS.has(value))) {
     throw new Error("ข้อมูลเคสยาวหรือไม่ครบตามที่ระบบรับได้");
   }
   const lat = location.lat == null ? null : Number(location.lat);
@@ -132,7 +144,7 @@ export function mapCaseForSubmit(item, consentVersion) {
 export function caseStatusText(result) {
   const label = STATUS_TEXT[result?.status];
   if (!label) return "ยังอ่านสถานะจากระบบไม่ได้";
-  const team = result.team_name ? ` (${String(result.team_name)})` : "";
+  const team = result.status !== "WITHDRAWN" && result.team_name ? ` (${String(result.team_name)})` : "";
   const late = result.late === true && result.status === "SENT" ? " เกิน 10 นาทีแล้วยังไม่มีทีมรับ โทร 1784 หรือ 1669 ตามเหตุทันที" : "";
   return `${label}${team}.${late}`;
 }
