@@ -238,7 +238,7 @@ function renderCase(item) {
   const badges = node("div", "badges");
   badges.append(node("span", `badge ${item.intake ? "attempt" : item.status === STATUS.LOCAL_ONLY ? "local" : "attempt"}`,
     item.intake ? "ระบบทีมอาสารับข้อมูลแล้ว • ยังไม่ยืนยันว่ามีทีมรับเคส" :
-      item.status === STATUS.LOCAL_ONLY ? "เก็บในเครื่องเท่านั้น" : "ผู้ใช้ระบุว่าส่งต่อแล้ว • ยังไม่ยืนยันผู้รับ"));
+      item.status === STATUS.LOCAL_ONLY ? "บันทึกในเครื่อง • ยังไม่ยืนยันผู้รับ" : "ผู้ใช้ระบุว่าส่งต่อแล้ว • ยังไม่ยืนยันผู้รับ"));
   card.append(badges);
   card.append(node("p", "", `${item.peopleCount} คน · ${item.needs.map(n => NEEDS[n]).join(", ")}`));
   if (isStale(item)) card.append(node("p", "case-warning", "ข้อมูลสถานการณ์นี้บันทึกเกิน 6 ชั่วโมงแล้ว ควรตรวจใหม่ก่อนส่งต่อ"));
