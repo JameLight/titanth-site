@@ -13,6 +13,15 @@ test('a share message contains only selected help and the volunteer own contact'
   assert.match(message, /1669/);
 });
 
+test('the default reply route does not require or leak a personal contact', () => {
+  const offer = checkOffer({ province: 'เชียงใหม่', kind: 'supplies', contactKind: 'reply_in_app', contactValue: '' });
+  const message = shareOfferText(offer);
+  assert.match(message, /ตอบกลับโพสต์หรือแชตต้นทาง/);
+  assert.match(message, /ถ้าถูกส่งต่อ อาจติดต่อฉันไม่ได้/);
+  assert.doesNotMatch(message, /LINE ID:|โทร:|demo_id/);
+  assert.throws(() => checkOffer({ ...offer, contactValue: '0000000000' }));
+});
+
 test('contact input cannot smuggle extra address or links into the public text', () => {
   const base = { province: 'เชียงใหม่', kind: 'relay', contactKind: 'line_id' };
   for (const value of ['demo_id\nบ้านเลขที่ 1', 'demo_id https://example.test', '@helper', '']) {
@@ -25,7 +34,7 @@ test('the immediate help page contains no backend calls, signup or public case i
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const js = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
   assert.match(html, /ไม่ต้องสมัคร/);
-  assert.match(html, /ถ้าโพสต์สาธารณะ ทุกคนจะเห็นเบอร์หรือ LINE ID/);
+  assert.match(html, /ถ้าเลือกเบอร์หรือ LINE ID แล้วโพสต์สาธารณะ ทุกคนจะเห็น/);
   assert.match(html, /ไม่ได้แปลว่ามีใครได้รับข้อความแล้ว/);
   assert.doesNotMatch(html + js, /supabase|signUp|submit_case|claim_case|aid_post|api\.js/);
 });

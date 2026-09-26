@@ -28,9 +28,13 @@ function manualCopy(text) {
 }
 
 $("share-contact-kind").addEventListener("change", () => {
-  const phone = $("share-contact-kind").value === "phone";
-  $("share-contact").inputMode = phone ? "tel" : "text";
-  $("share-contact").placeholder = phone ? "ใส่เบอร์ของคุณเอง" : "ใส่ LINE ID ของคุณเอง";
+  const kind = $("share-contact-kind").value;
+  const needsContact = kind !== "reply_in_app";
+  $("share-contact-label").hidden = !needsContact;
+  $("share-contact").hidden = !needsContact;
+  $("share-contact").value = "";
+  $("share-contact").inputMode = kind === "phone" ? "tel" : "text";
+  $("share-contact").placeholder = kind === "phone" ? "ใส่เบอร์ของคุณเอง" : "ใส่ LINE ID ของคุณเอง";
 });
 
 $("share-now").addEventListener("click", async () => {
