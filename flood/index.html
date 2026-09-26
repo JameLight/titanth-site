@@ -32,22 +32,23 @@
     <section class="primary">
       <section class="emergency sos" aria-labelledby="emergency-title">
         <h1 id="emergency-title" class="sos-title">ติดน้ำท่วม? <span>โทร 1784 เพื่อแจ้งเหตุ</span></h1>
-        <p class="sos-coverage">หน้านี้ใช้เตรียมข้อมูลได้ทุกจังหวัดทั่วประเทศ</p>
+        <p class="sos-coverage">เว็บนี้ช่วยเรียงข้อความให้ครบ ใช้ได้ทุกจังหวัด แล้วคุณโทรหรือกดส่งเอง</p>
         <div class="sos-actions">
           <a href="tel:1784" class="sos-button sos-call">📞 โทร 1784 <small>แจ้งน้ำท่วม กู้ภัย • ปภ. 24 ชม.</small></a>
-          <button type="button" id="quick-location" class="sos-button sos-location" hidden>📍 ใช้ตำแหน่งฉัน <small>เฉพาะที่เกิดเหตุ • ยังไม่ส่ง</small></button>
           <a href="tel:1669" class="sos-button sos-medical">🚑 โทร 1669 <small>เจ็บป่วยหรือบาดเจ็บฉุกเฉิน</small></a>
           <a href="tel:199" class="sos-button sos-fire">🚒 โทร 199 <small>ดับเพลิงและกู้ภัยท้องถิ่น • ผู้รับสายขึ้นกับพื้นที่</small></a>
+          <p class="sos-say"><strong>เวลาโทร บอก:</strong> อยู่ที่ไหน จุดสังเกต กี่คน ใครป่วย ต้องการอะไร เบอร์โทรกลับ</p>
+          <button type="button" id="quick-location" class="sos-button sos-location" hidden>📍 ใช้ตำแหน่งฉัน <small>เฉพาะที่เกิดเหตุ • เว็บไม่ส่งให้</small></button>
         </div>
         <div id="quick-location-row" class="quick-location-result" hidden>
           <p id="quick-location-status" role="status" aria-live="polite"></p>
-          <a id="quick-location-line" class="sos-button sos-line" href="https://lin.ee/MoS2rXU" rel="noopener noreferrer" hidden>เปิด LINE ปภ. <small>ยังไม่ส่ง • ใน LINE ต้องกด “ส่ง” เอง</small></a>
+          <a id="quick-location-line" class="sos-button sos-line" href="https://lin.ee/MoS2rXU" rel="noopener noreferrer" hidden>เปิด LINE ปภ. <small>ต้องกด “ส่ง” ใน LINE เอง</small></a>
           <div id="quick-location-more" class="quick-location-more" hidden><p class="quick-location-fallback">LINE ไม่มีข้อความหรือไม่ครบ? กลับมาหน้านี้ กด “คัดลอกข้อความ” แล้ววางใน LINE ตรวจข้อความและกดส่งเอง ถ้ากลับมาแล้วปุ่มหาย ให้กด “ใช้ตำแหน่งฉัน” ใหม่ หรือโทร 1784</p><button type="button" id="quick-location-share" class="secondary-button">แชร์ให้ญาติหรืออาสา</button><button type="button" id="quick-location-copy" class="secondary-button">คัดลอกข้อความ</button><button type="button" id="quick-location-media" class="secondary-button">แนบรูป/เสียงแล้วแชร์</button><button type="button" id="quick-location-qr" class="secondary-button" hidden>แสดง QR ให้คนที่มีสัญญาณสแกน</button></div>
           <div id="quick-location-qr-panel" class="qr-panel" hidden></div>
         </div>
         <div class="sos-more"><a href="tel:1418" class="sos-small">โทร 1418 <small>มูลนิธิป่อเต็กตึ๊ง (เอกชน)</small></a><a href="https://lin.ee/MoS2rXU" target="_blank" rel="noopener noreferrer" class="sos-small">แชต LINE ปภ. <small>@1784DDPM</small></a></div>
         <p class="sos-note">เว็บนี้ไม่ได้ส่งเรื่องเอง คุณต้องโทรหรือกดส่งใน LINE เอง แล้วดูคำตอบจากปลายทาง</p>
-        <div class="delivery-explainer" aria-label="ข้อมูลไปถึงใคร"><strong>ข้อมูลไปถึงใคร</strong><p>เมื่อคุณโทรหรือกดส่งใน LINE คุณติดต่อปลายทางนั้นด้วยตัวเอง เว็บนี้ไม่ทราบว่าอีกฝ่ายได้รับหรืออ่านแล้วหรือยัง</p><p>หากเปิดระบบทีมอาสาในอนาคต ทีมที่ลงทะเบียนและเฝ้าจังหวัดของคุณจะดูเคสได้เฉพาะเมื่อคุณกดยินยอมส่งเข้าระบบแยกต่างหาก</p></div>
+        <div class="delivery-explainer" aria-label="ข้อมูลไปถึงใคร"><strong>ข้อมูลไปถึงใคร</strong><p>เมื่อคุณโทรหรือกดส่งใน LINE คุณติดต่อปลายทางนั้นด้วยตัวเอง เว็บนี้ไม่ทราบว่าอีกฝ่ายได้รับหรืออ่านแล้วหรือยัง</p></div>
         <a class="sos-form-link" href="#form-title">หรือกรอกรายละเอียดเพื่อเตรียมข้อความครบ ↓</a>
       </section>
       <details class="offline-help"><summary>ถ้าไฟดับหรือไม่มีอินเทอร์เน็ต</summary><p>หน้านี้อาจเปิดได้จากข้อมูลที่เคยโหลดไว้ในเครื่อง แต่การบันทึกข้อความหรือแสดง QR ไม่ได้ส่งถึงเจ้าหน้าที่หรือทีมอาสา หากคุณยังโทรได้ ให้ใช้ปุ่มโทร 1784 หรือ 1669 ด้านบนตามเหตุ</p><p>ถ้าส่งจากเครื่องนี้ไม่ได้ ให้แสดง QR ข้อความให้คนที่มีสัญญาณและไว้ใจช่วยส่งต่อเมื่อทำได้ ตรวจสอบกับผู้รับอีกครั้งว่าได้รับข้อมูลแล้ว รูปและเสียงที่เลือกในหน้านี้ไม่ถูกเก็บไว้เป็นเคส</p></details>

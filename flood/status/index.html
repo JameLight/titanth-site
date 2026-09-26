@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://jktnyuhrbithgbsvcrwa.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#103b50">
+  <meta name="description" content="สถานะจริงของระบบพร้อมแจ้งน้ำท่วม: มีทีมเฝ้าเวรกี่จังหวัด มีเรื่องรอกี่เรื่อง และสิ่งที่ระบบยังไม่ได้ทำ ตัวเลขอ่านสดจากฐานข้อมูล ไม่มีข้อมูลส่วนบุคคล">
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./status.css">
+  <title>สถานะระบบ | พร้อมแจ้งน้ำท่วม</title>
+</head>
+<body>
+  <div class="calls">
+    <a href="tel:1784" class="call c1784">โทร 1784<small>แจ้งน้ำท่วม กู้ภัย • <span class="nw">ปภ. 24 ชม.</span></small></a>
+    <a href="tel:1669" class="call c1669">โทร 1669<small>เจ็บป่วยหรือบาดเจ็บฉุกเฉิน</small></a>
+  </div>
+  <main>
+    <p class="back"><a href="../">← กลับหน้าช่วยเหลือ</a></p>
+    <h1>ระบบนี้ทำอะไรได้แล้วบ้าง ตอนนี้</h1>
+    <p class="lead">สถานะรับเรื่องอ่านจากการตั้งค่า ส่วนจำนวนทีมและเรื่องอ่านจากฐานข้อมูลเมื่อเปิดหน้านี้หรือกด “อ่านใหม่” แสดงเฉพาะตัวเลขรวม ไม่มีชื่อ เบอร์ หรือตำแหน่งของใคร</p>
+
+    <section class="card" aria-labelledby="h-help">
+      <h2 id="h-help">หน้าเตรียมข้อความ</h2>
+      <p class="big ok">เปิดใช้</p>
+      <p>ช่วยเรียงข้อความให้ครบ แล้วคุณโทรหรือกดส่งเอง เว็บไม่ส่งเรื่องให้ใคร</p>
+    </section>
+
+    <section class="card" aria-labelledby="h-intake">
+      <h2 id="h-intake">ส่งเรื่องเข้าทีมอาสาผ่านเว็บ</h2>
+      <p class="big" id="intake-state">กำลังอ่าน…</p>
+      <p id="intake-note"></p>
+    </section>
+
+    <section class="card" aria-labelledby="h-duty">
+      <h2 id="h-duty">จังหวัดที่มีทีมเฝ้าเวรอยู่ตอนนี้</h2>
+      <p class="big" id="duty-count">กำลังอ่าน…</p>
+      <ul id="duty-list" class="list"></ul>
+    </section>
+
+    <section class="card" aria-labelledby="h-cases">
+      <h2 id="h-cases">เรื่องในระบบของทีมอาสา</h2>
+      <p class="big" id="cases-summary">กำลังอ่าน…</p>
+      <dl id="cases-detail" class="detail" hidden>
+        <dt>รอทีมรับ</dt><dd id="c-waiting"></dd>
+        <dt>รอเกิน 10 นาที</dt><dd id="c-waiting10"></dd>
+        <dt>ทีมกำลังช่วย</dt><dd id="c-progress"></dd>
+        <dt>ปิดแล้วใน 24 ชั่วโมง</dt><dd id="c-closed"></dd>
+      </dl>
+    </section>
+
+    <p class="readtime"><span id="read-time">ยังไม่ได้อ่าน</span> <button type="button" id="reload">อ่านใหม่</button></p>
+
+    <section class="card plain" aria-labelledby="h-unknown">
+      <h2 id="h-unknown">สิ่งที่เราไม่รู้และไม่นับ</h2>
+      <ul class="list">
+        <li>จำนวนคนที่เปิดเว็บ (เว็บนี้ไม่มีตัวนับผู้เข้าชม)</li>
+        <li>จำนวนคนที่โทร 1784 หรือส่ง LINE ปภ. หลังใช้เว็บ</li>
+        <li>ผลการช่วยเหลือของหน่วยงานรัฐหรือมูลนิธิ</li>
+      </ul>
+    </section>
+  </main>
+  <footer>ไม่ใช่เว็บหน่วยงานรัฐ • ข้อมูลรวมจากฐานข้อมูลของระบบพร้อมแจ้งน้ำท่วม</footer>
+  <script src="./status.js"></script>
+</body>
+</html>
