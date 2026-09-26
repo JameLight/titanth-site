@@ -31,7 +31,7 @@
         <div id="quick-location-row" class="quick-location-result" hidden>
           <p id="quick-location-status" role="status" aria-live="polite"></p>
           <a id="quick-location-line" class="sos-button sos-line" href="https://lin.ee/MoS2rXU" rel="noopener noreferrer" hidden>เปิด LINE ปภ. <small>ยังไม่ส่ง • ใน LINE ต้องกด “ส่ง” เอง</small></a>
-          <div id="quick-location-more" class="quick-location-more" hidden><button type="button" id="quick-location-share" class="secondary-button">แชร์ให้ญาติหรืออาสา</button><button type="button" id="quick-location-copy" class="secondary-button">คัดลอกข้อความ</button><button type="button" id="quick-location-media" class="secondary-button">แนบรูป/เสียงแล้วแชร์</button><button type="button" id="quick-location-qr" class="secondary-button" hidden>แสดง QR ให้คนที่มีสัญญาณสแกน</button></div>
+          <div id="quick-location-more" class="quick-location-more" hidden><p class="quick-location-fallback">LINE ไม่มีข้อความหรือไม่ครบ? กลับมาหน้านี้ กด “คัดลอกข้อความ” แล้ววางใน LINE ตรวจข้อความและกดส่งเอง ถ้ากลับมาแล้วปุ่มหาย ให้กด “ใช้ตำแหน่งฉัน” ใหม่ หรือโทร 1784</p><button type="button" id="quick-location-share" class="secondary-button">แชร์ให้ญาติหรืออาสา</button><button type="button" id="quick-location-copy" class="secondary-button">คัดลอกข้อความ</button><button type="button" id="quick-location-media" class="secondary-button">แนบรูป/เสียงแล้วแชร์</button><button type="button" id="quick-location-qr" class="secondary-button" hidden>แสดง QR ให้คนที่มีสัญญาณสแกน</button></div>
           <div id="quick-location-qr-panel" class="qr-panel" hidden></div>
         </div>
         <div class="sos-more"><a href="tel:1418" class="sos-small">โทร 1418 <small>มูลนิธิป่อเต็กตึ๊ง (เอกชน)</small></a><a href="https://lin.ee/MoS2rXU" target="_blank" rel="noopener noreferrer" class="sos-small">แชต LINE ปภ. <small>@1784DDPM</small></a></div>
@@ -40,6 +40,21 @@
         <a class="sos-form-link" href="#form-title">หรือกรอกรายละเอียดเพื่อเตรียมข้อความครบ ↓</a>
       </section>
       <details class="offline-help"><summary>ถ้าไฟดับหรือไม่มีอินเทอร์เน็ต</summary><p>หน้านี้อาจเปิดได้จากข้อมูลที่เคยโหลดไว้ในเครื่อง แต่การบันทึกข้อความหรือแสดง QR ไม่ได้ส่งถึงเจ้าหน้าที่หรือทีมอาสา หากคุณยังโทรได้ ให้ใช้ปุ่มโทร 1784 หรือ 1669 ด้านบนตามเหตุ</p><p>ถ้าส่งจากเครื่องนี้ไม่ได้ ให้แสดง QR ข้อความให้คนที่มีสัญญาณและไว้ใจช่วยส่งต่อเมื่อทำได้ ตรวจสอบกับผู้รับอีกครั้งว่าได้รับข้อมูลแล้ว รูปและเสียงที่เลือกในหน้านี้ไม่ถูกเก็บไว้เป็นเคส</p></details>
+      <details class="offline-help prep-help"><summary>ก่อนน้ำมา ถ้ายังมีเวลา และหลังน้ำลด</summary>
+        <ol>
+          <li>ติดตามคำเตือน ถ้าน้ำขึ้นเร็ว หรือบ้านมีเด็ก ผู้สูงอายุ ผู้ป่วย ให้ออกไปที่ปลอดภัยก่อนน้ำสูง</li>
+          <li>หยิบกระเป๋าที่มีน้ำ อาหาร ยาประจำตัว ไฟฉาย และเอกสารใส่ซองกันน้ำ (ปภ. แนะนำของจำเป็นอย่างน้อย <span class="nowrap">3‑5 วัน</span>)</li>
+          <li>ชาร์จโทรศัพท์และพาวเวอร์แบงก์ให้เต็ม</li>
+          <li>ถ้าทำได้อย่างปลอดภัย ยกเครื่องใช้ไฟฟ้าขึ้นที่สูงก่อนน้ำถึง ขณะตัวเปียกหรือยืนในน้ำ ห้ามแตะสวิตช์และปลั๊กไฟ</li>
+          <li>อย่าเดินหรือขับรถผ่านน้ำที่ไหลเชี่ยว</li>
+        </ol>
+        <p><strong>หลังน้ำลด</strong></p>
+        <ul>
+          <li>อย่าใช้หรือซ่อมเครื่องใช้ไฟฟ้าที่เคยเปียกเอง ให้ช่างผู้ชำนาญตรวจก่อน</li>
+          <li>ถ้าหลังลุยน้ำมีไข้สูงหรือปวดกล้ามเนื้อรุนแรง ให้รีบพบแพทย์ บอกว่าเคยลุยน้ำ และอย่าซื้อยากินเอง</li>
+        </ul>
+        <p>ที่มา: กรมป้องกันและบรรเทาสาธารณภัย การไฟฟ้าส่วนภูมิภาค กรมควบคุมโรค</p>
+      </details>
       <section class="bkk-links" aria-labelledby="bkk-links-title">
         <h2 id="bkk-links-title">กรุงเทพฯ: ตรวจน้ำท่วมถนนและภาพจราจร</h2>
         <div class="bkk-links-actions">
