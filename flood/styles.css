@@ -41,7 +41,10 @@ dialog{max-height:90vh;overflow:auto}
 #media-manual-text[hidden]{display:none}
 .media-open-external{display:block;font-size:.86rem;margin:.5rem 0;color:var(--teal);font-weight:700}.media-open-external[hidden]{display:none}
 .offline-help{margin:.6rem 0 1rem;padding:.65rem .9rem;background:#fff7df;border:1px solid #b69254;border-radius:9px}.offline-help summary{cursor:pointer;font-weight:800;color:#65410f}.offline-help p{font-size:.86rem;line-height:1.5;margin:.55rem 0 0;color:#513e27}
+.quick-location-more .quick-location-fallback{flex:1 1 100%;font-size:1rem;line-height:1.5;color:#113c2a}
+.prep-help summary,.prep-help p,.prep-help ol,.prep-help ul{font-size:1rem;line-height:1.5}.prep-help ol,.prep-help ul{margin:.55rem 0 0;padding-left:1.3rem;color:#513e27}.prep-help li{margin:.35rem 0}.prep-help .nowrap{white-space:nowrap}
 
 /* KFR-40: keep the manual-send warning readable on a narrow phone. */
 @media(max-width:650px){.test-ribbon{font-size:1rem;line-height:1.4}.sos-button small{font-size:1rem;line-height:1.35}.sos-note,.quick-location-result p{font-size:1rem;line-height:1.5}.sos-more{grid-template-columns:minmax(0,1fr)}.sos-small{min-width:0;overflow-wrap:anywhere}.triage{min-width:0}}
+@media(max-width:650px){.site-header{flex-wrap:wrap}.site-header .brand,.site-header .quiet-link{min-width:0}.quiet-link{overflow-wrap:anywhere}.triage-choices{grid-template-columns:minmax(0,1fr)}.triage-choices label{min-width:0;overflow-wrap:anywhere}}
 .quick-location-result p{white-space:pre-line}
