@@ -41,3 +41,10 @@ dialog{max-height:90vh;overflow:auto}
 #media-manual-text[hidden]{display:none}
 .media-open-external{display:block;font-size:.86rem;margin:.5rem 0;color:var(--teal);font-weight:700}.media-open-external[hidden]{display:none}
 .offline-help{margin:.6rem 0 1rem;padding:.65rem .9rem;background:#fff7df;border:1px solid #b69254;border-radius:9px}.offline-help summary{cursor:pointer;font-weight:800;color:#65410f}.offline-help p{font-size:.86rem;line-height:1.5;margin:.55rem 0 0;color:#513e27}
+
+/* iOS 26 Safari can paint the page under the Dynamic Island despite viewport-fit=auto. */
+@media(max-width:650px){
+  @supports (-webkit-touch-callout:none){
+    .test-ribbon{padding-top:max(3.5rem,calc(env(safe-area-inset-top) + .55rem))}
+  }
+}
