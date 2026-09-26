@@ -19,6 +19,8 @@ let draftTouched = false;
 let updateAvailable = false;
 let casesLoaded = false;
 let quickLocationInProgress = false;
+let pendingMediaText = "";
+let mediaGeneration = 0;
 const intakeClientPromise = loadIntakeConfig().then(config => config ? makeIntakeClient(config) : null).catch(() => null);
 intakeClientPromise.then(client => {
   if (!client) return;
@@ -257,6 +259,7 @@ function renderCase(item) {
   actions.append(button("คัดลอกข้อความ", "secondary-button", () => copyCase(item)));
   actions.append(lineLink());
   actions.append(button("แชร์ข้อความ", "secondary-button", () => shareCase(item)));
+  actions.append(button("แนบรูป/เสียงแล้วแชร์", "secondary-button", () => openMediaShare(shareText(item))));
   const qrPanel = node("div", "qr-panel");
   qrPanel.hidden = true;
   actions.append(button("แสดง QR ส่งต่อออฟไลน์", "secondary-button", () => {
@@ -357,7 +360,7 @@ async function readIntakeStatus(item, target) {
 }
 
 async function withdrawSubmittedCase(item, control) {
-  if (!await askConfirm("ระบบจะลบเบอร์ พิกัด จุดสังเกต และรายละเอียดจากฐานข้อมูล เคสที่ยังเปิดอยู่จะเปลี่ยนเป็นยกเลิก แต่ยังเก็บจังหวัด เวลา จำนวนคน ประเภทความต้องการ สถานะ และทีมไว้เพื่อสถิติ ข้อมูลที่ทีมเห็นหรือส่งต่อไปก่อนหน้าอาจยังอยู่กับปลายทางอื่น เมื่อระบบยืนยันแล้วจะลบสำเนาเคสในอุปกรณ์นี้ด้วย", "ยกเลิกเคสและลบข้อมูล")) return;
+  if (!await askConfirm("ระบบจะลบเบอร์ พิกัด จุดสังเกต และรายละเอียดจากฐานข้อมูล เคสที่ยังเปิดอยู่จะเปลี่ยนเป็นยกเลิก แต่ยังเก็บจังหวัด เวลา จำนวนคน กลุ่มความต้องการแบบกว้าง (ด่วน/กลุ่มเปราะบาง/อื่นๆ) สถานะ และทีมไว้เพื่อสถิติ ข้อมูลที่ทีมเห็นหรือส่งต่อไปก่อนหน้าอาจยังอยู่กับปลายทางอื่น เมื่อระบบยืนยันแล้วจะลบสำเนาเคสในอุปกรณ์นี้ด้วย", "ยกเลิกเคสและลบข้อมูล")) return;
   const client = await intakeClientPromise;
   if (!client) { toast("ยังเชื่อมระบบไม่ได้ จึงยังยืนยันการลบข้อมูลไม่ได้"); return; }
   control.disabled = true;
@@ -504,12 +507,118 @@ $("#quick-location-share").addEventListener("click", async () => {
     if (error?.name !== "AbortError") copyQuickLocation();
   }
 });
+$("#quick-location-media").addEventListener("click", () => {
+  if (lastQuickLocationText) openMediaShare(lastQuickLocationText);
+});
 $("#quick-location-copy").addEventListener("click", () => copyQuickLocation());
 $("#quick-location-qr").addEventListener("click", () => {
   if (!lastQuickQrText) return;
   showQr($("#quick-location-qr-panel"), lastQuickQrText);
 });
 $("#quick-location").hidden = false;
+
+const mediaDialog = $("#media-dialog");
+const mediaPhoto = $("#media-photo");
+const mediaAudio = $("#media-audio");
+const mediaStatus = $("#media-status");
+const mediaManualText = $("#media-manual-text");
+const mediaShareButton = $("#media-share");
+const mediaExternalLink = $("#media-open-external");
+
+function clearMediaSelection() {
+  mediaGeneration += 1;
+  mediaPhoto.value = "";
+  mediaAudio.value = "";
+  mediaManualText.value = "";
+  mediaManualText.hidden = true;
+  mediaExternalLink.hidden = true;
+  mediaShareButton.disabled = false;
+  pendingMediaText = "";
+}
+
+function openMediaShare(message) {
+  if (typeof mediaDialog.showModal !== "function") {
+    showManualCopy(message);
+    toast("อุปกรณ์นี้เปิดหน้าต่างแนบไฟล์ไม่ได้ ข้อความอยู่ในกล่องคัดลอก ให้แนบรูปหรือเสียงในแอปปลายทางเอง");
+    return;
+  }
+  clearMediaSelection();
+  pendingMediaText = message;
+  mediaStatus.textContent = "ไฟล์ยังอยู่ในอุปกรณ์นี้ เว็บไม่อัปโหลดหรือเก็บไฟล์ไว้ในเคส";
+  mediaDialog.showModal();
+}
+
+function selectedMediaFiles() {
+  return [mediaPhoto.files?.[0], mediaAudio.files?.[0]].filter(Boolean);
+}
+
+function updateMediaStatus() {
+  const files = selectedMediaFiles();
+  mediaStatus.textContent = files.length
+    ? `เลือก ${files.length} ไฟล์แล้ว ยังไม่ได้ส่งหรืออัปโหลด กดเปิดเมนูแชร์แล้วเลือกปลายทางเอง`
+    : "ไฟล์ยังอยู่ในอุปกรณ์นี้ เว็บไม่อัปโหลดหรือเก็บไฟล์ไว้ในเคส";
+}
+
+async function copyMediaTextForManualAttach(reason, generation) {
+  const message = pendingMediaText;
+  const copied = await copyText(message);
+  if (generation !== mediaGeneration) return;
+  mediaExternalLink.hidden = false;
+  if (copied) {
+    mediaStatus.textContent = `${reason} คัดลอกข้อความแล้ว เปิดแอปปลายทาง วางข้อความ แนบไฟล์เอง และกดส่ง`;
+  } else {
+    mediaManualText.value = message;
+    mediaManualText.hidden = false;
+    mediaStatus.textContent = `${reason} คัดลอกอัตโนมัติไม่ได้ ใช้กล่องข้อความด้านล่าง แล้วแนบไฟล์ในแอปปลายทางเอง`;
+  }
+}
+
+mediaPhoto.addEventListener("change", updateMediaStatus);
+mediaAudio.addEventListener("change", updateMediaStatus);
+$("#media-cancel").addEventListener("click", () => mediaDialog.close());
+mediaDialog.addEventListener("close", clearMediaSelection);
+mediaShareButton.addEventListener("click", async () => {
+  const files = selectedMediaFiles();
+  if (!files.length) {
+    mediaStatus.textContent = "เลือกรูปหรือเสียงอย่างน้อย 1 ไฟล์ก่อน หรือใช้ปุ่มแชร์ข้อความเดิมโดยไม่แนบไฟล์";
+    return;
+  }
+  if (files.some(file => file.type && !/^image\//.test(file.type) && !/^audio\//.test(file.type))) {
+    mediaStatus.textContent = "ไฟล์ที่เลือกไม่ใช่รูปหรือเสียง กรุณาเลือกใหม่";
+    return;
+  }
+  if (files.reduce((total, file) => total + file.size, 0) > 50 * 1024 * 1024) {
+    mediaStatus.textContent = "ไฟล์รวมใหญ่กว่า 50 MB กรุณาเลือกไฟล์ขนาดเล็กลง หรือแนบในแอปปลายทางเอง";
+    return;
+  }
+  const generation = mediaGeneration;
+  mediaShareButton.disabled = true;
+  mediaStatus.textContent = "กำลังเปิดเมนูแชร์ของอุปกรณ์ ยังไม่มีหลักฐานว่าปลายทางได้รับข้อมูล";
+  try {
+    let canShareFiles = false;
+    try { canShareFiles = typeof navigator.canShare === "function" && navigator.canShare({ files }); } catch { /* browser cannot share files */ }
+    if (!canShareFiles || typeof navigator.share !== "function") {
+      await copyMediaTextForManualAttach("เบราว์เซอร์นี้แชร์ไฟล์จากเว็บไม่ได้", generation);
+      return;
+    }
+    try {
+      await navigator.share({ title: "ขอความช่วยเหลือน้ำท่วม", text: pendingMediaText, files });
+      if (generation !== mediaGeneration) return;
+      mediaPhoto.value = "";
+      mediaAudio.value = "";
+      mediaStatus.textContent = "เปิดเมนูแชร์แล้ว หน้านี้ไม่ทราบว่าปลายทางได้รับหรือยัง หากไม่มีสัญญาณ ข้อความอาจยังส่งไม่ออก โทร 1784 หรือ 1669 ตามเหตุ";
+    } catch (error) {
+      if (generation !== mediaGeneration) return;
+      if (error?.name === "AbortError") {
+        mediaStatus.textContent = "ยกเลิกการแชร์แล้ว หน้านี้ไม่ได้ส่งข้อมูล";
+      } else {
+        await copyMediaTextForManualAttach("แชร์ไฟล์จากหน้านี้ไม่สำเร็จ", generation);
+      }
+    }
+  } finally {
+    if (generation === mediaGeneration) mediaShareButton.disabled = false;
+  }
+});
 
 async function copyCase(item) {
   const content = shareText(item);
@@ -690,5 +799,8 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
   });
   navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
     .then(registration => registration.update())
-    .catch(() => toast("ติดตั้งโหมดออฟไลน์ไม่สำเร็จ กรุณาลองโหลดหน้าใหม่ขณะออนไลน์"));
+    .catch(() => {
+      if (!hadController && !navigator.serviceWorker.controller)
+        toast("ติดตั้งโหมดออฟไลน์ไม่สำเร็จ กรุณาลองโหลดหน้าใหม่ขณะออนไลน์");
+    });
 }
