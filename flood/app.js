@@ -476,7 +476,7 @@ function showQuickLocationProblem(message) {
 $("#quick-location").addEventListener("click", () => {
   if (quickLocationInProgress) return;
   const button = $("#quick-location");
-  if (!navigator.geolocation) { showQuickLocationProblem("อุปกรณ์นี้ขอตำแหน่งไม่ได้ โทร 1784 แล้วบอกจุดสังเกต หากมีผู้ป่วยหรือบาดเจ็บ โทร 1669"); return; }
+  if (!navigator.geolocation) { showQuickLocationProblem("อุปกรณ์นี้ขอตำแหน่งไม่ได้ โทร 1784 แล้วบอกจุดสังเกต หากเจ็บป่วยหรือบาดเจ็บฉุกเฉิน โทร 1669"); return; }
   quickLocationInProgress = true;
   button.disabled = true;
   showQuickLocationProblem("กำลังขอตำแหน่งจากโทรศัพท์นี้…");
@@ -486,9 +486,9 @@ $("#quick-location").addEventListener("click", () => {
       try { showQuickLocationResult(quickLocationText(position.coords), position.coords); }
       catch (error) { showQuickLocationProblem(error.message); }
       finally { done(); }
-    }, () => { showQuickLocationProblem("ไม่ได้รับตำแหน่ง โทร 1784 แล้วบอกจุดสังเกตที่ใกล้ที่สุด หากมีผู้ป่วยหรือบาดเจ็บ โทร 1669"); done(); },
+    }, () => { showQuickLocationProblem("ไม่ได้รับตำแหน่ง โทร 1784 แล้วบอกจุดสังเกตที่ใกล้ที่สุด หากเจ็บป่วยหรือบาดเจ็บฉุกเฉิน โทร 1669"); done(); },
     { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
-  } catch { showQuickLocationProblem("ขอตำแหน่งไม่ได้ โทร 1784 แล้วบอกจุดสังเกตที่ใกล้ที่สุด หากมีผู้ป่วยหรือบาดเจ็บ โทร 1669"); done(); }
+  } catch { showQuickLocationProblem("ขอตำแหน่งไม่ได้ โทร 1784 แล้วบอกจุดสังเกตที่ใกล้ที่สุด หากเจ็บป่วยหรือบาดเจ็บฉุกเฉิน โทร 1669"); done(); }
 });
 
 async function copyQuickLocation() {

@@ -20,12 +20,12 @@
   <main class="layout">
     <section class="primary">
       <section class="emergency sos" aria-labelledby="emergency-title">
-        <h1 id="emergency-title" class="sos-title">ติดน้ำท่วม? <span>ขอความช่วยเหลือได้ทันที</span></h1>
+        <h1 id="emergency-title" class="sos-title">ติดน้ำท่วม? <span>โทร 1784 เพื่อแจ้งเหตุ</span></h1>
         <p class="sos-coverage">หน้านี้ใช้เตรียมข้อมูลได้ทุกจังหวัดทั่วประเทศ</p>
         <div class="sos-actions">
           <a href="tel:1784" class="sos-button sos-call">📞 โทร 1784 <small>แจ้งน้ำท่วม กู้ภัย • ปภ. 24 ชม.</small></a>
           <button type="button" id="quick-location" class="sos-button sos-location" hidden>📍 ใช้ตำแหน่งฉัน <small>เฉพาะที่เกิดเหตุ • ยังไม่ส่ง</small></button>
-          <a href="tel:1669" class="sos-button sos-medical">🚑 โทร 1669 <small>เจ็บป่วย บาดเจ็บ ผู้ป่วยติดเตียง</small></a>
+          <a href="tel:1669" class="sos-button sos-medical">🚑 โทร 1669 <small>เจ็บป่วยหรือบาดเจ็บฉุกเฉิน</small></a>
           <a href="tel:199" class="sos-button sos-fire">🚒 โทร 199 <small>ดับเพลิงและกู้ภัยท้องถิ่น • ผู้รับสายขึ้นกับพื้นที่</small></a>
         </div>
         <div id="quick-location-row" class="quick-location-result" hidden>
@@ -35,8 +35,8 @@
           <div id="quick-location-qr-panel" class="qr-panel" hidden></div>
         </div>
         <div class="sos-more"><a href="tel:1418" class="sos-small">โทร 1418 <small>มูลนิธิป่อเต็กตึ๊ง (เอกชน)</small></a><a href="https://lin.ee/MoS2rXU" target="_blank" rel="noopener noreferrer" class="sos-small">แชต LINE ปภ. <small>@1784DDPM</small></a></div>
-        <p class="sos-note">เว็บนี้ไม่ได้ส่งเรื่องเอง ข้อความถึงเจ้าหน้าที่เมื่อคุณกดส่งใน LINE หรือโทรเท่านั้น</p>
-        <div class="delivery-explainer" aria-label="ข้อมูลไปถึงใคร"><strong>ข้อมูลไปถึงใคร</strong><p>เมื่อโทรหรือกดส่งใน LINE คุณติดต่อปลายทางนั้นด้วยตัวเอง เว็บนี้ไม่ส่งเรื่องให้ใครอัตโนมัติ</p><p>หากเปิดระบบทีมอาสาในอนาคต ทีมที่ลงทะเบียนและเฝ้าจังหวัดของคุณจะดูเคสได้เฉพาะเมื่อคุณกดยินยอมส่งเข้าระบบแยกต่างหาก</p></div>
+        <p class="sos-note">เว็บนี้ไม่ได้ส่งเรื่องเอง คุณต้องโทรหรือกดส่งใน LINE เอง แล้วดูคำตอบจากปลายทาง</p>
+        <div class="delivery-explainer" aria-label="ข้อมูลไปถึงใคร"><strong>ข้อมูลไปถึงใคร</strong><p>เมื่อคุณโทรหรือกดส่งใน LINE คุณติดต่อปลายทางนั้นด้วยตัวเอง เว็บนี้ไม่ทราบว่าอีกฝ่ายได้รับหรืออ่านแล้วหรือยัง</p><p>หากเปิดระบบทีมอาสาในอนาคต ทีมที่ลงทะเบียนและเฝ้าจังหวัดของคุณจะดูเคสได้เฉพาะเมื่อคุณกดยินยอมส่งเข้าระบบแยกต่างหาก</p></div>
         <a class="sos-form-link" href="#form-title">หรือกรอกรายละเอียดเพื่อเตรียมข้อความครบ ↓</a>
       </section>
       <details class="offline-help"><summary>ถ้าไฟดับหรือไม่มีอินเทอร์เน็ต</summary><p>หน้านี้อาจเปิดได้จากข้อมูลที่เคยโหลดไว้ในเครื่อง แต่การบันทึกข้อความหรือแสดง QR ไม่ได้ส่งถึงเจ้าหน้าที่หรือทีมอาสา หากคุณยังโทรได้ ให้ใช้ปุ่มโทร 1784 หรือ 1669 ด้านบนตามเหตุ</p><p>ถ้าส่งจากเครื่องนี้ไม่ได้ ให้แสดง QR ข้อความให้คนที่มีสัญญาณและไว้ใจช่วยส่งต่อเมื่อทำได้ ตรวจสอบกับผู้รับอีกครั้งว่าได้รับข้อมูลแล้ว รูปและเสียงที่เลือกในหน้านี้ไม่ถูกเก็บไว้เป็นเคส</p></details>
@@ -98,7 +98,7 @@
           <fieldset class="triage" aria-describedby="triage-help"><legend>ตอนนี้ต้องอพยพด่วนหรือมีผู้ป่วยไหม <span class="required">*</span></legend>
             <p id="triage-help">เลือกตามสถานการณ์จริง หากอันตรายให้โทร 1784 หรือ 1669 ตามเหตุก่อนกรอกแบบฟอร์ม</p>
             <div class="triage-choices"><label><input type="radio" name="urgentNow" value="yes"> ใช่ ด่วน</label><label><input type="radio" name="urgentNow" value="no"> ยังปลอดภัย ต้องการของหรือข้อมูล</label></div>
-            <div id="urgent-needs" class="triage-urgent" hidden><p>เลือกเหตุที่ตรงกับสถานการณ์อย่างน้อยหนึ่งข้อ</p><div class="needs-list"><label class="need"><input type="checkbox" name="needs" value="trapped"><span>มีคนติดอยู่</span></label><label class="need"><input type="checkbox" name="needs" value="immobile"><span>มีผู้ป่วยติดเตียงหรือคนเคลื่อนย้ายเองไม่ได้</span></label><label class="need"><input type="checkbox" name="needs" value="medical"><span>ต้องการความช่วยเหลือทางการแพทย์</span></label><label class="need"><input type="checkbox" name="needs" value="fast_water"><span>ระดับน้ำเพิ่มเร็ว</span></label><label class="need"><input type="checkbox" name="needs" value="dialysis_oxygen"><span>ต้องฟอกไตหรือใช้ออกซิเจน</span></label></div><p class="triage-warning">โทร 1784 เพื่อแจ้งน้ำท่วม หรือ 1669 เมื่อมีผู้ป่วย/บาดเจ็บ การบันทึกในเว็บไม่ใช่การแจ้งเหตุ</p></div>
+            <div id="urgent-needs" class="triage-urgent" hidden><p>เลือกเหตุที่ตรงกับสถานการณ์อย่างน้อยหนึ่งข้อ</p><div class="needs-list"><label class="need"><input type="checkbox" name="needs" value="trapped"><span>มีคนติดอยู่</span></label><label class="need"><input type="checkbox" name="needs" value="immobile"><span>มีผู้ป่วยติดเตียงหรือคนเคลื่อนย้ายเองไม่ได้</span></label><label class="need"><input type="checkbox" name="needs" value="medical"><span>ต้องการความช่วยเหลือทางการแพทย์</span></label><label class="need"><input type="checkbox" name="needs" value="fast_water"><span>ระดับน้ำเพิ่มเร็ว</span></label><label class="need"><input type="checkbox" name="needs" value="dialysis_oxygen"><span>ต้องฟอกไตหรือใช้ออกซิเจน</span></label></div><p class="triage-warning">โทร 1784 เพื่อแจ้งน้ำท่วม หรือ 1669 เมื่อเจ็บป่วยหรือบาดเจ็บฉุกเฉิน การบันทึกในเว็บไม่ใช่การแจ้งเหตุ</p></div>
           </fieldset>
           <fieldset><legend>สถานที่เกิดเหตุ</legend>
             <div class="field-grid"><label>จังหวัด <span class="required">*</span><input name="province" list="province-options" autocomplete="address-level1" required placeholder="เลือกจังหวัดจากรายการ"></label><label>อำเภอหรือเขต<input name="district" autocomplete="address-level2" placeholder="ถ้าทราบ"></label><label>ตำบลหรือแขวง<input name="subdistrict" placeholder="ถ้าทราบ"></label><label>จุดสังเกต <span class="optional">ควรกรอกเสมอ</span><input name="landmark" placeholder="บ้านเลขที่ ซอย วัด หรืออาคารใกล้เคียง"></label></div>
