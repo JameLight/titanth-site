@@ -49,8 +49,8 @@ let acting = false;
 let state = freshState();
 
 function freshState() {
-  return { account: null, team: null, areas: [], members: [], cases: [], duplicates: new Map(), seenOpen: null, seenMine: null,
-    lateCount: 0, lastLateBuzz: 0, phones: new Map(), openHistory: new Set() };
+  return { account: null, team: null, areas: [], members: [], cases: [], duplicates: new Map(), seenOpen: null, newOpen: new Set(),
+    seenMine: null, lateCount: 0, lastLateBuzz: 0, phones: new Map(), openHistory: new Set() };
 }
 
 const clock = new Intl.DateTimeFormat("th-TH", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
@@ -328,16 +328,18 @@ function historyBox(item) {
   return box;
 }
 
+// The banner counts the new cases that are still waiting: it goes away by itself once they are taken, withdrawn or
+// erased, so it never says a case waits when none does. Tapping it clears the count until the next new case.
 function alertNewCases(open) {
   const ids = new Set(open.map(item => item.id));
   if (state.seenOpen) {
     const fresh = open.filter(item => !state.seenOpen.has(item.id));
-    if (fresh.length) {
-      $("#new-banner").textContent = `มีเคสใหม่รอรับ ${fresh.length} เคส (แตะเพื่อซ่อน)`;
-      $("#new-banner").hidden = false;
-      try { navigator.vibrate?.([200, 100, 200]); } catch { /* not supported */ }
-    }
+    for (const item of fresh) state.newOpen.add(item.id);
+    if (fresh.length) { try { navigator.vibrate?.([200, 100, 200]); } catch { /* not supported */ } }
   }
+  for (const id of state.newOpen) if (!ids.has(id)) state.newOpen.delete(id);
+  $("#new-banner").textContent = `มีเคสใหม่รอรับ ${state.newOpen.size} เคส (แตะเพื่อซ่อน)`;
+  $("#new-banner").hidden = !state.newOpen.size;
   state.seenOpen = ids;
   document.title = open.length ? `(${open.length}) หน้าทีมอาสา — พร้อมแจ้งน้ำท่วม` : "หน้าทีมอาสา — พร้อมแจ้งน้ำท่วม";
 }
@@ -504,10 +506,12 @@ function wire() {
     state = freshState();
     lastBeat = 0;
     document.title = "หน้าทีมอาสา — พร้อมแจ้งน้ำท่วม";
+    // The next person on this phone must not see the previous account's alerts.
+    for (const banner of document.querySelectorAll(".banner")) banner.hidden = true;
     show("#screen-auth");
   });
   $("#refresh").addEventListener("click", () => tick());
-  $("#new-banner").addEventListener("click", () => { $("#new-banner").hidden = true; });
+  $("#new-banner").addEventListener("click", () => { state.newOpen.clear(); $("#new-banner").hidden = true; });
   $("#late-banner").addEventListener("click", () => { $("#list-open").scrollIntoView({ behavior: "smooth", block: "start" }); });
   $("#withdrawn-banner").addEventListener("click", () => { $("#withdrawn-banner").hidden = true; });
   for (const dutyButton of document.querySelectorAll("[data-duty]")) {
