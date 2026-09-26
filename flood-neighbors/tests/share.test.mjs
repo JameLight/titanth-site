@@ -25,6 +25,7 @@ test('the immediate help page contains no backend calls, signup or public case i
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const js = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
   assert.match(html, /ไม่ต้องสมัคร/);
+  assert.match(html, /ถ้าโพสต์สาธารณะ ทุกคนจะเห็นเบอร์หรือ LINE ID/);
   assert.match(html, /ไม่ได้แปลว่ามีใครได้รับข้อความแล้ว/);
   assert.doesNotMatch(html + js, /supabase|signUp|submit_case|claim_case|aid_post|api\.js/);
 });
