@@ -238,7 +238,7 @@ function renderCase(item) {
   const badges = node("div", "badges");
   badges.append(node("span", `badge ${item.intake ? "attempt" : item.status === STATUS.LOCAL_ONLY ? "local" : "attempt"}`,
     item.intake ? "ระบบทีมอาสารับข้อมูลแล้ว • ยังไม่ยืนยันว่ามีทีมรับเคส" :
-      item.status === STATUS.LOCAL_ONLY ? "บันทึกในเครื่อง • ยังไม่ยืนยันผู้รับ" : "ผู้ใช้ระบุว่าส่งต่อแล้ว • ยังไม่ยืนยันผู้รับ"));
+      item.status === STATUS.LOCAL_ONLY ? "เคสในเครื่อง • เว็บไม่ส่งเรื่องเอง" : "ผู้ใช้ระบุว่าส่งต่อแล้ว • ยังไม่ยืนยันผู้รับ"));
   card.append(badges);
   card.append(node("p", "", `${item.peopleCount} คน · ${item.needs.map(n => NEEDS[n]).join(", ")}`));
   if (isStale(item)) card.append(node("p", "case-warning", "ข้อมูลสถานการณ์นี้บันทึกเกิน 6 ชั่วโมงแล้ว ควรตรวจใหม่ก่อนส่งต่อ"));
@@ -249,7 +249,7 @@ function renderCase(item) {
   card.append(node("p", "case-warning", item.intake
     ? `รหัสอ้างอิง ${item.intake.code} ส่งถึงระบบแล้ว ตรวจสถานะเพื่อดูคำรายงานของทีม ถ้าอันตรายให้โทร 1784 หรือ 1669 ทันที`
     : item.status === STATUS.LOCAL_ONLY
-      ? "เคสนี้ยังอยู่ในอุปกรณ์นี้ ไม่มีผู้รับเคสอัตโนมัติ"
+      ? "การบันทึกเคสไม่ใช่การแจ้งเหตุ เว็บไม่ทราบว่าคุณโทรหรือกดส่งเองแล้วหรือยัง หากยังไม่ได้แจ้ง ให้โทร 1784 หรือ 1669 ตามเหตุ และตรวจคำตอบจากปลายทาง"
       : "คุณระบุว่าส่งต่อแล้ว แต่ยังไม่มีหลักฐานว่ามีผู้รับเคส ถ้าไม่มีการตอบกลับ ให้โทร 1784 หรือ 1669 ตามเหตุ"));
   card.append(node("p", "shared-device-note", "ถ้าใช้เครื่องร่วมกับผู้อื่น ให้ลบเคสหลังส่งต่อและเก็บหลักฐานการตอบรับไว้ต่างหาก ข้อความที่คัดลอกอาจค้างในคลิปบอร์ดของเครื่อง"));
   const preview = node("details", "message-preview");
