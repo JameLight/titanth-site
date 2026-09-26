@@ -48,3 +48,6 @@ dialog{max-height:90vh;overflow:auto}
 @media(max-width:650px){.test-ribbon{font-size:1rem;line-height:1.4}.sos-button small{font-size:1rem;line-height:1.35}.sos-note,.quick-location-result p{font-size:1rem;line-height:1.5}.sos-more{grid-template-columns:minmax(0,1fr)}.sos-small{min-width:0;overflow-wrap:anywhere}.triage{min-width:0}}
 @media(max-width:650px){.site-header{flex-wrap:wrap}.site-header .brand,.site-header .quiet-link{min-width:0}.quiet-link{overflow-wrap:anywhere}.triage-choices{grid-template-columns:minmax(0,1fr)}.triage-choices label{min-width:0;overflow-wrap:anywhere}}
 .quick-location-result p{white-space:pre-line}
+.quick-location-result.gps-uncertain{border-color:#a82b21;background:#fff0ed}
+.quick-location-result.gps-uncertain #quick-location-status,.gps-row #gps-status.gps-uncertain{color:#782118;font-weight:800}
+.gps-row #gps-status.gps-uncertain{padding:.35rem .5rem;background:#fff0ed;border-left:4px solid #a82b21}

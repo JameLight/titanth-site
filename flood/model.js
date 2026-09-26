@@ -28,6 +28,12 @@ export const STALE_AFTER_MS = 6 * 60 * 60 * 1000; // เกณฑ์เตือ
 
 const clean = value => String(value ?? "").trim().replace(/\s+/g, " ");
 const has = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
+// A deliberately generous rectangle, not a claim that a point is inside Thailand.
+// Rejects obvious GPS defaults and distant points while retaining border/coastal margin.
+export const plausibleThailandGps = (lat, lon) => Number.isFinite(lat) && Number.isFinite(lon) &&
+  lat >= 5 && lat <= 22 && lon >= 96 && lon <= 107;
+export const gpsAccuracyWarning = accuracy => Number.isFinite(accuracy) && accuracy > 100
+  ? "ตำแหน่งยังไม่แม่น บอกจุดสังเกตด้วย และถ้าปลอดภัยลองกดใหม่" : "";
 
 export function createCaseId(cryptoSource = globalThis.crypto) {
   if (typeof cryptoSource?.randomUUID === "function") return cryptoSource.randomUUID();
@@ -80,6 +86,9 @@ export function makeCase(input, { now = new Date(), id = createCaseId() } = {}) 
     throw new Error("ลองจิจูดไม่ถูกต้อง");
   }
   if ((location.lat === null) !== (location.lon === null)) throw new Error("พิกัดต้องมีทั้งละติจูดและลองจิจูด");
+  if (location.lat !== null && !plausibleThailandGps(location.lat, location.lon)) {
+    throw new Error("พิกัดอยู่นอกบริเวณประเทศไทยโดยประมาณ กรุณาลองใหม่หรือเว้นพิกัดแล้วกรอกจุดสังเกต");
+  }
   if (location.accuracyMeters !== null && (!Number.isFinite(location.accuracyMeters) || location.accuracyMeters < 0 || location.accuracyMeters > 100000)) {
     throw new Error("ค่าความคลาดเคลื่อน GPS ไม่ถูกต้อง");
   }
@@ -137,13 +146,16 @@ export function shareText(item) {
     item.location.landmark && `จุดสังเกต: ${item.location.landmark}`].filter(Boolean).join(" ");
   const accuracy = Number.isFinite(item.location.accuracyMeters) && item.location.accuracyMeters >= 0
     ? ` (คลาดเคลื่อนประมาณ ${Math.round(item.location.accuracyMeters)} เมตร)` : "";
-  const coords = item.location.lat === null ? "" : `\nพิกัดจากโทรศัพท์ผู้แจ้ง: ${item.location.lat}, ${item.location.lon}${accuracy}`;
-  const map = Number.isFinite(item.location.lat) && Number.isFinite(item.location.lon)
+  const hasUsableGps = plausibleThailandGps(item.location.lat, item.location.lon);
+  const coords = hasUsableGps ? `\nพิกัดจากโทรศัพท์ผู้แจ้ง: ${item.location.lat}, ${item.location.lon}${accuracy}` : "";
+  const map = hasUsableGps
     ? `\nแผนที่: https://maps.google.com/?q=${item.location.lat},${item.location.lon}` : "";
+  const gpsNote = hasUsableGps ? (gpsAccuracyWarning(item.location.accuracyMeters) && `\nคำเตือน: ${gpsAccuracyWarning(item.location.accuracyMeters)}`) || ""
+    : item.location.lat != null || item.location.lon != null ? "\nคำเตือน: พิกัดที่บันทึกไว้ดูผิดปกติ โปรดใช้จุดสังเกตและโทร 1784" : "";
   const thaiTime = new Intl.DateTimeFormat("th-TH", {
     dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok"
   }).format(new Date(item.createdAt));
-  return `ขอความช่วยเหลือน้ำท่วม (ข้อมูลจากผู้แจ้ง ยังไม่ยืนยัน)\nรหัสเคส: ${item.caseId}\nข้อมูล ณ (เวลาไทย): ${thaiTime}\nพื้นที่: ${loc}${coords}${map}\nจำนวนคน: ${item.peopleCount}\nต้องการ: ${item.needs.map(n => NEEDS[n]).join(", ")}\nรายละเอียด: ${item.details || "ไม่มี"}\nโทรกลับ: ${item.contactPhone || "ไม่ได้ระบุ"}\nกรุณาตอบกลับเพื่อยืนยันว่าได้รับข้อมูลแล้ว`;
+  return `ขอความช่วยเหลือน้ำท่วม (ข้อมูลจากผู้แจ้ง ยังไม่ยืนยัน)\nรหัสเคส: ${item.caseId}\nข้อมูล ณ (เวลาไทย): ${thaiTime}\nพื้นที่: ${loc}${coords}${map}${gpsNote}\nจำนวนคน: ${item.peopleCount}\nต้องการ: ${item.needs.map(n => NEEDS[n]).join(", ")}\nรายละเอียด: ${item.details || "ไม่มี"}\nโทรกลับ: ${item.contactPhone || "ไม่ได้ระบุ"}\nกรุณาตอบกลับเพื่อยืนยันว่าได้รับข้อมูลแล้ว`;
 }
 
 export function quickLocationText({ latitude, longitude, accuracy }, now = new Date()) {
@@ -152,12 +164,16 @@ export function quickLocationText({ latitude, longitude, accuracy }, now = new D
       !Number.isFinite(accuracy) || accuracy < 0 || accuracy > 100000) {
     throw new Error("พิกัดจากโทรศัพท์ไม่ถูกต้อง กรุณาบอกจุดสังเกตทางโทรศัพท์แทน");
   }
+  if (!plausibleThailandGps(latitude, longitude)) {
+    throw new Error("ตำแหน่งจากโทรศัพท์ดูผิดปกติ โทร 1784 แล้วบอกจุดสังเกตที่ใกล้ที่สุดแทน");
+  }
   const lat = latitude.toFixed(6);
   const lon = longitude.toFixed(6);
   const thaiTime = new Intl.DateTimeFormat("th-TH", {
     dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok"
   }).format(now);
-  return `ขอความช่วยเหลือด่วน น้ำท่วม (ข้อมูลจากผู้แจ้ง ยังไม่ยืนยัน)\nตำแหน่งจากโทรศัพท์ผู้แจ้ง: ${lat}, ${lon} (คลาดเคลื่อนประมาณ ${Math.round(accuracy)} เมตร)\nแผนที่: https://maps.google.com/?q=${lat},${lon}\nข้อมูล ณ (เวลาไทย): ${thaiTime}\nกรุณาตอบกลับเพื่อยืนยันว่าได้รับข้อมูลแล้ว`;
+  const warning = gpsAccuracyWarning(accuracy);
+  return `ขอความช่วยเหลือด่วน น้ำท่วม (ข้อมูลจากผู้แจ้ง ยังไม่ยืนยัน)\nตำแหน่งจากโทรศัพท์ผู้แจ้ง: ${lat}, ${lon} (คลาดเคลื่อนประมาณ ${Math.round(accuracy)} เมตร)\nแผนที่: https://maps.google.com/?q=${lat},${lon}${warning ? `\nคำเตือน: ${warning}` : ""}\nข้อมูล ณ (เวลาไทย): ${thaiTime}\nกรุณาตอบกลับเพื่อยืนยันว่าได้รับข้อมูลแล้ว`;
 }
 
 export function ddpmLinePrefillUrl(message) {
@@ -170,7 +186,7 @@ export function ddpmLinePrefillUrl(message) {
 // QR เป็นข้อความสั้นสำหรับให้คนที่มีสัญญาณส่งต่อเอง ไม่ใช่หลักฐานการส่งหรือ ACK.
 export const QR_MAX_BYTES = 350;
 const QR_NEEDS = Object.freeze({
-  trapped: "ติดอยู่", medical: "ป่วย/บาดเจ็บ", immobile: "เคลื่อนย้ายไม่ได้",
+  trapped: "ติดอยู่", medical: "ป่วย/เจ็บ", immobile: "เคลื่อนย้ายไม่ได้",
   fast_water: "น้ำขึ้นเร็ว", boat: "เรือ/อพยพ", medicine: "ขาดยา",
   food_water: "อาหาร/น้ำ", other: "อื่นๆ", dialysis_oxygen: "ฟอกไต/ออกซิเจน",
   pregnant: "ตั้งครรภ์", infant: "เด็กเล็ก", elderly: "สูงอายุ", disabled: "พิการ"
@@ -189,7 +205,8 @@ export function quickLocationQrText(coords, now = new Date()) {
   const time = new Intl.DateTimeFormat("th-TH", {
     dateStyle: "short", timeStyle: "short", timeZone: "Asia/Bangkok"
   }).format(now);
-  return qrBounded(`น้ำท่วม ขอช่วย (ยังไม่ยืนยัน)\n${lat},${lon} ±${Math.round(coords.accuracy)}ม.\nhttps://maps.google.com/?q=${lat},${lon}\n${time} เวลาไทย\nโปรดตอบรับ`);
+  const warning = gpsAccuracyWarning(coords.accuracy) ? "\nGPS ไม่แม่น บอกจุดสังเกต" : "";
+  return qrBounded(`น้ำท่วม ขอช่วย (ยังไม่ยืนยัน)\n${lat},${lon} ±${Math.round(coords.accuracy)}ม.${warning}\nhttps://maps.google.com/?q=${lat},${lon}\n${time} เวลาไทย\nโปรดตอบรับ`);
 }
 
 export function caseQrText(item) {
@@ -198,12 +215,13 @@ export function caseQrText(item) {
       !Array.isArray(item.needs) || !item.needs.length || !item.needs.every(n => has(NEEDS, n)) ||
       ((loc.lat == null) !== (loc.lon == null)) ||
       (loc.lat !== null && loc.lat !== undefined && (!Number.isFinite(loc.lat) || loc.lat < -90 || loc.lat > 90)) ||
-      (loc.lon !== null && loc.lon !== undefined && (!Number.isFinite(loc.lon) || loc.lon < -180 || loc.lon > 180))) {
+      (loc.lon !== null && loc.lon !== undefined && (!Number.isFinite(loc.lon) || loc.lon < -180 || loc.lon > 180)) ||
+      (loc.lat != null && !plausibleThailandGps(loc.lat, loc.lon))) {
     throw new Error("ข้อมูลเคสไม่ครบสำหรับ QR ให้คัดลอกข้อความเต็มแทน");
   }
   const place = [loc.province, loc.district, loc.subdistrict, loc.landmark].filter(Boolean).join("/");
   const coords = Number.isFinite(loc.lat) && Number.isFinite(loc.lon)
-    ? `\nพิกัด ${loc.lat},${loc.lon}${Number.isFinite(loc.accuracyMeters) ? ` ±${Math.round(loc.accuracyMeters)}ม.` : ""}` : "";
+    ? `\nพิกัด ${loc.lat.toFixed(6)},${loc.lon.toFixed(6)}${Number.isFinite(loc.accuracyMeters) ? ` ±${Math.round(loc.accuracyMeters)}ม.` : ""}${gpsAccuracyWarning(loc.accuracyMeters) ? "\nGPS ไม่แม่น" : ""}` : "";
   const needs = item.needs.map(n => QR_NEEDS[n] || "อื่นๆ").join(",");
   const time = new Intl.DateTimeFormat("th-TH", {
     dateStyle: "short", timeStyle: "short", timeZone: "Asia/Bangkok"
@@ -217,7 +235,7 @@ export function caseQrText(item) {
   // Keep coordinates, province, headcount, all needs, phone and time. Show that place text was shortened.
   // Without GPS, shortening the place could remove the only usable location, so use the full-copy fallback.
   if (!coords || !loc.province) return qrBounded(full);
-  const compactMessage = placeText => `น้ำท่วม(ยังไม่ยืนยัน)\n${placeText}${coords}\n${item.peopleCount}คน ${needs}\nโทร ${item.contactPhone || "-"}\n${time} ไทย\nโปรดตอบรับ`;
+  const compactMessage = placeText => `น้ำท่วม(ไม่ยืนยัน)\n${placeText}${coords}\n${item.peopleCount}คน ${needs}\nโทร ${item.contactPhone || "-"}\n${time} ไทย\nโปรดตอบรับ`;
   const compactFull = compactMessage(place);
   if (new TextEncoder().encode(compactFull).length <= QR_MAX_BYTES) return compactFull;
   const landmarkChars = Array.from(String(loc.landmark || ""));
