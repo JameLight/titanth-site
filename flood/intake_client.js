@@ -1,6 +1,7 @@
 // Supabase public RPC client. Disabled unless a reviewed public config is installed.
 // No service-role key belongs in a browser bundle.
 import { canonicalProvince } from "./provinces.js";
+import { plausibleThailandGps } from "./model.js";
 const ALLOWED_NEEDS = new Set(["trapped", "medical", "immobile", "fast_water", "boat", "medicine", "food_water", "other", "dialysis_oxygen", "pregnant", "infant", "elderly", "disabled"]);
 const STATUS_TEXT = Object.freeze({
   SENT: "ระบบรับข้อมูลแล้ว ยังไม่มีทีมอาสากดรับเคส",
@@ -133,6 +134,9 @@ export function mapCaseForSubmit(item, consentVersion) {
       (lon !== null && (!Number.isFinite(lon) || lon < -180 || lon > 180)) ||
       (accuracy !== null && (!Number.isInteger(accuracy) || accuracy < 0 || accuracy > 100000 || lat === null)) ||
       (!landmark && lat === null)) throw new Error("ตำแหน่งไม่ครบหรือไม่ถูกต้อง");
+  if (lat !== null && !plausibleThailandGps(lat, lon)) {
+    throw new Error("พิกัดดูผิดปกติ กรุณาตรวจจุดสังเกตและโทร 1784 ก่อนส่งเข้าทีม");
+  }
   return {
     p_province: province, p_district: district || null, p_subdistrict: subdistrict || null,
     p_landmark: landmark || null, p_lat: lat, p_lon: lon, p_accuracy_m: accuracy,

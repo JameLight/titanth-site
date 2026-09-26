@@ -1,6 +1,6 @@
 import { NEEDS, CHANNELS, STATUS, makeCase, recordHandoffAttempt, isStale,
   possibleDuplicates, shareText, quickLocationText, ddpmLinePrefillUrl, validateTriage,
-  quickLocationQrText, caseQrText, casesCsv } from "./model.js";
+  quickLocationQrText, caseQrText, casesCsv, gpsAccuracyWarning } from "./model.js";
 import { listCases, putCase, deleteCase } from "./storage.js";
 import { qrSvg } from "./qr.js";
 import { loadIntakeConfig, makeIntakeClient, caseStatusText, stripIntakeSecrets } from "./intake_client.js";
@@ -243,8 +243,8 @@ function renderCase(item) {
   card.append(node("p", "", `${item.peopleCount} คน · ${item.needs.map(n => NEEDS[n]).join(", ")}`));
   if (isStale(item)) card.append(node("p", "case-warning", "ข้อมูลสถานการณ์นี้บันทึกเกิน 6 ชั่วโมงแล้ว ควรตรวจใหม่ก่อนส่งต่อ"));
   if (item.routingHint === "RED") card.append(node("p", "case-warning", "มีสัญญาณอันตราย โทร 1784 หรือ 1669 ตามเหตุทันที"));
-  if (Number.isFinite(item.location.accuracyMeters) && item.location.accuracyMeters > 500) {
-    card.append(node("p", "case-warning", `GPS คลาดเคลื่อนประมาณ ${Math.round(item.location.accuracyMeters)} เมตร กรุณาตรวจจุดสังเกตก่อนส่งต่อ`));
+  if (gpsAccuracyWarning(item.location.accuracyMeters)) {
+    card.append(node("p", "case-warning", `GPS คลาดเคลื่อนประมาณ ${Math.round(item.location.accuracyMeters)} เมตร — ${gpsAccuracyWarning(item.location.accuracyMeters)}`));
   }
   card.append(node("p", "case-warning", item.intake
     ? `รหัสอ้างอิง ${item.intake.code} ส่งถึงระบบแล้ว ตรวจสถานะเพื่อดูคำรายงานของทีม ถ้าอันตรายให้โทร 1784 หรือ 1669 ทันที`
@@ -417,6 +417,7 @@ form.addEventListener("submit", async event => {
     clearGpsFields();
     draftTouched = false;
     $("#gps-status").textContent = GPS_HINT;
+    $("#gps-status").classList.remove("gps-uncertain");
     await refresh();
     $("#case-list").scrollIntoView({ behavior: "smooth", block: "start" });
     toast("บันทึกในเครื่องแล้ว ยังไม่มีการส่งไปยังผู้รับเคส");
@@ -426,25 +427,38 @@ form.addEventListener("submit", async event => {
 $("#gps-button").addEventListener("click", () => {
   draftTouched = true;
   const status = $("#gps-status");
-  if (!navigator.geolocation) { status.textContent = "อุปกรณ์นี้ไม่มี GPS กรุณากรอกจุดสังเกต"; return; }
+  clearGpsFields(); // A failed refresh must not leave an older pin looking current.
+  if (!navigator.geolocation) { status.classList.add("gps-uncertain"); status.textContent = "อุปกรณ์นี้ไม่มี GPS โทร 1784 และบอกจุดสังเกต"; return; }
   const requestGeneration = ++gpsRequestGeneration;
+  status.classList.remove("gps-uncertain");
   status.textContent = "กำลังขอพิกัด…";
   navigator.geolocation.getCurrentPosition(position => {
     if (requestGeneration !== gpsRequestGeneration) return;
+    try { quickLocationText(position.coords); }
+    catch (error) {
+      clearGpsFields();
+      status.classList.add("gps-uncertain");
+      status.textContent = `${error.message} หากเจ็บป่วยหรือบาดเจ็บฉุกเฉิน โทร 1669`;
+      return;
+    }
     form.elements.lat.value = position.coords.latitude;
     form.elements.lon.value = position.coords.longitude;
     form.elements.accuracyMeters.value = Math.round(position.coords.accuracy);
-    status.textContent = `ได้ตำแหน่งของโทรศัพท์นี้แล้ว (คลาดเคลื่อนประมาณ ${Math.round(position.coords.accuracy)} เมตร) กรุณากรอกจุดสังเกตด้วย`;
-  }, () => { if (requestGeneration === gpsRequestGeneration) status.textContent = "ไม่ได้รับพิกัด กรุณากรอกจุดสังเกตด้วยมือ"; },
+    status.classList.toggle("gps-uncertain", Boolean(gpsAccuracyWarning(position.coords.accuracy)));
+    status.textContent = `ได้ตำแหน่งของโทรศัพท์นี้แล้ว (คลาดเคลื่อนประมาณ ${Math.round(position.coords.accuracy)} เมตร) ${gpsAccuracyWarning(position.coords.accuracy) || "กรุณากรอกจุดสังเกตด้วย"}`;
+  }, () => { if (requestGeneration === gpsRequestGeneration) { status.classList.add("gps-uncertain"); status.textContent = "ไม่ได้รับพิกัด โทร 1784 และบอกจุดสังเกตด้วยมือ"; } },
   { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
 });
 
 // KFR-10: find the location, then let the person send it straight into the DDPM LINE chat (one tap on a real link).
 let lastQuickLocationText = "";
 let lastQuickQrText = "";
+let lastQuickAccuracyWarning = "";
 
 function showQuickLocationResult(content, coords) {
   lastQuickLocationText = content;
+  lastQuickAccuracyWarning = gpsAccuracyWarning(coords.accuracy);
+  $("#quick-location-row").classList.toggle("gps-uncertain", Boolean(lastQuickAccuracyWarning));
   try { lastQuickQrText = quickLocationQrText(coords); }
   catch { lastQuickQrText = ""; }
   const line = $("#quick-location-line");
@@ -455,7 +469,7 @@ function showQuickLocationResult(content, coords) {
   $("#quick-location-qr-panel").hidden = true;
   $("#quick-location-qr-panel").replaceChildren();
   $("#quick-location-row").hidden = false;
-  $("#quick-location-status").textContent = `ถ้าอันตราย โทร 1784 ก่อน\nได้ตำแหน่งจากโทรศัพท์นี้แล้ว (อาจคลาดเคลื่อนประมาณ ${Math.round(coords.accuracy)} เมตร)\nเว็บยังไม่ส่งเรื่อง: เปิด LINE ปภ. ตรวจข้อความ แล้วกด “ส่ง” ใน LINE เอง`;
+  $("#quick-location-status").textContent = `ถ้าอันตราย โทร 1784 ก่อน\nได้ตำแหน่งจากโทรศัพท์นี้แล้ว (อาจคลาดเคลื่อนประมาณ ${Math.round(coords.accuracy)} เมตร)${lastQuickAccuracyWarning ? `\nคำเตือน: ${lastQuickAccuracyWarning}` : ""}\nเว็บยังไม่ส่งเรื่อง: เปิด LINE ปภ. ตรวจข้อความ แล้วกด “ส่ง” ใน LINE เอง`;
   // KFR-40: bring the next manual step into view after an asynchronous GPS result.
   line.focus();
 }
@@ -463,6 +477,8 @@ function showQuickLocationResult(content, coords) {
 function showQuickLocationProblem(message) {
   lastQuickLocationText = "";
   lastQuickQrText = "";
+  lastQuickAccuracyWarning = "";
+  $("#quick-location-row").classList.toggle("gps-uncertain", !message.startsWith("กำลัง"));
   $("#quick-location-line").hidden = true;
   $("#quick-location-more").hidden = true;
   $("#quick-location-qr-panel").hidden = true;
@@ -494,10 +510,10 @@ $("#quick-location").addEventListener("click", () => {
 async function copyQuickLocation() {
   if (!lastQuickLocationText) return;
   if (await copyText(lastQuickLocationText)) {
-    $("#quick-location-status").textContent = "คัดลอกข้อความแล้ว วางใน LINE ปภ. หรือส่งให้ญาติ แล้วโทร 1784 ด้วย การคัดลอกยังไม่ใช่การส่ง";
+    $("#quick-location-status").textContent = `${lastQuickAccuracyWarning ? `คำเตือน: ${lastQuickAccuracyWarning}\n` : ""}คัดลอกข้อความแล้ว วางใน LINE ปภ. หรือส่งให้ญาติ แล้วโทร 1784 ด้วย การคัดลอกยังไม่ใช่การส่ง`;
   } else {
     showManualCopy(lastQuickLocationText);
-    $("#quick-location-status").textContent = "ข้อความอยู่ในกล่องคัดลอกด้านบน ยังไม่มีข้อมูลส่งจากหน้านี้";
+    $("#quick-location-status").textContent = `${lastQuickAccuracyWarning ? `คำเตือน: ${lastQuickAccuracyWarning}\n` : ""}ข้อความอยู่ในกล่องคัดลอกด้านบน ยังไม่มีข้อมูลส่งจากหน้านี้`;
   }
 }
 
@@ -506,7 +522,7 @@ $("#quick-location-share").addEventListener("click", async () => {
   if (typeof navigator.share !== "function") return copyQuickLocation();
   try {
     await navigator.share({ title: "ขอความช่วยเหลือน้ำท่วม", text: lastQuickLocationText });
-    $("#quick-location-status").textContent = "เปิดการแชร์แล้ว หน้านี้ไม่รู้ว่าปลายทางได้รับข้อความหรือยัง โทร 1784 ด้วย";
+    $("#quick-location-status").textContent = `${lastQuickAccuracyWarning ? `คำเตือน: ${lastQuickAccuracyWarning}\n` : ""}เปิดการแชร์แล้ว หน้านี้ไม่รู้ว่าปลายทางได้รับข้อความหรือยัง โทร 1784 ด้วย`;
   } catch (error) {
     if (error?.name !== "AbortError") copyQuickLocation();
   }
