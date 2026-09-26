@@ -12,11 +12,13 @@ const NEEDS = Object.freeze({
   trapped: "มีคนติดอยู่", medical: "ต้องการแพทย์/บาดเจ็บ", immobile: "ผู้ป่วยติดเตียง/เคลื่อนย้ายเองไม่ได้",
   fast_water: "น้ำขึ้นเร็ว", boat: "ต้องการเรือ/อพยพ", medicine: "ขาดยาจำเป็น", food_water: "ต้องการอาหาร/น้ำดื่ม",
   other: "ความช่วยเหลืออื่น", dialysis_oxygen: "ผู้ฟอกไต/ใช้ออกซิเจน", pregnant: "หญิงตั้งครรภ์", infant: "เด็กเล็ก",
-  elderly: "ผู้สูงอายุ", disabled: "ผู้พิการ"
+  elderly: "ผู้สูงอายุ", disabled: "ผู้พิการ",
+  // v2.3: after details are erased only broad groups are kept
+  urgent: "ด่วน (รายละเอียดถูกลบแล้ว)", vulnerable: "กลุ่มเปราะบาง (รายละเอียดถูกลบแล้ว)"
 });
 // Triage: urgent first, then vulnerable groups (Ministry of Public Health list), then the rest.
-const URGENT = new Set(["trapped", "medical", "immobile", "fast_water", "dialysis_oxygen"]);
-const VULNERABLE = new Set(["pregnant", "infant", "elderly", "disabled"]);
+const URGENT = new Set(["trapped", "medical", "immobile", "fast_water", "dialysis_oxygen", "urgent"]);
+const VULNERABLE = new Set(["pregnant", "infant", "elderly", "disabled", "vulnerable"]);
 const STATUS = Object.freeze({
   SENT: "รอทีมรับ", ACKNOWLEDGED: "ทีมเรารับแล้ว", EN_ROUTE: "ทีมเรากำลังเดินทาง", NEED_INFO: "ต้องการข้อมูลเพิ่ม",
   RESOLVED: "ช่วยเสร็จแล้ว", HANDED_TO_OFFICIAL: "ส่งต่อหน่วยงานแล้ว", WITHDRAWN: "ผู้แจ้งยกเลิกแล้ว (ลบข้อมูลแล้ว)"
@@ -228,7 +230,8 @@ function renderList(selector, items, makeCard, emptyText) {
 function caseBody(item) {
   const box = el("div", "case-body");
   const needs = (item.needs ?? []).map(need => NEEDS[need] ?? "ความช่วยเหลืออื่น").join(" · ");
-  const prefix = urgent(item) ? "ด่วน: " : vulnerable(item) ? "กลุ่มเปราะบาง: " : "";
+  // Erased cases only keep broad groups, whose labels already say ด่วน / กลุ่มเปราะบาง.
+  const prefix = item.personal_data_purged ? "" : urgent(item) ? "ด่วน: " : vulnerable(item) ? "กลุ่มเปราะบาง: " : "";
   box.append(el("p", urgent(item) ? "needs urgent" : vulnerable(item) ? "needs vulnerable" : "needs", `${prefix}${needs}`));
   for (const d of state.duplicates.get(item.id) ?? []) {
     box.append(el("p", "duplicate", `อาจซ้ำกับเคส ${d.other_code} (${DUPLICATE_REASON[d.reason] ?? "คล้ายกัน"}) — ตรวจก่อนออกไป`));
@@ -248,7 +251,7 @@ function caseBody(item) {
   if (item.outcome) box.append(el("p", "", `ผลที่ทีมรายงาน: ${item.outcome}`));
   if (item.personal_data_purged) {
     const why = item.status === "WITHDRAWN" ? "ผู้แจ้งยกเลิกเคสและขอลบข้อมูล ระบบลบ" : "ระบบลบ";
-    box.append(el("p", "note", `${why}ข้อมูลที่ระบุตัวคนได้ของเคสนี้แล้ว (เบอร์ รายละเอียด จุดสังเกต ตำบล อำเภอ พิกัด ผลการช่วย และข้อความกับชื่อในประวัติ) เหลือเฉพาะจังหวัด จำนวนคน ประเภทความต้องการ และสถานะ`));
+    box.append(el("p", "note", `${why}ข้อมูลที่ระบุตัวคนได้ของเคสนี้แล้ว (เบอร์ รายละเอียด จุดสังเกต ตำบล อำเภอ พิกัด ผลการช่วย และข้อความกับชื่อในประวัติ) เหลือเฉพาะจังหวัด เวลา จำนวนคน กลุ่มความต้องการแบบกว้าง (ด่วน / กลุ่มเปราะบาง / อื่นๆ) และสถานะ`));
   }
   return box;
 }
