@@ -241,12 +241,33 @@ function caseBody(item) {
   if (item.landmark) box.append(el("p", "", `จุดสังเกต: ${item.landmark}`));
   if (item.details) box.append(el("p", "details", `รายละเอียดจากผู้แจ้ง: ${item.details}`));
   if (item.lat != null && item.lon != null && Number.isFinite(Number(item.lat)) && Number.isFinite(Number(item.lon))) {
-    const accuracy = Number.isFinite(Number(item.accuracy_m)) && item.accuracy_m != null ? ` (คลาดเคลื่อนประมาณ ${item.accuracy_m} ม.)` : "";
+    const lat = Number(item.lat).toFixed(6);
+    const lon = Number(item.lon).toFixed(6);
+    const meters = item.accuracy_m != null && Number.isFinite(Number(item.accuracy_m)) ? Math.round(Number(item.accuracy_m)) : null;
+    const accuracy = meters != null ? ` (คลาดเคลื่อนประมาณ ${meters} ม.)` : "";
     const link = el("a", "map-link", `เปิดแผนที่ตำแหน่งจากโทรศัพท์ผู้แจ้ง${accuracy}`);
-    link.href = `https://maps.google.com/?q=${Number(item.lat).toFixed(6)},${Number(item.lon).toFixed(6)}`;
+    link.href = `https://maps.google.com/?q=${lat},${lon}`;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
     box.append(link);
+    // LOC-3: the numbers themselves, to read out by phone or radio and to paste into another map app.
+    const coords = el("p", "coords", "พิกัด (ละติจูด, ลองจิจูด): ");
+    coords.append(el("span", "nums", `${lat}, ${lon}`), " ", button("คัดลอกพิกัด", "secondary copy-coords", async event => {
+      event.stopPropagation();
+      try {
+        await navigator.clipboard.writeText(`${lat}, ${lon}`);
+        toast(`คัดลอกพิกัดแล้ว: ${lat}, ${lon}`);
+      } catch {
+        toast(`คัดลอกไม่ได้ อ่านพิกัดจากบรรทัดนี้แทน: ${lat}, ${lon}`);
+      }
+    }));
+    box.append(coords);
+    // LOC-1: a rough fix must not look like a precise pin.
+    if (meters == null || meters > 100) {
+      box.append(el("p", "loc-warn", meters == null
+        ? "ไม่ทราบว่าตำแหน่งนี้คลาดเคลื่อนเท่าไร ใช้จุดสังเกตประกอบ และโทรยืนยันกับผู้แจ้งก่อนออกเดินทาง"
+        : `ตำแหน่งอาจคลาดเคลื่อนมาก (ประมาณ ${meters} ม.) ใช้จุดสังเกตประกอบ และโทรยืนยันกับผู้แจ้งก่อนออกเดินทาง`));
+    }
   }
   if (item.outcome) box.append(el("p", "", `ผลที่ทีมรายงาน: ${item.outcome}`));
   if (item.personal_data_purged) {
