@@ -2,7 +2,7 @@
 
 สถานะ: **candidate ปิดรับเคส**. ไฟล์ `intake-config.json` ยัง `enabled:false`, `schemaVersion:2`, URL/key ว่าง. ไม่ใช่หลักฐานว่ามี SQL รุ่นใหม่บนฐานจริงหรือมีทีมเฝ้าคิว และไม่ได้เปิดรับประชาชนจาก PR นี้
 
-ต้นแบบหน้านี้เริ่มตรวจเทียบ `sql_v26/archive_r10/supabase_setup_v26_candidate.sql` SHA-256 `d651c550c21939934696fed7f3a2b02ff43e20f46074d137334fc499770f923f` ซึ่งเป็น **รุ่นเก่าใน archive**. ตอนอ่านไฟล์วันที่ 27 ก.ย. snapshot ของ `sql_v26/supabase_setup_v26_candidate.sql` เป็น r11 SHA-256 `7876ef79430afc3612905c702f4b1d88100554cab24571993153f9fe89b7ab6a` และ `INTAKE_RPC_CONTRACT.md` เป็น r11 SHA-256 `4d36e84cdf826ddd41b3fc101dcc8537cbc5bcf63f54ada45f4f81b1e364b875`. ต่อมาพบช่องสิทธิ์ heartbeat ของ r11; Claude กำลังแก้รุ่นถัดไป. ต้องให้ Claude/ผู้ตรวจอิสระยืนยันผล SQL รุ่นสุดท้ายกับ HEAD นี้โดยตรงก่อนอ้างความพร้อม. ทั้งหมดเป็น candidate/ฐานทิ้ง ไม่ใช่ production
+ต้นแบบหน้านี้เริ่มตรวจเทียบ SQL r10 ที่เก็บใน archive. ฉบับล่าสุดที่ตรวจอิสระ 27 ก.ย. คือ `sql_v26/supabase_setup_v26_candidate.sql` r13 SHA-256 `78dca85081bb86c3abf1148c5706611d206a672fe54db865c5d7bd108e727a51` คู่ SQL v2.7 SHA-256 `814913ccbd7908e2c23bb51a3e119dc258be6a174336c4dbd62f5fd09b55969b`. Codex ตรวจสิทธิ์สมาชิกใหม่และผู้ประสานที่ถูกถอนในฐานทิ้งด้วยข้อมูลสมมติแล้ว; Claude ทดสอบ HEAD `6bda684` กับ emulator และ Chrome จำลอง พบจุดแสดงผล 2 จุดที่แก้ใน source หลัง HEAD นั้น. ต้องทดสอบ HEAD ใหม่ตรงตัวอีกครั้ง. ผลทั้งหมดไม่ใช่ Supabase/PostgREST production หรือการมีทีมเฝ้าคิว
 
 ## สิ่งที่ผู้ใช้เห็น
 
@@ -29,4 +29,4 @@
 
 `node --test flood/*.test.mjs flood-neighbors/tests/*.test.mjs`
 
-Tests ใน repo ใช้ข้อมูลสมมติและ mock เท่านั้น ไม่ใช่หลักฐานว่าคนจริงได้รับความช่วยเหลือหรือถอนข้อมูลบนฐาน production ได้
+Tests ใน repo ใช้ข้อมูลสมมติและ mock เท่านั้น. Claude ตรวจ HEAD ก่อนแก้ข้อความ/ปุ่มด้วย emulator client 25/25, Chrome 38/39, อัปเกรดแคชและ offline 4/4; ข้อ Chrome ที่ไม่ผ่านเป็นปุ่มซึ่งยังเปิดอยู่หลังได้รับเคส แต่ไม่ส่งซ้ำในกรณีทดสอบ. การแก้ source รอบนี้ต้องตรวจ browser ซ้ำ. ไม่มีผลใดพิสูจน์ว่าคนจริงได้รับความช่วยเหลือหรือถอนข้อมูลบนฐาน production ได้

@@ -477,11 +477,12 @@ async function sendToTeam(item, sendButton) {
       submit: (source, payload) => submitAttempt(client, source, payload, sendButton)
     });
   } catch (error) {
+    if (error?.reserved) submissionGuard.mark(item.caseId, "uncertain");
     showError(error?.reserved
       ? error.message
       : `ยังไม่ได้ส่งเคสเข้าระบบจากหน้านี้: ${error.message || "ตรวจข้อมูลไม่สำเร็จ"} หากอันตรายโทร 1784 หรือ 1669`);
     await refresh().catch(() => {});
-  } finally { sendButton.disabled = false; }
+  } finally { sendButton.disabled = !!submissionGuard.get(item.caseId); }
 }
 
 async function retryTeamSubmission(item, control) {
@@ -581,7 +582,9 @@ async function recoverFromSecret(withdraw) {
       target.textContent = `พบรหัสเคส ${found.code} • ${caseStatusText(found)} เก็บรหัสเคสและรหัสกู้คืนไว้เอง หากอันตรายโทร 1784 หรือ 1669`;
     }
   } catch (error) {
-    target.textContent = `ยังยืนยันผลไม่ได้: ${error.message || "ระบบไม่ตอบ"} หากเพิ่งส่งและเน็ตหลุด อย่าสร้างเคสซ้ำทันที ถ้าอันตรายโทร 1784 หรือ 1669`;
+    target.textContent = error?.definitive
+      ? `${error.message} ถ้าอันตรายโทร 1784 หรือ 1669`
+      : `ยังยืนยันผลไม่ได้: ${error.message || "ระบบไม่ตอบ"} หากเพิ่งส่งและเน็ตหลุด อย่าสร้างเคสซ้ำทันที ถ้าอันตรายโทร 1784 หรือ 1669`;
   } finally { control.disabled = false; }
 }
 
