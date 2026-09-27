@@ -42,6 +42,13 @@ export function validConfig(value, origin = globalThis.location?.origin) {
   return production || testing;
 }
 
+export function deniesFraming(headers) {
+  const xfo = String(headers?.get("x-frame-options") ?? "").trim().toUpperCase();
+  if (xfo === "DENY") return true;
+  const csp = String(headers?.get("content-security-policy") ?? "");
+  return csp.split(";").some(directive => /^frame-ancestors\s+'none'$/i.test(directive.trim()));
+}
+
 export async function loadConfig(fetchImpl = globalThis.fetch.bind(globalThis), origin = globalThis.location?.origin) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12_000);
@@ -54,6 +61,10 @@ export async function loadConfig(fetchImpl = globalThis.fetch.bind(globalThis), 
     if (!notice.ok || !String(notice.headers.get("content-type") ?? "").includes("text/html")) return null;
     const noticeText = await notice.text();
     if (!noticeText.includes('<meta name="aid-terms-version" content="aid-terms-v1-20260927">')) return null;
+    // GitHub Pages currently sends neither header. A meta CSP frame-ancestors is ignored by browsers.
+    // Keep the board closed even if someone accidentally flips the JSON config before hosting is secured.
+    const page = await fetchImpl("./", { cache: "no-store", credentials: "omit", redirect: "error", signal: controller.signal });
+    if (!page.ok || !deniesFraming(page.headers)) return null;
     return value;
   } catch { return null; }
   finally { clearTimeout(timeout); }

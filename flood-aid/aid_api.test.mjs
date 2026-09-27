@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { AidError, validConfig, loadConfig, makeAidApi } from "./aid_api.js";
+import { AidError, validConfig, loadConfig, makeAidApi, deniesFraming } from "./aid_api.js";
 
 const origin = "https://titanth.com";
 const good = {
@@ -26,8 +26,22 @@ test("starts closed unless enabled, same-version notice, and safe public API are
 test("will not activate if notice is unavailable", async () => {
   const fetcher = async url => url === "./aid-config.json" ? json(good) : new Response("missing", { status: 404 });
   assert.equal(await loadConfig(fetcher, origin), null);
-  const fetcher2 = async url => url === "./aid-config.json" ? json(good) : new Response('<meta name="aid-terms-version" content="aid-terms-v1-20260927">', { headers: { "content-type": "text/html" } });
+  const fetcher2 = async url => url === "./aid-config.json" ? json(good) : url === "./" ?
+    new Response("<html></html>", { headers: { "content-security-policy": "frame-ancestors 'none'" } }) :
+    new Response('<meta name="aid-terms-version" content="aid-terms-v1-20260927">', { headers: { "content-type": "text/html" } });
   assert.deepEqual(await loadConfig(fetcher2, origin), good);
+});
+
+test("HTTP anti-frame header is required; an HTML meta directive does not count", async () => {
+  assert.equal(deniesFraming(new Headers()), false);
+  assert.equal(deniesFraming(new Headers({ "content-security-policy-report-only": "frame-ancestors 'none'" })), false);
+  assert.equal(deniesFraming(new Headers({ "content-security-policy": "default-src 'self'; frame-ancestors 'none'" })), true);
+  assert.equal(deniesFraming(new Headers({ "x-frame-options": "DENY" })), true);
+  assert.equal(deniesFraming(new Headers({ "x-frame-options": "SAMEORIGIN" })), false);
+  const noHeader = async url => url === "./aid-config.json" ? json(good) : url === "./" ?
+    new Response('<meta http-equiv="Content-Security-Policy" content="frame-ancestors \'none\'">', { headers: { "content-type": "text/html" } }) :
+    new Response('<meta name="aid-terms-version" content="aid-terms-v1-20260927">', { headers: { "content-type": "text/html" } });
+  assert.equal(await loadConfig(noHeader, origin), null);
 });
 
 test("public board calls only RPC with publishable key and never direct tables", async () => {
