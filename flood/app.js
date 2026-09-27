@@ -335,8 +335,11 @@ async function sendToTeam(item, sendButton) {
   const client = await intakeClientPromise;
   if (!client || !await intakeConsent(client)) return;
   sendButton.disabled = true;
+  let receiptConfirmed = false;
   try {
     const receipt = await client.submitCase(item);
+    receiptConfirmed = true;
+    sendButton.textContent = "ระบบรับแล้ว • อย่าส่งซ้ำ";
     try {
       await putCase({ ...item, intake: receipt });
     } catch {
@@ -356,7 +359,7 @@ async function sendToTeam(item, sendButton) {
       : error?.definitive
         ? `ระบบไม่รับเคสนี้: ${error.message}${route}`
         : "ยังยืนยันไม่ได้ว่าระบบรับเคสหรือไม่ อย่ากดส่งซ้ำทันที ถ้าอันตรายโทร 1784 หรือ 1669 หรือส่ง LINE ปภ.");
-  } finally { sendButton.disabled = false; }
+  } finally { if (!receiptConfirmed) sendButton.disabled = false; }
 }
 
 async function readIntakeStatus(item, target) {
