@@ -101,6 +101,20 @@ test("network and malformed JSON responses point to an emergency channel", async
   await assert.rejects(() => makeIntakeClient(config, badJson).submitCase(item), /อ่านคำตอบ.*1784/);
 });
 
+test("an uncertain submit response warns that the case may already exist", async () => {
+  const ready = { ok: true, json: async () => [{ intake_open: true, duty_locked: false }] };
+  const duty = { ok: true, json: async () => [{ on_duty: true }] };
+  const failsAfterPost = async url => url.endsWith("system_totals") ? ready
+    : url.endsWith("duty_status") ? duty : Promise.reject(new TypeError("offline after POST"));
+  await assert.rejects(() => makeIntakeClient(config, failsAfterPost, () => "a".repeat(48)).submitCase(item), /อาจรับข้อมูลแล้ว.*อย่ากดส่งซ้ำ.*1784/);
+  const malformedAfterPost = async url => url.endsWith("system_totals") ? ready
+    : url.endsWith("duty_status") ? duty : { ok: true, json: async () => { throw new SyntaxError("bad JSON"); } };
+  await assert.rejects(() => makeIntakeClient(config, malformedAfterPost, () => "a".repeat(48)).submitCase(item), /อาจรับข้อมูลแล้ว.*อย่ากดส่งซ้ำ.*1784/);
+  const missingReceipt = async url => url.endsWith("system_totals") ? ready
+    : url.endsWith("duty_status") ? duty : { ok: true, json: async () => [{ code: "", secret: "" }] };
+  await assert.rejects(() => makeIntakeClient(config, missingReceipt, () => "a".repeat(48)).submitCase(item), /ยังยืนยันไม่ได้.*อย่ากดส่งซ้ำ.*1784/);
+});
+
 test("stalled claimed cases display a call-now warning without changing the actual status", () => {
   assert.match(caseStatusText({ status: "ACKNOWLEDGED", stale: true }), /ไม่มีการอัปเดต.*1784/);
   assert.match(caseStatusText({ status: "NEED_INFO", stale: true }), /ไม่มีการอัปเดต.*1784/);

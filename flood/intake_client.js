@@ -82,6 +82,7 @@ export function makeIntakeClient(config, fetchImpl = globalThis.fetch, deviceTok
         body: JSON.stringify(payload)
       });
     } catch {
+      if (name === "submit_case") throw new Error("ยังยืนยันไม่ได้ว่าเคสถูกบันทึกหรือไม่ ระบบอาจรับข้อมูลแล้ว อย่ากดส่งซ้ำทันที หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");
       throw new Error("ติดต่อระบบรับเคสไม่ได้ หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");
     }
     if (!response.ok) {
@@ -94,7 +95,10 @@ export function makeIntakeClient(config, fetchImpl = globalThis.fetch, deviceTok
       }
       throw new Error(`ระบบรับเคสตอบกลับผิดพลาด (${response.status}) หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ`);
     }
-    const result = await response.json().catch(() => { throw new Error("อ่านคำตอบจากระบบรับเคสไม่ได้ หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ"); });
+    const result = await response.json().catch(() => {
+      if (name === "submit_case") throw new Error("ยังยืนยันไม่ได้ว่าเคสถูกบันทึกหรือไม่ ระบบอาจรับข้อมูลแล้ว อย่ากดส่งซ้ำทันที หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");
+      throw new Error("อ่านคำตอบจากระบบรับเคสไม่ได้ หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");
+    });
     if (!Array.isArray(result) || result.length !== 1 || typeof result[0] !== "object" || !result[0]) {
       throw new Error("คำตอบจากระบบรับเคสไม่ครบ หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");
     }
@@ -123,7 +127,7 @@ export function makeIntakeClient(config, fetchImpl = globalThis.fetch, deviceTok
     // Do not retry automatically: a network error after POST may mean the server received it.
     const result = await rpc("submit_case", payload);
     if (!/^[A-Z0-9-]{4,40}$/.test(result.code || "") || !/^[a-f0-9]{32,128}$/.test(result.secret || "")) {
-      throw new Error("ระบบรับเคสตอบรหัสกลับไม่ครบ กรุณาโทร 1784 หากเป็นเหตุจริง");
+      throw new Error("ระบบตอบรหัสเคสกลับไม่ครบ ยังยืนยันไม่ได้ว่าเคสถูกบันทึกหรือไม่ อย่ากดส่งซ้ำทันที หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");
     }
     return { code: result.code, secret: result.secret, submittedAt: new Date().toISOString() };
   }
