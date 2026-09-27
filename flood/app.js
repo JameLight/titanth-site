@@ -4,6 +4,7 @@ import { NEEDS, CHANNELS, STATUS, makeCase, recordHandoffAttempt, isStale,
 import { listCases, putCase, deleteCase } from "./storage.js";
 import { qrSvg } from "./qr.js";
 import { loadIntakeConfig, makeIntakeClient, caseStatusText, stripIntakeSecrets } from "./intake_client.js";
+import { createSubmissionGuard } from "./submission_guard.js";
 import { PROVINCES, canonicalProvince } from "./provinces.js";
 import { NDWC_ALERTS_URL, alertsForProvince, newestAlertTime } from "./official_alerts.js";
 
@@ -12,6 +13,9 @@ const DDPM_LINE_URL = "https://lin.ee/MoS2rXU";
 const GPS_HINT = "กดเฉพาะเมื่ออยู่ที่จุดเกิดเหตุ ถ้าแจ้งแทนคนอื่น ให้กรอกจุดสังเกตแทน";
 const form = $("#case-form");
 const list = $("#case-list");
+let guardStorage;
+try { guardStorage = globalThis.localStorage; } catch { /* A private browser may block storage. */ }
+const submissionGuard = createSubmissionGuard(guardStorage);
 let cases = [];
 let pendingHandoff = null;
 let gpsRequestGeneration = 0;
@@ -228,6 +232,7 @@ function lineLink() {
 }
 
 function renderCase(item) {
+  const submissionOutcome = !item.intake && submissionGuard.get(item.caseId);
   const card = node("article", `case-card ${item.routingHint === "RED" ? "urgent" : ""}`);
   const head = node("div", "case-head");
   head.append(node("h3", "", `${item.location.landmark || "พิกัดที่บันทึก"} · ${item.location.province}`));
@@ -236,8 +241,10 @@ function renderCase(item) {
   head.append(time);
   card.append(head);
   const badges = node("div", "badges");
-  badges.append(node("span", `badge ${item.intake ? "attempt" : item.status === STATUS.LOCAL_ONLY ? "local" : "attempt"}`,
+  badges.append(node("span", `badge ${item.intake || submissionOutcome ? "attempt" : item.status === STATUS.LOCAL_ONLY ? "local" : "attempt"}`,
     item.intake ? "ระบบทีมอาสารับข้อมูลแล้ว • ยังไม่ยืนยันว่ามีทีมรับเคส" :
+      submissionOutcome === "confirmed" ? "ระบบรับข้อมูลแล้ว • อย่าส่งซ้ำ; หากเก็บรหัสไว้ให้ใช้ตรวจสถานะ" :
+      submissionOutcome === "uncertain" ? "เคสนี้อาจถึงระบบแล้ว • อย่าส่งซ้ำ" :
       item.status === STATUS.LOCAL_ONLY ? "เคสในเครื่อง • เว็บไม่ส่งเรื่องเอง" : "ผู้ใช้ระบุว่าส่งต่อแล้ว • ยังไม่ยืนยันผู้รับ"));
   card.append(badges);
   card.append(node("p", "", `${item.peopleCount} คน · ${item.needs.map(n => NEEDS[n]).join(", ")}`));
@@ -248,6 +255,7 @@ function renderCase(item) {
   }
   card.append(node("p", "case-warning", item.intake
     ? `รหัสอ้างอิง ${item.intake.code} ส่งถึงระบบแล้ว ตรวจสถานะเพื่อดูคำรายงานของทีม ถ้าอันตรายให้โทร 1784 หรือ 1669 ทันที`
+    : submissionOutcome ? "อย่ากดส่งเคสนี้ซ้ำ ถ้าเก็บรหัสรับเรื่องไว้ให้ใช้รหัสนั้นตรวจสถานะ หากยังเดือดร้อนโทร 1784 หรือ 1669 ตามเหตุทันที"
     : item.status === STATUS.LOCAL_ONLY
       ? "การบันทึกเคสไม่ใช่การแจ้งเหตุ เว็บไม่ทราบว่าคุณโทรหรือกดส่งเองแล้วหรือยัง หากยังไม่ได้แจ้ง ให้โทร 1784 หรือ 1669 ตามเหตุ และตรวจคำตอบจากปลายทาง"
       : "คุณระบุว่าส่งต่อแล้ว แต่ยังไม่มีหลักฐานว่ามีผู้รับเคส ถ้าไม่มีการตอบกลับ ให้โทร 1784 หรือ 1669 ตามเหตุ"));
@@ -273,7 +281,7 @@ function renderCase(item) {
     const withdrawButton = button("ยกเลิกเคส/ลบข้อมูลของฉัน", "danger-button", () => withdrawSubmittedCase(item, withdrawButton));
     actions.append(withdrawButton);
     card.append(statusText);
-  } else {
+  } else if (!submissionOutcome) {
     const sendButton = button("ส่งเข้าทีมอาสา", "primary-button", () => sendToTeam(item, sendButton));
     sendButton.hidden = true;
     actions.append(sendButton);
@@ -332,13 +340,16 @@ function showReceiptRecovery(receipt) {
 }
 
 async function sendToTeam(item, sendButton) {
+  if (submissionGuard.get(item.caseId)) return;
   const client = await intakeClientPromise;
   if (!client || !await intakeConsent(client)) return;
+  if (submissionGuard.get(item.caseId)) return;
   sendButton.disabled = true;
   let receiptConfirmed = false;
   try {
     const receipt = await client.submitCase(item);
     receiptConfirmed = true;
+    submissionGuard.mark(item.caseId, "confirmed");
     sendButton.textContent = "ระบบรับแล้ว • อย่าส่งซ้ำ";
     try {
       await putCase({ ...item, intake: receipt });
@@ -353,13 +364,17 @@ async function sendToTeam(item, sendButton) {
     }
     toast(`ระบบบันทึกเคส ${receipt.code} แล้ว ยังไม่มีหลักฐานว่าทีมรับเคส ถ้าอันตรายโทร 1784 หรือ 1669`);
   } catch (error) {
+    if (!receiptConfirmed && !error?.beforeSubmit && !error?.definitive) {
+      submissionGuard.mark(item.caseId, "uncertain");
+      sendButton.textContent = "อาจรับแล้ว • อย่าส่งซ้ำ";
+    }
     const route = /1784|1669/.test(error?.message ?? "") ? "" : " หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ";
     showError(error?.beforeSubmit
       ? `ยังไม่ได้ส่งเคสเข้าระบบ: ${error.message}${route}`
       : error?.definitive
         ? `ระบบไม่รับเคสนี้: ${error.message}${route}`
         : "ยังยืนยันไม่ได้ว่าระบบรับเคสหรือไม่ อย่ากดส่งซ้ำทันที ถ้าอันตรายโทร 1784 หรือ 1669 หรือส่ง LINE ปภ.");
-  } finally { if (!receiptConfirmed) sendButton.disabled = false; }
+  } finally { if (!receiptConfirmed && !submissionGuard.get(item.caseId)) sendButton.disabled = false; }
 }
 
 async function readIntakeStatus(item, target) {
@@ -380,6 +395,7 @@ async function withdrawSubmittedCase(item, control) {
     const result = await client.withdrawCase(item.intake);
     try {
       await deleteCase(item.caseId);
+      submissionGuard.clear(item.caseId);
       clearManualCopy();
       await refresh();
       toast(result.status === "WITHDRAWN" ? "ระบบยืนยันยกเลิกเคสและลบข้อมูลละเอียดตามที่แจ้งแล้ว สำเนาในอุปกรณ์นี้ลบแล้ว" : "ระบบยืนยันลบข้อมูลละเอียดตามที่แจ้งแล้ว เคสที่ปิดไว้คงสถานะเดิม สำเนาในอุปกรณ์นี้ลบแล้ว");
@@ -760,7 +776,7 @@ async function removeCase(item) {
   if (!await askConfirm(item.intake
     ? "การลบในอุปกรณ์จะลบรหัสลับสำหรับอ่านสถานะ แต่ไม่ลบข้อมูลที่ส่งถึงระบบทีมอาสาแล้ว หากต้องลบข้อมูลในระบบให้กด ‘ยกเลิกเคส/ลบข้อมูลของฉัน’ ก่อน"
     : "หากเคยส่งข้อความไปช่องทางอื่น ข้อมูลปลายทางจะไม่ถูกลบ", "ลบเคสนี้ออกจากอุปกรณ์")) return;
-  try { await deleteCase(item.caseId); clearManualCopy(); await refresh(); toast("ลบเคสในอุปกรณ์นี้แล้ว"); }
+  try { await deleteCase(item.caseId); submissionGuard.clear(item.caseId); clearManualCopy(); await refresh(); toast("ลบเคสในอุปกรณ์นี้แล้ว"); }
   catch (error) { toast(error.message); }
 }
 
