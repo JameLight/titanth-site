@@ -15,6 +15,7 @@ const STATUS_TEXT = Object.freeze({
   WITHDRAWN: "คุณยกเลิกเคสนี้แล้ว และระบบลบข้อมูลละเอียดตามขอบเขตที่แจ้งแล้ว"
 });
 const REJECTED_TEXT = Object.freeze({
+  INTAKE_CLOSED: "ตอนนี้ระบบไม่เปิดรับเคสเข้าทีมอาสา โทร 1784 หรือส่ง LINE ปภ. ด้วยตัวเอง",
   UNKNOWN_PROVINCE: "ชื่อจังหวัดไม่อยู่ในรายการ กรุณาเลือกจังหวัดใหม่ก่อนส่ง",
   NO_TEAM_ON_DUTY: "ตอนนี้ไม่มีทีมอาสาเฝ้าจังหวัดนี้ โทร 1784 หรือส่ง LINE ปภ.",
   TOO_MANY_CASES: "มีการส่งเรื่องจากเครื่องหรือเครือข่ายนี้มากในช่วงสั้น ๆ ถ้าอันตรายโทร 1784",
@@ -25,8 +26,9 @@ const REJECTED_TEXT = Object.freeze({
 });
 
 export function validIntakeConfig(value) {
-  // Version 3 requires the v2.6 submit_case RPC with p_device; the live v2.3
-  // RPC does not accept that field. Keep the deployed v2 config closed.
+  // Version 3 opts in to the v2.6 payload contract. The live v2.3 RPC does
+  // not accept p_device. A config alone is not proof the backend was upgraded;
+  // submitCase also checks the v2.6 system_totals RPC before sending anything.
   if (!value || value.enabled !== true || value.schemaVersion !== 3 ||
       typeof value.publishableKey !== "string" || !value.publishableKey.startsWith("sb_publishable_") ||
       typeof value.consentVersion !== "string" || !/^[a-zA-Z0-9._-]{1,40}$/.test(value.consentVersion) ||
@@ -104,6 +106,12 @@ export function makeIntakeClient(config, fetchImpl = globalThis.fetch, deviceTok
 
   async function submitCase(item) {
     const payload = mapCaseForSubmit(item, config.consentVersion);
+    let totals;
+    try { totals = await rpc("system_totals", {}); }
+    catch { throw new Error("ยังยืนยันไม่ได้ว่าระบบรับเคสรุ่นใหม่พร้อมใช้ หากเป็นเหตุจริงโทร 1784 หรือส่ง LINE ปภ. ด้วยตัวเอง"); }
+    if (totals.intake_open !== true || totals.duty_locked !== false) {
+      throw new Error("ตอนนี้ระบบยังไม่เปิดรับเคสเข้าทีมอาสา หากเป็นเหตุจริงโทร 1784 หรือส่ง LINE ปภ. ด้วยตัวเอง");
+    }
     if (!await dutyStatus(payload.p_province)) throw new Error("ตอนนี้ยังไม่มีทีมอาสาเฝ้าในพื้นที่นี้ ให้โทร 1784 หรือส่ง LINE ปภ.");
     const deviceToken = deviceTokenProvider();
     if (DEVICE_TOKEN_PATTERN.test(deviceToken ?? "")) payload.p_device = deviceToken;
@@ -176,7 +184,10 @@ export function caseStatusText(result) {
   if (!label) return "ยังอ่านสถานะจากระบบไม่ได้";
   const team = result.status !== "WITHDRAWN" && result.team_name ? ` (${String(result.team_name)})` : "";
   const late = result.late === true && result.status === "SENT" ? " เกิน 10 นาทีแล้วยังไม่มีทีมรับ โทร 1784 หรือ 1669 ตามเหตุทันที" : "";
-  return `${label}${team}.${late}`;
+  const stale = result.stale === true && ["ACKNOWLEDGED", "NEED_INFO", "EN_ROUTE"].includes(result.status)
+    ? " ไม่มีการอัปเดตจากทีมมาระยะหนึ่ง อย่ารอคำตอบในเว็บ หากยังเดือดร้อนโทร 1784 หรือ 1669 ตามเหตุทันที"
+    : "";
+  return `${label}${team}.${late}${stale}`;
 }
 
 export function stripIntakeSecrets(items) {
