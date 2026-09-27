@@ -4,7 +4,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { waterSummary, rainSummary, waterUrl, rainUrl, thaiTime, stationLine, rainLine } from "../water_model.js";
+import { waterSummary, rainSummary, waterUrl, rainUrl, thaiTime, stationLine, rainLine, ageText, provinceFromQuery } from "../water_model.js";
 import { PROVINCE_CODES } from "../province_codes.js";
 import { PROVINCES } from "../../flood/provinces.js";
 
@@ -59,12 +59,28 @@ test("ระยอง rain: the top station has 286 mm in 24 hours and counts ar
   assert.equal(r.top[0].mm, 286);
   assert.equal(r.top.length, 5);
   assert.ok(r.over90 >= 1 && r.over35 >= r.over90);
-  assert.match(rainLine(r.top[0]), /^286 มม\. — .+ อ\./);
+  assert.match(rainLine(r.top[0], NOW), /^286 มม\. — .+ อ\..+ · ถึง \d{2}:\d{2} น\. \(/);
 });
 
-test("a station line says the share of the bank, the trend and the time", () => {
-  const line = stationLine({ name: "บ้านทดสอบ", river: "คลองทดสอบ", district: "อ.ทดสอบ", percent: 118.6, trend: "up", time: "19:30" });
-  assert.equal(line, "บ้านทดสอบ (คลองทดสอบ) อ.ทดสอบ — 119% ของตลิ่ง · น้ำกำลังขึ้น · 19:30 น.");
+test("a station line says the share of the bank, the trend, when it was measured and how long ago", () => {
+  const item = { name: "บ้านทดสอบ", river: "คลองทดสอบ", district: "อ.ทดสอบ", percent: 118.6, trend: "up", time: "19:30", at: "2026-09-27T12:30:00.000Z" };
+  assert.equal(stationLine(item, NOW), "บ้านทดสอบ (คลองทดสอบ) อ.ทดสอบ — 119% ของตลิ่ง · น้ำกำลังขึ้น · วัดเมื่อ 19:30 น. (15 นาทีที่แล้ว)");
+});
+
+test("reading age is said in words and slow readings are marked", () => {
+  assert.equal(ageText("2026-09-27T12:44:30Z", NOW), "เมื่อสักครู่");
+  assert.equal(ageText("2026-09-27T12:30:00Z", NOW), "15 นาทีที่แล้ว");
+  assert.equal(ageText("2026-09-27T11:40:00Z", NOW), "1 ชม. 5 นาทีที่แล้ว");
+  assert.equal(ageText("2026-09-27T11:00:00Z", NOW), "1 ชม. 45 นาทีที่แล้ว · ข้อมูลช้า");
+  assert.equal(ageText("2026-09-27T10:44:50Z", NOW), "2 ชม.ที่แล้ว · ข้อมูลช้า");
+});
+
+test("a shared link opens its province by code or by Thai name, and ignores anything else", () => {
+  assert.equal(provinceFromQuery("?p=21", PROVINCE_CODES), "ระยอง");
+  assert.equal(provinceFromQuery("?p=" + encodeURIComponent("ปราจีนบุรี"), PROVINCE_CODES), "ปราจีนบุรี");
+  assert.equal(provinceFromQuery("?p=99", PROVINCE_CODES), null);
+  assert.equal(provinceFromQuery("?p=<script>", PROVINCE_CODES), null);
+  assert.equal(provinceFromQuery("", PROVINCE_CODES), null);
 });
 
 test("a changed or broken answer is refused instead of shown as no data", () => {

@@ -7,6 +7,8 @@ export const API_BASE = "https://api-v3.thaiwater.net/api/v1/thaiwater30/public/
 export const THAIWATER_LEVEL_PAGE = "https://www.thaiwater.net/water/wl";
 export const THAIWATER_HOME = "https://www.thaiwater.net/";
 export const FRESH_HOURS = 3;
+export const REFRESH_MINUTES = 10;
+export const SLOW_MINUTES = 90;
 
 export function waterUrl(provinceCode) {
   return `${API_BASE}waterlevel_load?province_code=${encodeURIComponent(provinceCode)}`;
@@ -118,12 +120,29 @@ export function rainSummary(answer, provinceCode, now = new Date(), limit = 5) {
 
 export const TREND_TH = Object.freeze({ up: "น้ำกำลังขึ้น", down: "น้ำกำลังลง", steady: "ทรงตัว", unknown: "ไม่ทราบแนวโน้ม" });
 
-export function stationLine(item) {
-  const place = [item.river ? `(${item.river})` : "", item.district].filter(Boolean).join(" ");
-  const percent = item.percent === null ? "ไม่ทราบระดับ" : `${Math.round(item.percent)}% ของตลิ่ง`;
-  return `${item.name}${place ? " " + place : ""} — ${percent} · ${TREND_TH[item.trend] ?? TREND_TH.unknown} · ${item.time} น.`;
+// How old a reading is, in words, so people can judge how fresh it is. Readings older than SLOW_MINUTES are marked.
+export function ageText(iso, now = new Date()) {
+  const minutes = Math.max(0, Math.round((now.getTime() - Date.parse(iso)) / 60000));
+  const words = minutes < 1 ? "เมื่อสักครู่" : minutes < 60 ? `${minutes} นาทีที่แล้ว`
+    : `${Math.floor(minutes / 60)} ชม.${minutes % 60 ? ` ${minutes % 60} นาที` : ""}ที่แล้ว`;
+  return minutes > SLOW_MINUTES ? `${words} · ข้อมูลช้า` : words;
 }
 
-export function rainLine(item) {
-  return `${Math.round(item.mm)} มม. — ${item.name}${item.district ? " " + item.district : ""} · ${item.time} น.`;
+export function stationLine(item, now = new Date()) {
+  const place = [item.river ? `(${item.river})` : "", item.district].filter(Boolean).join(" ");
+  const percent = item.percent === null ? "ไม่ทราบระดับ" : `${Math.round(item.percent)}% ของตลิ่ง`;
+  return `${item.name}${place ? " " + place : ""} — ${percent} · ${TREND_TH[item.trend] ?? TREND_TH.unknown} · วัดเมื่อ ${item.time} น. (${ageText(item.at, now)})`;
+}
+
+export function rainLine(item, now = new Date()) {
+  return `${Math.round(item.mm)} มม. — ${item.name}${item.district ? " " + item.district : ""} · ถึง ${item.time} น. (${ageText(item.at, now)})`;
+}
+
+// ?p= in the address picks a province, by code ("21") or by Thai name, so a shared link opens straight to that province.
+export function provinceFromQuery(search, codes) {
+  const value = new URLSearchParams(String(search ?? "")).get("p");
+  if (!value) return null;
+  const trimmed = value.trim();
+  for (const [name, code] of Object.entries(codes)) if (trimmed === code || trimmed === name) return name;
+  return null;
 }

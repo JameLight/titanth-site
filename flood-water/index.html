@@ -25,7 +25,7 @@
 
     <section class="card" aria-labelledby="look-title">
       <h2 id="look-title">ดูระดับน้ำและฝนในจังหวัดของคุณ</h2>
-      <p>ข้อมูลสดจากคลังข้อมูลน้ำแห่งชาติ (สสน.) อัปเดตประมาณทุกชั่วโมง</p>
+      <p>ข้อมูลสดจากคลังข้อมูลน้ำแห่งชาติ (สสน.) สถานีส่วนใหญ่ส่งค่าใหม่ทุกชั่วโมง หน้านี้ขอข้อมูลใหม่ทุกครั้งที่เปิด และอัปเดตเองทุก 10 นาทีขณะเปิดอยู่ ทุกจุดบอกว่าวัดเมื่อไร</p>
       <label for="province">จังหวัด</label>
       <select id="province"><option value="">เลือกจังหวัด</option></select>
       <div class="actions"><button id="look" class="button blue" type="button">ดูข้อมูลล่าสุด</button></div>
@@ -35,6 +35,7 @@
     <section id="result" class="card" aria-labelledby="result-title" hidden>
       <h2 id="result-title"></h2>
       <p id="result-time" class="fine"></p>
+      <p id="stale-warning" class="box caution" hidden></p>
       <div id="over-box" class="box danger" hidden>
         <h3>น้ำเกินตลิ่ง</h3>
         <ul id="over-list" class="list"></ul>
@@ -61,12 +62,13 @@
       </div>
       <p class="fine">สถานีเป็นจุดวัดบนแม่น้ำหรือคลอง ไม่ได้แปลว่าทั้งจังหวัดน้ำท่วมหรือไม่ท่วม ถ้าเห็นน้ำขึ้นเร็วใกล้บ้าน ให้เชื่อสิ่งที่เห็นและไปที่ปลอดภัยก่อน</p>
       <p><a id="map-link" href="https://www.thaiwater.net/water/wl" target="_blank" rel="noopener noreferrer">ดูแผนที่และทุกสถานีที่ thaiwater.net ↗</a></p>
+      <p id="share-line" class="fine" hidden>ลิงก์ของจังหวัดนี้ แชร์ได้ เปิดเมื่อไรก็เห็นข้อมูลล่าสุด: <a id="share-link" href="./"></a></p>
     </section>
 
     <section class="card" aria-labelledby="about-title">
       <h2 id="about-title">ข้อมูลนี้มาจากไหน</h2>
       <p>ข้อมูลระดับน้ำและฝนมาจาก <a href="https://www.thaiwater.net/" target="_blank" rel="noopener noreferrer">คลังข้อมูลน้ำแห่งชาติ (thaiwater.net)</a> ของสถาบันสารสนเทศทรัพยากรน้ำ (องค์การมหาชน) หรือ สสน. ซึ่งรวมสถานีของหลายหน่วยงาน หน้าเว็บนี้แสดงผลให้อ่านง่ายขึ้นเท่านั้น และใช้แบบไม่หาเงินตามเงื่อนไขข้อมูลเปิดของ สสน.</p>
-      <p>ตัวเลข "% ของตลิ่ง" มาจากค่าที่ สสน. คำนวณ เกิน 100% คือน้ำสูงกว่าตลิ่ง ลูกศรขึ้นหรือลงเทียบกับค่าก่อนหน้าของสถานีเดียวกัน ข้อมูลที่เก่ากว่า 3 ชั่วโมงไม่นำมาแสดง</p>
+      <p>ตัวเลข "% ของตลิ่ง" มาจากค่าที่ สสน. คำนวณ เกิน 100% คือน้ำสูงกว่าตลิ่ง คำว่าน้ำกำลังขึ้นหรือลงเทียบกับค่าก่อนหน้าของสถานีเดียวกัน ค่าที่วัดมานานกว่า 90 นาทีมีคำว่า "ข้อมูลช้า" และค่าที่เก่ากว่า 3 ชั่วโมงไม่นำมาแสดง</p>
       <p>หน้านี้ไม่เก็บอะไรในเครื่องของคุณ เมื่อกดดู เครื่องของคุณส่งเพียงรหัสจังหวัดไปที่ api-v3.thaiwater.net ของ สสน.</p>
     </section>
   </main>
