@@ -1,9 +1,11 @@
 // /flood-water/: fetch one province's live water levels and 24-hour rain from HII's ThaiWater API and show a short summary.
 // It loads on a tap or from a shared link (?p=21), then reloads by itself every REFRESH_MINUTES while the page is open and
-// visible, and shows how old every reading is. Everything from the API is shown with textContent. Nothing is stored.
+// visible, and shows how old every reading is. If a reload fails, the last answers are drawn again with the current time,
+// so ages keep growing and readings older than 3 hours drop out. Everything from the API is shown with textContent.
+// Nothing is stored on the device.
 import { PROVINCES } from "../flood/provinces.js";
 import { PROVINCE_CODES } from "./province_codes.js";
-import { waterUrl, rainUrl, waterSummary, rainSummary, stationLine, rainLine, ageText, provinceFromQuery, REFRESH_MINUTES } from "./water_model.js";
+import { waterUrl, rainUrl, waterSummary, rainSummary, stationLine, rainLine, ageText, newestTime, provinceFromQuery, REFRESH_MINUTES } from "./water_model.js";
 
 const $ = id => document.getElementById(id);
 const HIGH_SHOWN = 8;
@@ -32,10 +34,17 @@ async function getJson(url, signal) {
   return response.json();
 }
 
-function show(province, water, rain, now) {
-  $("result-title").textContent = `จังหวัด${province}`;
-  const latest = water.latest || rain.latest;
-  $("result-time").textContent = `ข้อมูลใหม่ที่สุดวัดเมื่อ ${latest ? `${clockText(latest)} น. (${ageText(latest, now)})` : "ไม่ทราบ"} · อัปเดตหน้าเมื่อ ${clockText(now.toISOString())} น. · สถานีวัดระดับน้ำที่มีข้อมูล ${water.total} แห่ง`;
+// Draws one province from HII's raw answers (`view` = { province, code, waterAnswer, rainAnswer, loadedAt }).
+// `now` sets every age and the 3-hour limit; `loadedAt` is when the answers arrived. `failed` means the latest reload
+// did not work, so the warning says which time the data is from. Summaries are made first, so a broken answer throws
+// before anything on the page changes.
+function show(view, now, failed) {
+  const water = waterSummary(view.waterAnswer, view.code, now);
+  const rain = rainSummary(view.rainAnswer, view.code, now);
+  const loadedClock = clockText(view.loadedAt.toISOString());
+  $("result-title").textContent = `จังหวัด${view.province}`;
+  const latest = newestTime(water.latest, rain.latest);
+  $("result-time").textContent = `ข้อมูลใหม่ที่สุดวัดเมื่อ ${latest ? `${clockText(latest)} น. (${ageText(latest, now)})` : "ไม่ทราบ"} · อัปเดตหน้าเมื่อ ${loadedClock} น. · สถานีวัดระดับน้ำที่มีข้อมูล ${water.total} แห่ง`;
 
   $("over-box").hidden = water.over.length === 0;
   fillList($("over-list"), water.over.map(item => stationLine(item, now)));
@@ -55,13 +64,13 @@ function show(province, water, rain, now) {
   $("rain-count").textContent = `สถานีวัดฝน ${rain.total} แห่ง · ฝนมากกว่า 90 มม. ${rain.over90} แห่ง · มากกว่า 35 มม. ${rain.over35} แห่ง`;
   fillList($("rain-list"), rain.top.map(item => rainLine(item, now)));
 
-  $("stale-warning").hidden = true;
+  $("stale-warning").textContent = failed ? `อัปเดตล่าสุดไม่สำเร็จ ข้อมูลด้านล่างเป็นของเวลา ${loadedClock} น. ระบบจะลองใหม่เอง หรือเปิด thaiwater.net โดยตรง` : "";
+  $("stale-warning").hidden = !failed;
   $("result").hidden = false;
 }
 
 let busy = false;
-let shownCode = null;
-let lastLoad = 0;
+let lastGood = null; // the last answers HII gave that could be shown: { province, code, waterAnswer, rainAnswer, loadedAt }
 let timer = null;
 
 function scheduleRefresh() {
@@ -82,9 +91,9 @@ async function load(byTap) {
   try {
     const [waterAnswer, rainAnswer] = await Promise.all([getJson(waterUrl(code), controller.signal), getJson(rainUrl(code), controller.signal)]);
     const now = new Date();
-    show(province, waterSummary(waterAnswer, code, now), rainSummary(rainAnswer, code, now), now);
-    shownCode = code;
-    lastLoad = now.getTime();
+    const view = { province, code, waterAnswer, rainAnswer, loadedAt: now };
+    show(view, now, false);
+    lastGood = view;
     history.replaceState(null, "", `?p=${code}`);
     $("share-link").href = location.href;
     $("share-link").textContent = location.href;
@@ -93,10 +102,10 @@ async function load(byTap) {
     if (byTap) $("result").scrollIntoView({ block: "start" });
     scheduleRefresh();
   } catch {
-    if (shownCode === code && !$("result").hidden) {
-      // keep what people already see, but say plainly that it is no longer fresh
-      $("stale-warning").textContent = `อัปเดตล่าสุดไม่สำเร็จ ข้อมูลด้านล่างเป็นของเวลา ${clockText(new Date(lastLoad).toISOString())} น. ระบบจะลองใหม่เอง หรือเปิด thaiwater.net โดยตรง`;
-      $("stale-warning").hidden = false;
+    if (lastGood?.code === code && !$("result").hidden) {
+      // Draw the last good answers again with the current time, so every age grows and readings older than 3 hours
+      // drop out, and say plainly which time the data is from.
+      show(lastGood, new Date(), true);
       $("status").textContent = "อัปเดตไม่สำเร็จ จะลองใหม่อีกครั้งเอง";
       scheduleRefresh();
     } else {
@@ -114,7 +123,7 @@ async function load(byTap) {
 $("look").addEventListener("click", () => load(true));
 $("province").addEventListener("change", () => { clearTimeout(timer); timer = null; });
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible" && shownCode && Date.now() - lastLoad >= REFRESH_MS) load(false);
+  if (document.visibilityState === "visible" && lastGood && Date.now() - lastGood.loadedAt.getTime() >= REFRESH_MS) load(false);
 });
 
 const fromLink = provinceFromQuery(location.search, PROVINCE_CODES);

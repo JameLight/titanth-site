@@ -4,7 +4,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { waterSummary, rainSummary, waterUrl, rainUrl, thaiTime, stationLine, rainLine, ageText, provinceFromQuery } from "../water_model.js";
+import { waterSummary, rainSummary, waterUrl, rainUrl, thaiTime, stationLine, rainLine, ageText, newestTime, provinceFromQuery } from "../water_model.js";
 import { PROVINCE_CODES } from "../province_codes.js";
 import { PROVINCES } from "../../flood/provinces.js";
 
@@ -73,6 +73,37 @@ test("reading age is said in words and slow readings are marked", () => {
   assert.equal(ageText("2026-09-27T11:40:00Z", NOW), "1 ชม. 5 นาทีที่แล้ว");
   assert.equal(ageText("2026-09-27T11:00:00Z", NOW), "1 ชม. 45 นาทีที่แล้ว · ข้อมูลช้า");
   assert.equal(ageText("2026-09-27T10:44:50Z", NOW), "2 ชม.ที่แล้ว · ข้อมูลช้า");
+});
+
+test("the newest reading time is the newer of water and rain, and either may be missing", () => {
+  const water = "2026-09-27T12:30:00.000Z";
+  const rain = "2026-09-27T12:40:00.000Z";
+  assert.equal(newestTime(water, rain), rain);
+  assert.equal(newestTime(rain, water), rain);
+  assert.equal(newestTime(water, null), water);
+  assert.equal(newestTime(undefined, rain), rain);
+  assert.equal(newestTime(null, null), null);
+  assert.equal(newestTime("not a time", water), water);
+  // ระยอง on the evening of the fixtures: water (19:30) is newer than rain (19:00)
+  const w = waterSummary(load("waterlevel_21"), "21", NOW);
+  const r = rainSummary(load("rain_21"), "21", NOW);
+  assert.equal(r.latest, "2026-09-27T12:00:00.000Z");
+  assert.equal(newestTime(w.latest, r.latest), "2026-09-27T12:30:00.000Z");
+});
+
+test("the same saved answers read two hours later: ages grow and readings older than 3 hours drop out", () => {
+  // what the page draws after a failed refresh: the last good answers with the current time
+  const later = new Date(NOW.getTime() + 2 * 60 * 60 * 1000);
+  const before = waterSummary(load("waterlevel_21"), "21", NOW);
+  const after = waterSummary(load("waterlevel_21"), "21", later);
+  assert.equal(before.over.length, 2);
+  assert.equal(after.over.length, 1);
+  assert.equal(after.total, 2);
+  assert.equal(after.over[0].name, before.over.find(item => item.time === "19:30").name);
+  assert.match(stationLine(after.over[0], later), /\(2 ชม\. 15 นาทีที่แล้ว · ข้อมูลช้า\)$/);
+  const rainLater = rainSummary(load("rain_21"), "21", later);
+  assert.ok(rainLater.total < rainSummary(load("rain_21"), "21", NOW).total);
+  assert.ok(rainLater.top.every(item => Date.parse(item.at) >= later.getTime() - 3 * 60 * 60 * 1000));
 });
 
 test("a shared link opens its province by code or by Thai name, and ignores anything else", () => {

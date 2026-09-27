@@ -58,6 +58,16 @@ function latestOf(items) {
   return items.reduce((latest, item) => (latest && latest > item.at ? latest : item.at), null);
 }
 
+// The newer of two reading times (ISO text; either may be missing), so the page can say when its newest reading was
+// taken, whether that is a water level or a rain reading.
+export function newestTime(a, b) {
+  const timeA = Date.parse(a ?? "");
+  const timeB = Date.parse(b ?? "");
+  if (!Number.isFinite(timeA)) return Number.isFinite(timeB) ? b : null;
+  if (!Number.isFinite(timeB)) return a;
+  return timeB > timeA ? b : a;
+}
+
 // situation_level in the API matches the share of the channel filled up to the bank (storage_percent):
 // 5 = over 100% (over the bank), 4 = 70-100%. Checked on 789 live stations on 2026-09-27.
 export function waterSummary(answer, provinceCode, now = new Date()) {
