@@ -3,6 +3,8 @@
 import { canonicalProvince } from "./provinces.js";
 import { plausibleThailandGps } from "./model.js";
 const ALLOWED_NEEDS = new Set(["trapped", "medical", "immobile", "fast_water", "boat", "medicine", "food_water", "other", "dialysis_oxygen", "pregnant", "infant", "elderly", "disabled"]);
+const DEVICE_TOKEN_KEY = "promjaeng-flood-intake-device-v1";
+const DEVICE_TOKEN_PATTERN = /^[A-Za-z0-9_-]{16,64}$/;
 const STATUS_TEXT = Object.freeze({
   SENT: "ระบบรับข้อมูลแล้ว ยังไม่มีทีมอาสากดรับเคส",
   ACKNOWLEDGED: "ทีมอาสาแจ้งว่ารับเคสแล้ว",
@@ -15,7 +17,7 @@ const STATUS_TEXT = Object.freeze({
 const REJECTED_TEXT = Object.freeze({
   UNKNOWN_PROVINCE: "ชื่อจังหวัดไม่อยู่ในรายการ กรุณาเลือกจังหวัดใหม่ก่อนส่ง",
   NO_TEAM_ON_DUTY: "ตอนนี้ไม่มีทีมอาสาเฝ้าจังหวัดนี้ โทร 1784 หรือส่ง LINE ปภ.",
-  TOO_MANY_CASES: "ระบบจำกัดจำนวนเคสที่ส่งจากเครื่องนี้ ถ้าอันตรายโทร 1784",
+  TOO_MANY_CASES: "มีการส่งเรื่องจากเครื่องหรือเครือข่ายนี้มากในช่วงสั้น ๆ ถ้าอันตรายโทร 1784",
   SYSTEM_BUSY: "ระบบรับเคสเต็ม ถ้าอันตรายโทร 1784 หรือส่ง LINE ปภ.",
   BAD_NEEDS: "ข้อมูลความช่วยเหลือไม่ถูกต้อง กรุณากรอกใหม่",
   BAD_LOCATION: "ข้อมูลสถานที่ไม่ถูกต้อง กรุณากรอกใหม่",
@@ -23,7 +25,9 @@ const REJECTED_TEXT = Object.freeze({
 });
 
 export function validIntakeConfig(value) {
-  if (!value || value.enabled !== true || value.schemaVersion !== 2 ||
+  // Version 3 requires the v2.6 submit_case RPC with p_device; the live v2.3
+  // RPC does not accept that field. Keep the deployed v2 config closed.
+  if (!value || value.enabled !== true || value.schemaVersion !== 3 ||
       typeof value.publishableKey !== "string" || !value.publishableKey.startsWith("sb_publishable_") ||
       typeof value.consentVersion !== "string" || !/^[a-zA-Z0-9._-]{1,40}$/.test(value.consentVersion) ||
       typeof value.privacyNoticeUrl !== "string" || !/^\/(?!\/)[^\s]*$/.test(value.privacyNoticeUrl)) return false;
@@ -43,7 +47,27 @@ export async function loadIntakeConfig(fetchImpl = globalThis.fetch) {
   } catch { return null; }
 }
 
-export function makeIntakeClient(config, fetchImpl = globalThis.fetch) {
+// This random browser token spreads the rate limit across devices sharing one network.
+// It is not a person or identity check. If storage or secure randomness is unavailable,
+// the server's stricter no-device network limit applies.
+export function getOrCreateDeviceToken(storage, cryptoImpl) {
+  try {
+    const existing = storage?.getItem(DEVICE_TOKEN_KEY);
+    if (DEVICE_TOKEN_PATTERN.test(existing ?? "")) return existing;
+    if (!cryptoImpl?.getRandomValues || !storage?.setItem) return null;
+    const bytes = cryptoImpl.getRandomValues(new Uint8Array(24));
+    const token = Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+    storage.setItem(DEVICE_TOKEN_KEY, token);
+    return storage.getItem(DEVICE_TOKEN_KEY) === token ? token : null;
+  } catch { return null; }
+}
+
+function browserDeviceToken() {
+  try { return getOrCreateDeviceToken(globalThis.localStorage, globalThis.crypto); }
+  catch { return null; }
+}
+
+export function makeIntakeClient(config, fetchImpl = globalThis.fetch, deviceTokenProvider = browserDeviceToken) {
   if (!validIntakeConfig(config)) throw new Error("ยังไม่ได้เปิดระบบรับเคสทีมอาสา");
   const base = config.url.replace(/\/$/, "");
 
@@ -81,6 +105,8 @@ export function makeIntakeClient(config, fetchImpl = globalThis.fetch) {
   async function submitCase(item) {
     const payload = mapCaseForSubmit(item, config.consentVersion);
     if (!await dutyStatus(payload.p_province)) throw new Error("ตอนนี้ยังไม่มีทีมอาสาเฝ้าในพื้นที่นี้ ให้โทร 1784 หรือส่ง LINE ปภ.");
+    const deviceToken = deviceTokenProvider();
+    if (DEVICE_TOKEN_PATTERN.test(deviceToken ?? "")) payload.p_device = deviceToken;
     // Do not retry automatically: a network error after POST may mean the server received it.
     const result = await rpc("submit_case", payload);
     if (!/^[A-Z0-9-]{4,40}$/.test(result.code || "") || !/^[a-f0-9]{32,128}$/.test(result.secret || "")) {
