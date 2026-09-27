@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 test('the new flood page shell replaces the previous cached shell', async () => {
   const events = {};
-  const keys = new Set(['promjaeng-flood-public-v20', 'promjaeng-flood-public-v21', 'promjaeng-flood-public-v22', 'promjaeng-flood-public-v23', 'promjaeng-flood-public-v24', 'unrelated-cache']);
+  const keys = new Set(['promjaeng-flood-public-v20', 'promjaeng-flood-public-v21', 'promjaeng-flood-public-v22', 'promjaeng-flood-public-v23', 'promjaeng-flood-public-v24', 'promjaeng-flood-public-v25', 'unrelated-cache']);
   let shell = [];
   const scope = 'https://example.invalid/flood/';
   const cache = { addAll: async requests => { shell = requests.map(request => request.url); } };
@@ -29,7 +29,7 @@ test('the new flood page shell replaces the previous cached shell', async () => 
   events.install({ waitUntil: promise => { pending = promise; } });
   await pending;
   assert.ok(shell.includes(`${scope}index.html`));
-  assert.ok(keys.has('promjaeng-flood-public-v25'));
+  assert.ok(keys.has('promjaeng-flood-public-v26'));
   events.activate({ waitUntil: promise => { pending = promise; } });
   await pending;
   assert.equal(keys.has('promjaeng-flood-public-v20'), false);
@@ -37,5 +37,6 @@ test('the new flood page shell replaces the previous cached shell', async () => 
   assert.equal(keys.has('promjaeng-flood-public-v22'), false);
   assert.equal(keys.has('promjaeng-flood-public-v23'), false);
   assert.equal(keys.has('promjaeng-flood-public-v24'), false);
+  assert.equal(keys.has('promjaeng-flood-public-v25'), false);
   assert.equal(keys.has('unrelated-cache'), true);
 });
