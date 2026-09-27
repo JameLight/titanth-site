@@ -325,7 +325,7 @@ function intakeConsent(client) {
 function showReceiptRecovery(receipt) {
   const value = `รหัสเคส: ${receipt.code}\nรหัสลับสำหรับดูสถานะ: ${receipt.secret}`;
   const dialog = $("#receipt-recovery-dialog");
-  if (typeof dialog.showModal !== "function") { window.prompt("คัดลอกรหัสนี้เก็บไว้: ระบบรับเคสแล้ว แต่เครื่องบันทึกไม่ได้", value); return; }
+  if (typeof dialog.showModal !== "function") { window.prompt("ระบบรับเคสแล้ว คัดลอกรหัสนี้เก็บไว้", value); return; }
   $("#receipt-recovery-text").value = value;
   $("#receipt-recovery-close").onclick = () => { dialog.close(); $("#receipt-recovery-text").value = ""; };
   dialog.showModal();
@@ -343,10 +343,19 @@ async function sendToTeam(item, sendButton) {
       showReceiptRecovery(receipt);
       return;
     }
-    await refresh();
+    try { await refresh(); }
+    catch {
+      showReceiptRecovery(receipt);
+      return;
+    }
     toast(`ระบบบันทึกเคส ${receipt.code} แล้ว ยังไม่มีหลักฐานว่าทีมรับเคส ถ้าอันตรายโทร 1784 หรือ 1669`);
   } catch (error) {
-    showError(error.definitive ? error.message : "ยังยืนยันไม่ได้ว่าระบบรับเคสหรือไม่ อย่ากดส่งซ้ำทันที ถ้าอันตรายโทร 1784 หรือ 1669 หรือส่ง LINE ปภ.");
+    const route = /1784|1669/.test(error?.message ?? "") ? "" : " หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ";
+    showError(error?.beforeSubmit
+      ? `ยังไม่ได้ส่งเคสเข้าระบบ: ${error.message}${route}`
+      : error?.definitive
+        ? `ระบบไม่รับเคสนี้: ${error.message}${route}`
+        : "ยังยืนยันไม่ได้ว่าระบบรับเคสหรือไม่ อย่ากดส่งซ้ำทันที ถ้าอันตรายโทร 1784 หรือ 1669 หรือส่ง LINE ปภ.");
   } finally { sendButton.disabled = false; }
 }
 

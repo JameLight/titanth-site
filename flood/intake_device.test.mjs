@@ -85,6 +85,38 @@ test("v2.3 or closed backend never receives a case payload despite a v3 config",
   assert.deepEqual(calls, ["system_totals"]);
 });
 
+test("all failures before submit_case are definite non-submissions", async () => {
+  const calls = [];
+  const closed = async url => { calls.push(url.split("/").at(-1)); return { ok: true, json: async () => [{ intake_open: false, duty_locked: true }] }; };
+  await assert.rejects(() => makeIntakeClient(config, closed).submitCase(item), error => {
+    assert.equal(error.definitive, true);
+    assert.equal(error.beforeSubmit, true);
+    assert.match(error.message, /ยังไม่เปิดรับเคส/);
+    return true;
+  });
+  assert.deepEqual(calls, ["system_totals"]);
+
+  const noDuty = async url => { calls.push(url.split("/").at(-1)); return { ok: true, json: async () =>
+    url.endsWith("system_totals") ? [{ intake_open: true, duty_locked: false }] : [{ on_duty: false }] }; };
+  calls.length = 0;
+  await assert.rejects(() => makeIntakeClient(config, noDuty).submitCase(item), error => {
+    assert.equal(error.definitive, true);
+    assert.equal(error.beforeSubmit, true);
+    assert.match(error.message, /ไม่มีทีมอาสาเฝ้า/);
+    return true;
+  });
+  assert.deepEqual(calls, ["system_totals", "duty_status"]);
+
+  calls.length = 0;
+  await assert.rejects(() => makeIntakeClient(config, noDuty).submitCase({ ...item, location: { province: "จังหวัดสมมติ" } }), error => {
+    assert.equal(error.definitive, true);
+    assert.equal(error.beforeSubmit, true);
+    assert.match(error.message, /จังหวัดไม่อยู่ในรายการ/);
+    return true;
+  });
+  assert.deepEqual(calls, []);
+});
+
 test("unrecognized server errors still point to an emergency channel", async () => {
   const fetchImpl = async url => url.endsWith("system_totals")
     ? { ok: true, json: async () => [{ intake_open: true, duty_locked: false }] }
@@ -107,6 +139,11 @@ test("an uncertain submit response warns that the case may already exist", async
   const failsAfterPost = async url => url.endsWith("system_totals") ? ready
     : url.endsWith("duty_status") ? duty : Promise.reject(new TypeError("offline after POST"));
   await assert.rejects(() => makeIntakeClient(config, failsAfterPost, () => "a".repeat(48)).submitCase(item), /อาจรับข้อมูลแล้ว.*อย่ากดส่งซ้ำ.*1784/);
+  await assert.rejects(() => makeIntakeClient(config, failsAfterPost, () => "a".repeat(48)).submitCase(item), error => {
+    assert.notEqual(error.definitive, true);
+    assert.notEqual(error.beforeSubmit, true);
+    return true;
+  });
   const malformedAfterPost = async url => url.endsWith("system_totals") ? ready
     : url.endsWith("duty_status") ? duty : { ok: true, json: async () => { throw new SyntaxError("bad JSON"); } };
   await assert.rejects(() => makeIntakeClient(config, malformedAfterPost, () => "a".repeat(48)).submitCase(item), /อาจรับข้อมูลแล้ว.*อย่ากดส่งซ้ำ.*1784/);

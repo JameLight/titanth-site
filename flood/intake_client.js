@@ -117,16 +117,25 @@ export function makeIntakeClient(config, fetchImpl = globalThis.fetch, deviceTok
   }
 
   async function submitCase(item) {
-    const payload = mapCaseForSubmit(item, config.consentVersion);
-    let totals;
-    try { totals = await rpc("system_totals", {}); }
-    catch { throw new Error("ยังยืนยันไม่ได้ว่าระบบรับเคสรุ่นใหม่พร้อมใช้ หากเป็นเหตุจริงโทร 1784 หรือส่ง LINE ปภ. ด้วยตัวเอง"); }
-    if (totals.intake_open !== true || totals.duty_locked !== false) {
-      throw new Error("ตอนนี้ระบบยังไม่เปิดรับเคสเข้าทีมอาสา หากเป็นเหตุจริงโทร 1784 หรือส่ง LINE ปภ. ด้วยตัวเอง");
+    let payload;
+    try {
+      payload = mapCaseForSubmit(item, config.consentVersion);
+      let totals;
+      try { totals = await rpc("system_totals", {}); }
+      catch { throw new Error("ยังยืนยันไม่ได้ว่าระบบรับเคสรุ่นใหม่พร้อมใช้ หากเป็นเหตุจริงโทร 1784 หรือส่ง LINE ปภ. ด้วยตัวเอง"); }
+      if (totals.intake_open !== true || totals.duty_locked !== false) {
+        throw new Error("ตอนนี้ระบบยังไม่เปิดรับเคสเข้าทีมอาสา หากเป็นเหตุจริงโทร 1784 หรือส่ง LINE ปภ. ด้วยตัวเอง");
+      }
+      if (!await dutyStatus(payload.p_province)) throw new Error("ตอนนี้ยังไม่มีทีมอาสาเฝ้าในพื้นที่นี้ ให้โทร 1784 หรือส่ง LINE ปภ.");
+      const deviceToken = deviceTokenProvider();
+      if (DEVICE_TOKEN_PATTERN.test(deviceToken ?? "")) payload.p_device = deviceToken;
+    } catch (error) {
+      // No submit_case request has begun. The UI can say this attempt was not sent.
+      const failure = error instanceof Error ? error : new Error("ตรวจข้อมูลก่อนส่งไม่สำเร็จ หากเป็นเหตุจริงโทร 1784");
+      failure.definitive = true;
+      failure.beforeSubmit = true;
+      throw failure;
     }
-    if (!await dutyStatus(payload.p_province)) throw new Error("ตอนนี้ยังไม่มีทีมอาสาเฝ้าในพื้นที่นี้ ให้โทร 1784 หรือส่ง LINE ปภ.");
-    const deviceToken = deviceTokenProvider();
-    if (DEVICE_TOKEN_PATTERN.test(deviceToken ?? "")) payload.p_device = deviceToken;
     // Do not retry automatically: a network error after POST may mean the server received it.
     const result = await rpc("submit_case", payload);
     if (!/^[A-Z0-9-]{4,40}$/.test(result.code || "") || !/^[a-f0-9]{32,128}$/.test(result.secret || "")) {
