@@ -1,7 +1,7 @@
-const CACHE = "promjaeng-flood-public-v22";
+const CACHE = "promjaeng-flood-public-v34";
 const CACHE_FAMILY = CACHE.replace(/v\d+$/, "");
 const LEGACY_CACHE_FAMILIES = ["khem-flood-rescue-pilot-shell-v", "khem-flood-rescue-public-v"];
-const SHELL = ["./", "./index.html", "./styles.css", "./app.js", "./intake_client.js", "./provinces.js", "./official_alerts.js", "./model.js", "./storage.js", "./qr.js", "./vendor/qrcode.mjs", "./manifest.webmanifest", "./icon.svg"];
+const SHELL = ["./", "./index.html", "./styles.css", "./app.js", "./intake_client.js", "./intake_attempt.js", "./submission_guard.js", "./receipt_lookup.js", "./provinces.js", "./official_alerts.js", "./model.js", "./storage.js", "./qr.js", "./vendor/qrcode.mjs", "./manifest.webmanifest", "./icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL.map(path => new Request(path, { cache: "reload" })))).then(() => self.skipWaiting()));
 });

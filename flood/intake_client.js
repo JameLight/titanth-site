@@ -3,6 +3,9 @@
 import { canonicalProvince } from "./provinces.js";
 import { plausibleThailandGps } from "./model.js";
 const ALLOWED_NEEDS = new Set(["trapped", "medical", "immobile", "fast_water", "boat", "medicine", "food_water", "other", "dialysis_oxygen", "pregnant", "infant", "elderly", "disabled"]);
+const DEVICE_TOKEN_KEY = "promjaeng-flood-intake-device-v1";
+const DEVICE_TOKEN_PATTERN = /^[A-Za-z0-9_-]{16,64}$/;
+const UNCERTAIN_SUBMISSION = "ยังยืนยันไม่ได้ว่าเคสถูกบันทึกหรือไม่ ระบบอาจรับข้อมูลแล้ว อย่ากดส่งซ้ำทันที หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ";
 const STATUS_TEXT = Object.freeze({
   SENT: "ระบบรับข้อมูลแล้ว ยังไม่มีทีมอาสากดรับเคส",
   ACKNOWLEDGED: "ทีมอาสาแจ้งว่ารับเคสแล้ว",
@@ -13,17 +16,32 @@ const STATUS_TEXT = Object.freeze({
   WITHDRAWN: "คุณยกเลิกเคสนี้แล้ว และระบบลบข้อมูลละเอียดตามขอบเขตที่แจ้งแล้ว"
 });
 const REJECTED_TEXT = Object.freeze({
+  INTAKE_CLOSED: "ตอนนี้ระบบไม่เปิดรับเคสเข้าทีมอาสา โทร 1784 หรือส่ง LINE ปภ. ด้วยตัวเอง",
   UNKNOWN_PROVINCE: "ชื่อจังหวัดไม่อยู่ในรายการ กรุณาเลือกจังหวัดใหม่ก่อนส่ง",
   NO_TEAM_ON_DUTY: "ตอนนี้ไม่มีทีมอาสาเฝ้าจังหวัดนี้ โทร 1784 หรือส่ง LINE ปภ.",
-  TOO_MANY_CASES: "ระบบจำกัดจำนวนเคสที่ส่งจากเครื่องนี้ ถ้าอันตรายโทร 1784",
+  TOO_MANY_CASES: "มีการส่งเรื่องจากเครื่องหรือเครือข่ายนี้มากในช่วงสั้น ๆ ถ้าอันตรายโทร 1784",
   SYSTEM_BUSY: "ระบบรับเคสเต็ม ถ้าอันตรายโทร 1784 หรือส่ง LINE ปภ.",
   BAD_NEEDS: "ข้อมูลความช่วยเหลือไม่ถูกต้อง กรุณากรอกใหม่",
   BAD_LOCATION: "ข้อมูลสถานที่ไม่ถูกต้อง กรุณากรอกใหม่",
+  BAD_SECRET: "รหัสกู้คืนไม่ถูกต้อง ยังไม่ได้ส่งเคสนี้ หากอันตรายโทร 1784",
+  SECRET_REUSED: "รหัสกู้คืนนี้ใช้กับเคสอื่นแล้ว เคสนี้ยังไม่ได้ส่ง หากอันตรายโทร 1784",
+  SECRET_CLOSED: "รหัสนี้เป็นของเคสที่ถอนหรือถูกลบแล้ว เคสใหม่นี้ยังไม่ได้ส่ง หากยังต้องการความช่วยเหลือให้สร้างเคสใหม่และโทร 1784 ตามเหตุ",
   CASE_NOT_FOUND: "ไม่พบเคสที่ตรงกับรหัสนี้ กรุณาตรวจรหัสอ้างอิงและรหัสลับ"
 });
+const CASE_SECRET_PATTERN = /^[a-f0-9]{64}$/;
+const RECOVERY_SECRET_PATTERN = /^[a-f0-9]{32,128}$/;
 
-export function validIntakeConfig(value) {
-  if (!value || value.enabled !== true || value.schemaVersion !== 2 ||
+export function createCaseSecret(cryptoImpl = globalThis.crypto) {
+  if (typeof cryptoImpl?.getRandomValues !== "function") throw new Error("เครื่องนี้สร้างรหัสกู้คืนที่ปลอดภัยไม่ได้ จึงยังไม่ส่งเคส หากอันตรายโทร 1784 หรือ 1669");
+  const bytes = cryptoImpl.getRandomValues(new Uint8Array(32));
+  if (!(bytes instanceof Uint8Array) || bytes.length !== 32) throw new Error("สร้างรหัสกู้คืนไม่สำเร็จ จึงยังไม่ส่งเคส หากอันตรายโทร 1784 หรือ 1669");
+  return Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
+function validConnectionConfig(value) {
+  // Version 4 opts in to the v2.6 r10 client-generated secret contract.
+  // A config alone cannot prove the backend was upgraded.
+  if (!value || ![3, 4].includes(value.schemaVersion) ||
       typeof value.publishableKey !== "string" || !value.publishableKey.startsWith("sb_publishable_") ||
       typeof value.consentVersion !== "string" || !/^[a-zA-Z0-9._-]{1,40}$/.test(value.consentVersion) ||
       typeof value.privacyNoticeUrl !== "string" || !/^\/(?!\/)[^\s]*$/.test(value.privacyNoticeUrl)) return false;
@@ -34,38 +52,85 @@ export function validIntakeConfig(value) {
   } catch { return false; }
 }
 
+export function validIntakeConfig(value) {
+  return value?.enabled === true && value.schemaVersion === 4 && validConnectionConfig(value);
+}
+
+export function validStatusConfig(value) {
+  // Closing new intake must not strand people who already have a receipt.
+  // A separate switch still lets the owner close read/withdraw RPC access.
+  return value?.enabled === false && value?.statusEnabled === true && validConnectionConfig(value);
+}
+
 export async function loadIntakeConfig(fetchImpl = globalThis.fetch) {
   try {
     const response = await fetchImpl("./intake-config.json", { cache: "no-store", credentials: "omit" });
     if (!response.ok) return null;
     const config = await response.json();
-    return validIntakeConfig(config) ? config : null;
+    return validIntakeConfig(config) || validStatusConfig(config) ? config : null;
   } catch { return null; }
 }
 
-export function makeIntakeClient(config, fetchImpl = globalThis.fetch) {
-  if (!validIntakeConfig(config)) throw new Error("ยังไม่ได้เปิดระบบรับเคสทีมอาสา");
+// This random browser token spreads the rate limit across devices sharing one network.
+// It is not a person or identity check. If storage or secure randomness is unavailable,
+// the server's stricter no-device network limit applies.
+export function getOrCreateDeviceToken(storage, cryptoImpl) {
+  try {
+    const existing = storage?.getItem(DEVICE_TOKEN_KEY);
+    if (DEVICE_TOKEN_PATTERN.test(existing ?? "")) return existing;
+    if (!cryptoImpl?.getRandomValues || !storage?.setItem) return null;
+    const bytes = cryptoImpl.getRandomValues(new Uint8Array(24));
+    const token = Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+    storage.setItem(DEVICE_TOKEN_KEY, token);
+    return storage.getItem(DEVICE_TOKEN_KEY) === token ? token : null;
+  } catch { return null; }
+}
+
+function browserDeviceToken() {
+  try { return getOrCreateDeviceToken(globalThis.localStorage, globalThis.crypto); }
+  catch { return null; }
+}
+
+export function makeIntakeClient(config, fetchImpl = globalThis.fetch, deviceTokenProvider = browserDeviceToken) {
+  if (!validIntakeConfig(config) && !validStatusConfig(config)) throw new Error("ยังไม่ได้เชื่อมระบบเคสทีมอาสา");
   const base = config.url.replace(/\/$/, "");
 
   async function rpc(name, payload) {
-    const response = await fetchImpl(`${base}/rest/v1/rpc/${name}`, {
-      method: "POST", credentials: "omit", cache: "no-store", redirect: "error", referrerPolicy: "no-referrer",
-      headers: { "apikey": config.publishableKey, "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    let response;
+    try {
+      response = await fetchImpl(`${base}/rest/v1/rpc/${name}`, {
+        method: "POST", credentials: "omit", cache: "no-store", redirect: "error", referrerPolicy: "no-referrer",
+        headers: { "apikey": config.publishableKey, "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(payload)
+      });
+    } catch {
+      if (name === "submit_case") throw new Error(UNCERTAIN_SUBMISSION);
+      throw new Error("ติดต่อระบบรับเคสไม่ได้ หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");
+    }
     if (!response.ok) {
       const body = await response.json().catch(() => null);
       const code = body?.message;
       if (response.status >= 400 && response.status < 500 && Object.hasOwn(REJECTED_TEXT, code)) {
         const error = new Error(REJECTED_TEXT[code]);
         error.definitive = true;
+        error.code = code;
         throw error;
       }
-      throw new Error(`ระบบรับเคสตอบกลับผิดพลาด (${response.status})`);
+      if (name === "submit_case") throw new Error(`${UNCERTAIN_SUBMISSION} (HTTP ${response.status})`);
+      throw new Error(`ระบบรับเคสตอบกลับผิดพลาด (${response.status}) หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ`);
     }
-    const result = await response.json();
+    const result = await response.json().catch(() => {
+      if (name === "submit_case") throw new Error(UNCERTAIN_SUBMISSION);
+      throw new Error("อ่านคำตอบจากระบบรับเคสไม่ได้ หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");
+    });
+    if (Array.isArray(result) && result.length === 0 && ["case_status", "withdraw_case", "recover_case"].includes(name)) {
+      const error = new Error(REJECTED_TEXT.CASE_NOT_FOUND);
+      error.definitive = true;
+      throw error;
+    }
     if (!Array.isArray(result) || result.length !== 1 || typeof result[0] !== "object" || !result[0]) {
-      throw new Error("คำตอบจากระบบรับเคสไม่ครบ");
+      if (name === "submit_case") throw new Error(UNCERTAIN_SUBMISSION);
+      throw new Error("คำตอบจากระบบรับเคสไม่ครบ หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");
     }
     return result[0];
   }
@@ -78,15 +143,56 @@ export function makeIntakeClient(config, fetchImpl = globalThis.fetch) {
     return result.on_duty === true;
   }
 
-  async function submitCase(item) {
-    const payload = mapCaseForSubmit(item, config.consentVersion);
-    if (!await dutyStatus(payload.p_province)) throw new Error("ตอนนี้ยังไม่มีทีมอาสาเฝ้าในพื้นที่นี้ ให้โทร 1784 หรือส่ง LINE ปภ.");
-    // Do not retry automatically: a network error after POST may mean the server received it.
-    const result = await rpc("submit_case", payload);
-    if (!/^[A-Z0-9-]{4,40}$/.test(result.code || "") || !/^[a-f0-9]{32,128}$/.test(result.secret || "")) {
-      throw new Error("ระบบรับเคสตอบรหัสกลับไม่ครบ กรุณาโทร 1784 หากเป็นเหตุจริง");
+  async function prepareCaseSubmission(item, secret) {
+    let payload;
+    try {
+      if (!validIntakeConfig(config)) throw new Error("ตอนนี้ระบบไม่เปิดรับเคสใหม่ หากเป็นเหตุจริงโทร 1784 หรือส่ง LINE ปภ. ด้วยตัวเอง");
+      if (!CASE_SECRET_PATTERN.test(secret ?? "")) throw new Error("รหัสกู้คืนไม่ถูกต้อง จึงยังไม่ได้ส่งเคส หากอันตรายโทร 1784");
+      payload = mapCaseForSubmit(item, config.consentVersion);
+      payload.p_secret = secret;
+      let totals;
+      try { totals = await rpc("system_totals", {}); }
+      catch { throw new Error("ยังยืนยันไม่ได้ว่าระบบรับเคสรุ่นใหม่พร้อมใช้ หากเป็นเหตุจริงโทร 1784 หรือส่ง LINE ปภ. ด้วยตัวเอง"); }
+      if (totals.intake_open !== true || totals.duty_locked !== false) {
+        throw new Error("ตอนนี้ระบบยังไม่เปิดรับเคสเข้าทีมอาสา หากเป็นเหตุจริงโทร 1784 หรือส่ง LINE ปภ. ด้วยตัวเอง");
+      }
+      if (!await dutyStatus(payload.p_province)) throw new Error("ตอนนี้ยังไม่มีทีมอาสาเฝ้าในพื้นที่นี้ ให้โทร 1784 หรือส่ง LINE ปภ.");
+      const deviceToken = deviceTokenProvider();
+      if (DEVICE_TOKEN_PATTERN.test(deviceToken ?? "")) payload.p_device = deviceToken;
+    } catch (error) {
+      // No submit_case request has begun. The UI can say this attempt was not sent.
+      const failure = error instanceof Error ? error : new Error("ตรวจข้อมูลก่อนส่งไม่สำเร็จ หากเป็นเหตุจริงโทร 1784");
+      failure.definitive = true;
+      failure.beforeSubmit = true;
+      throw failure;
     }
-    return { code: result.code, secret: result.secret, submittedAt: new Date().toISOString() };
+    return payload;
+  }
+
+  async function submitPrepared(payload) {
+    if (!payload || !CASE_SECRET_PATTERN.test(payload.p_secret ?? "")) {
+      const error = new Error("ไม่มีรหัสกู้คืนที่ถูกต้อง จึงยังไม่ได้ส่งเคส หากอันตรายโทร 1784");
+      error.beforeSubmit = true;
+      error.definitive = true;
+      throw error;
+    }
+    // A retry must reuse the exact payload and secret, even if intake is now closed.
+    const result = await rpc("submit_case", payload);
+    if (!/^[A-Z0-9-]{4,40}$/.test(result.code || "") || result.secret !== payload.p_secret ||
+        typeof result.replayed !== "boolean" || !Object.hasOwn(STATUS_TEXT, result.status)) {
+      throw new Error(UNCERTAIN_SUBMISSION);
+    }
+    return { code: result.code, secret: result.secret, replayed: result.replayed,
+      status: result.status, submittedAt: new Date().toISOString() };
+  }
+
+  async function recoverCase(secret) {
+    if (!RECOVERY_SECRET_PATTERN.test(secret ?? "")) throw new Error("รหัสกู้คืนต้องมีตัวเลขและ a-f รวม 32–128 ตัว");
+    const result = await rpc("recover_case", { p_secret: secret });
+    if (!/^[A-Z0-9-]{4,40}$/.test(result.code || "") || !Object.hasOwn(STATUS_TEXT, result.status)) {
+      throw new Error("ยังอ่านข้อมูลเคสไม่ครบ หากเป็นเหตุจริงโทร 1784 หรือ 1669");
+    }
+    return { ...result, secret };
   }
 
   async function caseStatus(receipt) {
@@ -106,7 +212,7 @@ export function makeIntakeClient(config, fetchImpl = globalThis.fetch) {
     return result;
   }
 
-  return { dutyStatus, submitCase, caseStatus, withdrawCase, config };
+  return { dutyStatus, prepareCaseSubmission, submitPrepared, recoverCase, caseStatus, withdrawCase, config };
 }
 
 export function mapCaseForSubmit(item, consentVersion) {
@@ -150,12 +256,14 @@ export function caseStatusText(result) {
   if (!label) return "ยังอ่านสถานะจากระบบไม่ได้";
   const team = result.status !== "WITHDRAWN" && result.team_name ? ` (${String(result.team_name)})` : "";
   const late = result.late === true && result.status === "SENT" ? " เกิน 10 นาทีแล้วยังไม่มีทีมรับ โทร 1784 หรือ 1669 ตามเหตุทันที" : "";
-  return `${label}${team}.${late}`;
+  const stale = result.stale === true && ["ACKNOWLEDGED", "NEED_INFO", "EN_ROUTE"].includes(result.status)
+    ? " ไม่มีการอัปเดตจากทีมมาระยะหนึ่ง อย่ารอคำตอบในเว็บ หากยังเดือดร้อนโทร 1784 หรือ 1669 ตามเหตุทันที"
+    : "";
+  return `${label}${team}.${late}${stale}`;
 }
 
 export function stripIntakeSecrets(items) {
-  return items.map(item => item.intake ? {
-    ...item,
-    intake: { code: item.intake.code, submittedAt: item.intake.submittedAt, statusAccessRemoved: true }
+  return items.map(({ intakeAttempt, ...item }) => item.intake ? {
+    ...item, intake: { code: item.intake.code, submittedAt: item.intake.submittedAt, statusAccessRemoved: true }
   } : item);
 }

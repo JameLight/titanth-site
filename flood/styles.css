@@ -41,6 +41,7 @@ dialog{max-height:90vh;overflow:auto}
 #media-manual-text[hidden]{display:none}
 .media-open-external{display:block;font-size:.86rem;margin:.5rem 0;color:var(--teal);font-weight:700}.media-open-external[hidden]{display:none}
 .offline-help{margin:.6rem 0 1rem;padding:.65rem .9rem;background:#fff7df;border:1px solid #b69254;border-radius:9px}.offline-help summary{cursor:pointer;font-weight:800;color:#65410f}.offline-help p{font-size:.86rem;line-height:1.5;margin:.55rem 0 0;color:#513e27}
+#intake-secret-dialog,#saved-secret-dialog{max-width:min(96vw,520px)}#intake-secret-text,#saved-secret-text{font-family:ui-monospace,monospace;overflow-wrap:anywhere;word-break:break-all;font-size:1rem}#intake-secret-dialog .dialog-actions button,#saved-secret-dialog .dialog-actions button{min-height:48px}#intake-secret-dialog .confirm-line{display:flex;gap:.55rem;align-items:flex-start;margin:.8rem 0;font-weight:700}#intake-secret-dialog .confirm-line input{width:22px;height:22px;flex:none}#intake-secret-copy-status,#saved-secret-copy-status{min-height:1.4rem}
 .quick-location-more .quick-location-fallback{flex:1 1 100%;font-size:1rem;line-height:1.5;color:#113c2a}
 .prep-help summary,.prep-help p,.prep-help ol,.prep-help ul{font-size:1rem;line-height:1.5}.prep-help ol,.prep-help ul{margin:.55rem 0 0;padding-left:1.3rem;color:#513e27}.prep-help li{margin:.35rem 0}.prep-help .nowrap{white-space:nowrap}
 
