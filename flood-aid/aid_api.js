@@ -88,7 +88,7 @@ function readSession(storage) {
 function responseError(status, body, auth = false) {
   const raw = String(body?.message ?? body?.error_code ?? body?.error ?? "");
   const code = raw.split(/[^A-Z_]/)[0] || String(body?.error_code ?? "REQUEST_FAILED");
-  if (THAI_ERROR[code]) return new AidError(code, THAI_ERROR[code], status);
+  if (Object.hasOwn(THAI_ERROR, code)) return new AidError(code, THAI_ERROR[code], status);
   if (status === 429) return new AidError("RATE_LIMIT", "คำขอถี่เกินไป รอสักครู่", status);
   if (status >= 500) return new AidError("SERVER_DOWN", "ระบบหลังบ้านไม่ตอบ หากอันตราย โทร 1784 หรือ 1669", status);
   if (auth && ["invalid_credentials", "invalid_grant"].includes(body?.error_code)) return new AidError("BAD_LOGIN", "อีเมลหรือรหัสผ่านไม่ถูกต้อง", status);

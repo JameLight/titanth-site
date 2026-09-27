@@ -79,6 +79,14 @@ test("known Auth failures give a useful Thai action without showing raw server t
   }
 });
 
+test("unexpected prototype-shaped error codes remain generic text", async () => {
+  for (const errorCode of ["constructor", "toString"]) {
+    const api = makeAidApi(good, async () => json({ error_code: errorCode, msg: "raw sample@example.test" }, 400), memory());
+    await assert.rejects(api.boardPublic(null), error =>
+      error instanceof AidError && error.message === "ทำรายการไม่สำเร็จ ตรวจข้อมูลแล้วลองใหม่");
+  }
+});
+
 test("auth token remains in session storage and refreshes before protected RPC", async () => {
   const seen = [];
   const store = memory();
