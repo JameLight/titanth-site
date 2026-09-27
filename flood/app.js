@@ -5,12 +5,14 @@ import { listCases, putCase, deleteCase } from "./storage.js";
 import { qrSvg } from "./qr.js";
 import { loadIntakeConfig, makeIntakeClient, caseStatusText, stripIntakeSecrets } from "./intake_client.js";
 import { createSubmissionGuard } from "./submission_guard.js";
+import { takeReceipt } from "./receipt_lookup.js";
 import { PROVINCES, canonicalProvince } from "./provinces.js";
 import { NDWC_ALERTS_URL, alertsForProvince, newestAlertTime } from "./official_alerts.js";
 
 const $ = selector => document.querySelector(selector);
 const DDPM_LINE_URL = "https://lin.ee/MoS2rXU";
 const GPS_HINT = "กดเฉพาะเมื่ออยู่ที่จุดเกิดเหตุ ถ้าแจ้งแทนคนอื่น ให้กรอกจุดสังเกตแทน";
+const WITHDRAW_SCOPE_TEXT = "ระบบจะลบเบอร์ พิกัด จุดสังเกต และรายละเอียดจากฐานข้อมูล เคสที่ยังเปิดอยู่จะเปลี่ยนเป็นยกเลิก แต่ยังเก็บจังหวัด เวลา จำนวนคน กลุ่มความต้องการแบบกว้าง (ด่วน/กลุ่มเปราะบาง/อื่นๆ) สถานะ และทีมไว้เพื่อสถิติ ข้อมูลที่ทีมเห็นหรือส่งต่อไปก่อนหน้าอาจยังอยู่กับปลายทางอื่น";
 const form = $("#case-form");
 const list = $("#case-list");
 let guardStorage;
@@ -29,7 +31,11 @@ const intakeClientPromise = loadIntakeConfig().then(config => config ? makeIntak
 intakeClientPromise.then(client => {
   if (!client) return;
   $("#receipt-lookup").hidden = false;
-  if (!client.config.enabled) return;
+  if (!client.config.enabled) {
+    $("#service-ribbon").textContent = "ไม่ใช่เว็บหน่วยงานรัฐ • ปิดรับเคสใหม่ • ผู้มีรหัสยังตรวจสถานะหรือถอนข้อมูลละเอียดได้";
+    $("#service-footer").textContent = "ปิดรับเคสใหม่ • ผู้มีรหัสยังตรวจสถานะหรือถอนข้อมูลละเอียดได้ • หากอันตรายโทร 1784 หรือ 1669";
+    return;
+  }
   $("#service-ribbon").textContent = "ไม่ใช่เว็บหน่วยงานรัฐ • ข้อมูลจะถึงระบบทีมอาสาเฉพาะเมื่อคุณกดส่งและยินยอม • ถ้าอันตรายโทร 1784 หรือ 1669";
   $("#intro-copy").textContent = "กรอกเท่าที่รู้แล้วบันทึกในเครื่อง คุณยังส่งข้อความเองทาง LINE ปภ. หรือโทร 1784 ได้ ถ้าพื้นที่นี้มีทีมอาสาเฝ้า ระบบจะแสดงปุ่มส่งเข้าทีมแยกต่างหาก";
   $("#storage-scope").textContent = "บันทึกในเครื่องก่อน";
@@ -388,39 +394,31 @@ async function readIntakeStatus(item, target) {
   } catch { target.textContent = "ยังอ่านสถานะจากระบบไม่ได้ ถ้าอันตรายโทร 1784 หรือ 1669"; }
 }
 
-function lookupReceipt() {
-  const form = $("#receipt-lookup-form");
-  const code = form.elements.code.value.trim().toUpperCase();
-  const secret = form.elements.secret.value.trim().toLowerCase();
-  if (!/^[A-Z0-9-]{4,40}$/.test(code) || !/^[a-f0-9]{32,128}$/.test(secret)) {
-    throw new Error("รหัสเคสหรือรหัสลับไม่ครบ กรุณาตรวจรหัสที่เก็บไว้");
-  }
-  return { code, secret };
-}
-
 $("#receipt-lookup-form").addEventListener("submit", async event => {
   event.preventDefault();
   const target = $("#receipt-lookup-result");
+  let receipt;
+  try { receipt = takeReceipt($("#receipt-lookup-form")); }
+  catch (error) { target.textContent = error.message; return; }
   const client = await intakeClientPromise;
   if (!client) { target.textContent = "ยังเชื่อมระบบสถานะไม่ได้ หากเดือดร้อนโทร 1784 หรือ 1669 ตามเหตุ"; return; }
   const button = $("#receipt-lookup-read");
   button.disabled = true;
   try {
-    const receipt = lookupReceipt();
     const result = await client.caseStatus(receipt);
     target.textContent = caseStatusText(result);
   } catch (error) { target.textContent = error.message || "ยังอ่านสถานะไม่ได้ หากเดือดร้อนโทร 1784 หรือ 1669"; }
-  finally { $("#receipt-lookup-form").elements.secret.value = ""; button.disabled = false; }
+  finally { button.disabled = false; }
 });
 
 $("#receipt-lookup-withdraw").addEventListener("click", async () => {
   const target = $("#receipt-lookup-result");
+  let receipt;
+  try { receipt = takeReceipt($("#receipt-lookup-form")); }
+  catch (error) { target.textContent = error.message; return; }
   const client = await intakeClientPromise;
   if (!client) { target.textContent = "ยังเชื่อมระบบลบข้อมูลไม่ได้ กรุณาลองใหม่เมื่อเชื่อมระบบได้"; return; }
-  let receipt;
-  try { receipt = lookupReceipt(); }
-  catch (error) { target.textContent = error.message; return; }
-  if (!await askConfirm("ระบบจะลบเบอร์ พิกัด จุดสังเกต และรายละเอียดจากฐานข้อมูล แต่ข้อมูลที่ทีมเห็นหรือส่งต่อไปก่อนหน้าอาจยังอยู่กับปลายทางอื่น ถ้ามีเคสในเครื่อง ให้ลบแยกจากรายการด้านล่าง", "ยกเลิกเคสและลบข้อมูล")) return;
+  if (!await askConfirm(`${WITHDRAW_SCOPE_TEXT} ถ้ามีเคสในเครื่อง ให้ลบแยกจากรายการด้านล่าง`, "ยกเลิกเคสและลบข้อมูลละเอียด")) return;
   const button = $("#receipt-lookup-withdraw");
   button.disabled = true;
   try {
@@ -429,11 +427,11 @@ $("#receipt-lookup-withdraw").addEventListener("click", async () => {
       ? "ระบบยืนยันยกเลิกเคสและลบข้อมูลละเอียดแล้ว หากมีเคสในเครื่อง ให้ลบแยกจากรายการด้านล่าง"
       : "ระบบยืนยันลบข้อมูลละเอียดแล้ว เคสที่ปิดไว้คงสถานะเดิม หากมีเคสในเครื่อง ให้ลบแยกจากรายการด้านล่าง";
   } catch (error) { target.textContent = error.definitive ? error.message : "ยังยืนยันผลการลบข้อมูลไม่ได้ อย่าลองซ้ำทันที กรุณาอ่านสถานะหรือติดต่อผู้ดูแลระบบ"; }
-  finally { $("#receipt-lookup-form").elements.secret.value = ""; button.disabled = false; }
+  finally { button.disabled = false; }
 });
 
 async function withdrawSubmittedCase(item, control) {
-  if (!await askConfirm("ระบบจะลบเบอร์ พิกัด จุดสังเกต และรายละเอียดจากฐานข้อมูล เคสที่ยังเปิดอยู่จะเปลี่ยนเป็นยกเลิก แต่ยังเก็บจังหวัด เวลา จำนวนคน กลุ่มความต้องการแบบกว้าง (ด่วน/กลุ่มเปราะบาง/อื่นๆ) สถานะ และทีมไว้เพื่อสถิติ ข้อมูลที่ทีมเห็นหรือส่งต่อไปก่อนหน้าอาจยังอยู่กับปลายทางอื่น เมื่อระบบยืนยันแล้วจะลบสำเนาเคสในอุปกรณ์นี้ด้วย", "ยกเลิกเคสและลบข้อมูล")) return;
+  if (!await askConfirm(`${WITHDRAW_SCOPE_TEXT} เมื่อระบบยืนยันแล้วจะลบสำเนาเคสในอุปกรณ์นี้ด้วย`, "ยกเลิกเคสและลบข้อมูลละเอียด")) return;
   const client = await intakeClientPromise;
   if (!client) { toast("ยังเชื่อมระบบไม่ได้ จึงยังยืนยันการลบข้อมูลไม่ได้"); return; }
   control.disabled = true;
