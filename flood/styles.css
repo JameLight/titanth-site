@@ -52,3 +52,5 @@ dialog{max-height:90vh;overflow:auto}
 .quick-location-result.gps-uncertain #quick-location-status,.gps-row #gps-status.gps-uncertain{color:#782118;font-weight:800}
 .gps-row #gps-status.gps-uncertain{padding:.35rem .5rem;background:#fff0ed;border-left:4px solid #a82b21}
 .sos-say{margin:0;padding:.6rem .8rem;background:#fff;border:1.5px solid #d7aaa3;border-radius:10px;font-size:1rem;line-height:1.5;color:#513b36}.sos-say strong{color:#782118}
+/* KFR-96 (Claude): phone targets at least 44px and text at least 14px, from the 27 Sep audit */
+details>summary{min-height:44px;padding:.55rem 0;box-sizing:border-box}.official-alerts details li{margin:.1rem 0}.official-alerts details li a{display:inline-block;min-height:44px;padding:.6rem 0;line-height:1.4}.secondary-button{min-height:44px}.sos-small small,.bkk-links-actions a span,.bkk-links p,.optional{font-size:.875rem}.official-alerts .alert-source{font-size:.875rem!important}.sos-actions .sos-coverage{margin:0!important}.sos-form-link{display:inline-flex;align-items:center;min-height:44px}.status-guide li span,footer,.privacy-note{font-size:.875rem}
