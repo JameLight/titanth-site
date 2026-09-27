@@ -1,5 +1,6 @@
 import { PROVINCES } from "../flood/provinces.js";
 import { AidError, loadConfig, makeAidApi } from "./aid_api.js";
+import { conversationControls, postStatusLabel } from "./aid_view.js";
 
 const $ = id => document.getElementById(id);
 const field = (form, name) => form.elements.namedItem(name);
@@ -146,7 +147,7 @@ async function loadMine() {
   for (const row of rows) {
     const card = node("article", "", "card");
     card.append(node("h3", `${row.kind === "request" ? "ขอ" : "เสนอ"} · ${row.province}`));
-    card.append(node("p", row.summary || ""), node("p", `สถานะ: ${row.status} · คนเริ่มคุย ${row.responses || 0} · หมดอายุ ${dateText(row.expires_at)}`, "muted"));
+    card.append(node("p", row.summary || ""), node("p", `สถานะ: ${postStatusLabel(row.status)} · คนเริ่มคุย ${row.responses || 0} · หมดอายุ ${dateText(row.expires_at)}`, "muted"));
     if (["open", "reported", "expired"].includes(row.status)) {
       const actions = node("div", "", "actions");
       if (row.status !== "expired") actions.append(button("ปิดโพสต์", async () => {
@@ -167,7 +168,7 @@ async function loadThreads(selectId = selectedThread) {
     const card = node("article", "", "card");
     card.append(node("h3", `คุยกับ ${row.other_name || "ผู้ใช้ที่ไม่ได้ตั้งชื่อ"} · ${row.province || ""}`));
     card.append(node("p", row.post_summary || "คำอธิบายซ่อนไว้จนกว่าผู้โพสต์จะเลือกเปิดให้", "muted"));
-    card.append(node("p", `ข้อความ ${row.messages || 0} · ล่าสุด ${dateText(row.last_at || row.created_at)} · สถานะโพสต์ ${row.post_status}`, "muted"));
+    card.append(node("p", `ข้อความ ${row.messages || 0} · ล่าสุด ${dateText(row.last_at || row.created_at)} · สถานะโพสต์ ${postStatusLabel(row.post_status)}`, "muted"));
     card.append(button("เปิดห้องนี้", async () => { selectThread(row); await loadMessages(); }, true));
     $("threads").append(card);
   }
@@ -179,16 +180,17 @@ async function loadThreads(selectId = selectedThread) {
 }
 function selectThread(row) {
   const changed = selectedThread !== row.thread_id;
+  const controls = conversationControls(row);
   selectedThread = row.thread_id; currentThread = row;
   if (changed) currentMessages = [];
   $("conversation").hidden = false;
   $("conversation-title").textContent = `ห้องคุยกับ ${row.other_name || "ผู้ใช้"}`;
-  $("conversation-state").textContent = `โพสต์ ${row.post_status} · ${row.i_am_poster ? "คุณเป็นผู้โพสต์" : "คุณเป็นผู้ติดต่อ"}`;
-  $("share-details").hidden = !row.i_am_poster || row.shared_at != null || row.post_status !== "open";
-  $("view-details").hidden = row.i_am_poster || row.shared_at == null || row.post_status !== "open";
-  $("message-form").hidden = row.post_status !== "open";
+  $("conversation-state").textContent = `โพสต์ ${postStatusLabel(row.post_status)} · ${row.i_am_poster ? "คุณเป็นผู้โพสต์" : "คุณเป็นผู้ติดต่อ"}`;
+  $("share-details").hidden = !controls.share;
+  $("view-details").hidden = !controls.view;
+  $("message-form").hidden = !controls.message;
   $("report-thread-form").hidden = false;
-  if (changed || row.post_status !== "open") { $("details").hidden = true; clear($("details")); }
+  if (changed || !controls.message) { $("details").hidden = true; clear($("details")); }
   if (changed) clear($("messages"));
 }
 async function loadMessages() {
