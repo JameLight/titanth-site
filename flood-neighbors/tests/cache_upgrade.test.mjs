@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 test('the new flood page shell replaces the previous cached shell', async () => {
   const events = {};
-  const keys = new Set(['promjaeng-flood-public-v20', 'promjaeng-flood-public-v21', 'promjaeng-flood-public-v22', 'promjaeng-flood-public-v23', 'promjaeng-flood-public-v24', 'promjaeng-flood-public-v25', 'promjaeng-flood-public-v26', 'promjaeng-flood-public-v27', 'promjaeng-flood-public-v28', 'unrelated-cache']);
+  const keys = new Set(['promjaeng-flood-public-v20', 'promjaeng-flood-public-v21', 'promjaeng-flood-public-v22', 'promjaeng-flood-public-v23', 'promjaeng-flood-public-v24', 'promjaeng-flood-public-v25', 'promjaeng-flood-public-v26', 'promjaeng-flood-public-v27', 'promjaeng-flood-public-v28', 'promjaeng-flood-public-v29', 'unrelated-cache']);
   let shell = [];
   const scope = 'https://example.invalid/flood/';
   const cache = { addAll: async requests => { shell = requests.map(request => request.url); } };
@@ -30,7 +30,7 @@ test('the new flood page shell replaces the previous cached shell', async () => 
   await pending;
   assert.ok(shell.includes(`${scope}index.html`));
   assert.ok(shell.includes(`${scope}submission_guard.js`));
-  assert.ok(keys.has('promjaeng-flood-public-v29'));
+  assert.ok(keys.has('promjaeng-flood-public-v30'));
   events.activate({ waitUntil: promise => { pending = promise; } });
   await pending;
   assert.equal(keys.has('promjaeng-flood-public-v20'), false);
@@ -42,5 +42,6 @@ test('the new flood page shell replaces the previous cached shell', async () => 
   assert.equal(keys.has('promjaeng-flood-public-v26'), false);
   assert.equal(keys.has('promjaeng-flood-public-v27'), false);
   assert.equal(keys.has('promjaeng-flood-public-v28'), false);
+  assert.equal(keys.has('promjaeng-flood-public-v29'), false);
   assert.equal(keys.has('unrelated-cache'), true);
 });
