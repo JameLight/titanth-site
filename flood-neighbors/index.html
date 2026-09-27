@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#123d51">
+  <title>เสนอช่วยแล้วแชร์เอง | พร้อมแจ้งน้ำท่วม</title>
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header class="top"><a href="../flood/">← พร้อมแจ้งน้ำท่วม</a><strong>เสนอช่วยแล้วแชร์เอง</strong></header>
+  <main>
+    <section class="urgent" aria-labelledby="urgent-title">
+      <h1 id="urgent-title">มีอันตราย? โทรก่อน</h1>
+      <p>หน้านี้ช่วยคุณเขียนข้อความเสนอช่วย แล้วเลือกช่องทางส่งเอง เว็บไม่มีคิวกู้ภัยหรือทีมรับเคสจากหน้านี้</p>
+      <div class="actions"><a class="button red" href="tel:1784">โทร 1784 <small>แจ้งภัยน้ำท่วม · ปภ.</small></a><a class="button green" href="tel:1669">โทร 1669 <small>เจ็บป่วยหรือบาดเจ็บฉุกเฉิน</small></a></div>
+    </section>
+    <section class="card" aria-labelledby="share-title">
+      <div class="step">1 · เลือกสิ่งที่คุณช่วยได้</div>
+      <h2 id="share-title">สร้างข้อความเสนอช่วย</h2>
+      <p>ไม่ต้องสมัคร ข้อความอยู่บนเครื่องคุณจนกว่าคุณจะกดแชร์หรือคัดลอก</p>
+      <label for="share-province">จังหวัดที่คุณช่วยได้</label><select id="share-province" required><option value="">เลือกจังหวัด</option></select>
+      <label for="share-kind">ช่วยแบบไหน</label><select id="share-kind"><option value="relay">ช่วยโทรหรือส่งต่อข้อมูล</option><option value="supplies">แบ่งปันน้ำดื่มหรืออาหาร</option></select>
+      <label for="share-contact-kind">ให้ติดต่อคุณทางไหน</label><select id="share-contact-kind"><option value="reply_in_app">ตอบกลับโพสต์/แชต</option><option value="phone">เบอร์โทรของฉัน</option><option value="line_id">LINE ID ของฉัน</option></select>
+      <label id="share-contact-label" for="share-contact" hidden>เบอร์โทรหรือ LINE ID ของคุณ</label><input id="share-contact" autocomplete="off" inputmode="tel" maxlength="32" placeholder="ใส่ของคุณเองเท่านั้น" hidden>
+      <p class="warning">ถ้าให้ตอบกลับในแอป ให้ส่งจากบัญชีของคุณในโพสต์หรือแชตที่คนตอบกลับได้ ข้อความที่คนอื่นส่งต่ออาจติดต่อคุณกลับไม่ได้ ถ้าเลือกเบอร์หรือ LINE ID แล้วโพสต์สาธารณะ ทุกคนจะเห็นและอาจคัดลอกต่อได้ อย่าใส่ข้อมูลผู้เดือดร้อนในข้อความหรือคอมเมนต์สาธารณะ และอย่ารับปากว่าจะเข้าไปกู้ภัยหากยังทำไม่ได้</p>
+      <div class="step">2 · กดแชร์ หรือคัดลอกแล้วส่งเอง</div>
+      <div class="actions"><button id="share-now" class="button blue" type="button">แชร์ข้อความ</button><button id="copy-now" class="button outline" type="button">คัดลอกข้อความ</button></div>
+      <label id="manual-copy-label" for="manual-copy" hidden>ถ้าคัดลอกอัตโนมัติไม่ได้ ให้เลือกข้อความนี้แล้วคัดลอกเอง</label><textarea id="manual-copy" readonly hidden></textarea>
+      <p id="share-result" role="status"></p>
+      <p class="fine"><strong>ตรวจอีกครั้งในแอปที่คุณเลือก:</strong> ต้องกดส่งเองและรอผู้รับตอบกลับ การกดแชร์หรือคัดลอกที่นี่ไม่ได้แปลว่ามีใครได้รับข้อความแล้ว</p>
+    </section>
+    <section class="card" aria-labelledby="limits-title">
+      <h2 id="limits-title">หน้านี้ช่วยได้แค่ไหน</h2>
+      <p>เราไม่ได้ตรวจตัวตนหรือความพร้อมของคนที่นำข้อความไปแชร์ และไม่มีผู้เฝ้ารับข้อความจากหน้านี้ เราไม่รับเงินบริจาคและไม่ขอเงินจากใคร ถ้ามีคนอ้างชื่อเราแล้วขอเงินหรือให้โอนเงิน นั่นไม่ใช่เรา อย่าส่งเงินให้อาสาที่ไม่รู้จัก อย่านัดพบลำพัง</p>
+      <p class="warning">ถ้าจะไปช่วย อย่าลงน้ำที่ไหลเชี่ยวหรือเข้าใกล้สายไฟและจุดที่อาจมีไฟรั่ว อย่าไปคนเดียว ถ้าเกินกำลัง โทร 1784</p>
+      <p>ถ้าสัญญาณอินเทอร์เน็ตใช้ไม่ได้ แต่ยังโทรได้ ให้โทร 1784 หรือ 1669 ตามเหตุ</p>
+      <a class="main-link" href="../flood/">กลับไปหน้าเตรียมข้อมูลแจ้งเจ้าหน้าที่ →</a>
+    </section>
+  </main>
+  <footer><p>พร้อมแจ้งน้ำท่วม · เครื่องมือช่วยเขียนและส่งต่อข้อมูลด้วยตัวเอง · <a href="mailto:jamelight@titanth.com?subject=Flood%20share%20page%20feedback">แจ้งข้อผิดพลาดของหน้าเว็บ</a> (ไม่ใช่ช่องแจ้งเหตุฉุกเฉิน)</p></footer>
+</body>
+</html>
