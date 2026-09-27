@@ -63,6 +63,22 @@ test("signup without session does not report the user signed in", async () => {
   assert.equal(api.hasSession(), false);
 });
 
+test("known Auth failures give a useful Thai action without showing raw server text", async () => {
+  const cases = [
+    ["weak_password", "WEAK_PASSWORD", "รหัสผ่านไม่ผ่านเกณฑ์"],
+    ["user_already_exists", "ACCOUNT_EXISTS", "ลองเข้าสู่ระบบ"],
+    ["email_exists", "ACCOUNT_EXISTS", "ลองเข้าสู่ระบบ"],
+    ["signup_disabled", "SIGNUP_DISABLED", "ไม่เปิดให้สมัคร"],
+    ["validation_failed", "AUTH_INPUT_INVALID", "ตรวจรูปแบบอีเมล"],
+    ["captcha_failed", "AUTH_CHECK_FAILED", "ระบบตรวจความปลอดภัยไม่ผ่าน"]
+  ];
+  for (const [errorCode, expectedCode, guidance] of cases) {
+    const api = makeAidApi(good, async () => json({ code: 422, error_code: errorCode, msg: "raw sample@example.test" }, 422), memory());
+    await assert.rejects(api.signUp("sample@example.test", "test-password"), error =>
+      error instanceof AidError && error.code === expectedCode && error.message.includes(guidance) && !error.message.includes("sample@example.test"));
+  }
+});
+
 test("auth token remains in session storage and refreshes before protected RPC", async () => {
   const seen = [];
   const store = memory();

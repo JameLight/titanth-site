@@ -24,6 +24,14 @@ const THAI_ERROR = Object.freeze({
   SUMMARY_TOO_LONG: "คำอธิบายยาวเกิน 160 ตัวอักษร",
   INVALID_INPUT: "ตรวจข้อมูลที่กรอกแล้วลองใหม่"
 });
+const AUTH_ERROR = Object.freeze({
+  weak_password: ["WEAK_PASSWORD", "รหัสผ่านไม่ผ่านเกณฑ์ความปลอดภัย ลองตั้งให้ยาวและคาดเดายากขึ้น"],
+  user_already_exists: ["ACCOUNT_EXISTS", "อีเมลนี้อาจมีบัญชีแล้ว ลองเข้าสู่ระบบ"],
+  email_exists: ["ACCOUNT_EXISTS", "อีเมลนี้อาจมีบัญชีแล้ว ลองเข้าสู่ระบบ"],
+  signup_disabled: ["SIGNUP_DISABLED", "ตอนนี้ระบบไม่เปิดให้สมัครบัญชีใหม่ หากอันตราย โทร 1784 หรือ 1669"],
+  validation_failed: ["AUTH_INPUT_INVALID", "ตรวจรูปแบบอีเมลและรหัสผ่าน แล้วลองใหม่"],
+  captcha_failed: ["AUTH_CHECK_FAILED", "ระบบตรวจความปลอดภัยไม่ผ่าน กรุณาลองใหม่ภายหลัง หากอันตราย โทร 1784 หรือ 1669"]
+});
 
 export class AidError extends Error {
   constructor(code, message, status = 0) { super(message); this.name = "AidError"; this.code = code; this.status = status; }
@@ -85,6 +93,9 @@ function responseError(status, body, auth = false) {
   if (status >= 500) return new AidError("SERVER_DOWN", "ระบบหลังบ้านไม่ตอบ หากอันตราย โทร 1784 หรือ 1669", status);
   if (auth && ["invalid_credentials", "invalid_grant"].includes(body?.error_code)) return new AidError("BAD_LOGIN", "อีเมลหรือรหัสผ่านไม่ถูกต้อง", status);
   if (auth && body?.error_code === "email_not_confirmed") return new AidError("EMAIL_NOT_CONFIRMED", "โปรดยืนยันอีเมลก่อนเข้าสู่ระบบ", status);
+  const authCode = String(body?.error_code ?? "").toLowerCase();
+  const knownAuth = auth && Object.hasOwn(AUTH_ERROR, authCode) ? AUTH_ERROR[authCode] : null;
+  if (knownAuth) return new AidError(knownAuth[0], knownAuth[1], status);
   if (status === 401 || status === 403) return new AidError("NO_PERMISSION", "ไม่มีสิทธิ์ทำรายการนี้ เข้าสู่ระบบใหม่", status);
   if (status === 404) return new AidError("MISSING_API", "ระบบกระดานยังไม่พร้อม กรุณาใช้ช่องทางโทร", status);
   return new AidError(code, "ทำรายการไม่สำเร็จ ตรวจข้อมูลแล้วลองใหม่", status);
