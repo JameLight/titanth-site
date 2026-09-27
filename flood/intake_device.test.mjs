@@ -113,6 +113,12 @@ test("an uncertain submit response warns that the case may already exist", async
   const missingReceipt = async url => url.endsWith("system_totals") ? ready
     : url.endsWith("duty_status") ? duty : { ok: true, json: async () => [{ code: "", secret: "" }] };
   await assert.rejects(() => makeIntakeClient(config, missingReceipt, () => "a".repeat(48)).submitCase(item), /ยังยืนยันไม่ได้.*อย่ากดส่งซ้ำ.*1784/);
+  const unknownHttp = async url => url.endsWith("system_totals") ? ready
+    : url.endsWith("duty_status") ? duty : { ok: false, status: 503, json: async () => ({ message: "UNEXPECTED" }) };
+  await assert.rejects(() => makeIntakeClient(config, unknownHttp, () => "a".repeat(48)).submitCase(item), /อย่ากดส่งซ้ำ.*1784.*503/);
+  const wrongShape = async url => url.endsWith("system_totals") ? ready
+    : url.endsWith("duty_status") ? duty : { ok: true, json: async () => [] };
+  await assert.rejects(() => makeIntakeClient(config, wrongShape, () => "a".repeat(48)).submitCase(item), /อาจรับข้อมูลแล้ว.*อย่ากดส่งซ้ำ.*1784/);
 });
 
 test("stalled claimed cases display a call-now warning without changing the actual status", () => {

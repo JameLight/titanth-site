@@ -5,6 +5,7 @@ import { plausibleThailandGps } from "./model.js";
 const ALLOWED_NEEDS = new Set(["trapped", "medical", "immobile", "fast_water", "boat", "medicine", "food_water", "other", "dialysis_oxygen", "pregnant", "infant", "elderly", "disabled"]);
 const DEVICE_TOKEN_KEY = "promjaeng-flood-intake-device-v1";
 const DEVICE_TOKEN_PATTERN = /^[A-Za-z0-9_-]{16,64}$/;
+const UNCERTAIN_SUBMISSION = "ยังยืนยันไม่ได้ว่าเคสถูกบันทึกหรือไม่ ระบบอาจรับข้อมูลแล้ว อย่ากดส่งซ้ำทันที หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ";
 const STATUS_TEXT = Object.freeze({
   SENT: "ระบบรับข้อมูลแล้ว ยังไม่มีทีมอาสากดรับเคส",
   ACKNOWLEDGED: "ทีมอาสาแจ้งว่ารับเคสแล้ว",
@@ -82,7 +83,7 @@ export function makeIntakeClient(config, fetchImpl = globalThis.fetch, deviceTok
         body: JSON.stringify(payload)
       });
     } catch {
-      if (name === "submit_case") throw new Error("ยังยืนยันไม่ได้ว่าเคสถูกบันทึกหรือไม่ ระบบอาจรับข้อมูลแล้ว อย่ากดส่งซ้ำทันที หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");
+      if (name === "submit_case") throw new Error(UNCERTAIN_SUBMISSION);
       throw new Error("ติดต่อระบบรับเคสไม่ได้ หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");
     }
     if (!response.ok) {
@@ -93,13 +94,15 @@ export function makeIntakeClient(config, fetchImpl = globalThis.fetch, deviceTok
         error.definitive = true;
         throw error;
       }
+      if (name === "submit_case") throw new Error(`${UNCERTAIN_SUBMISSION} (HTTP ${response.status})`);
       throw new Error(`ระบบรับเคสตอบกลับผิดพลาด (${response.status}) หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ`);
     }
     const result = await response.json().catch(() => {
-      if (name === "submit_case") throw new Error("ยังยืนยันไม่ได้ว่าเคสถูกบันทึกหรือไม่ ระบบอาจรับข้อมูลแล้ว อย่ากดส่งซ้ำทันที หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");
+      if (name === "submit_case") throw new Error(UNCERTAIN_SUBMISSION);
       throw new Error("อ่านคำตอบจากระบบรับเคสไม่ได้ หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");
     });
     if (!Array.isArray(result) || result.length !== 1 || typeof result[0] !== "object" || !result[0]) {
+      if (name === "submit_case") throw new Error(UNCERTAIN_SUBMISSION);
       throw new Error("คำตอบจากระบบรับเคสไม่ครบ หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");
     }
     return result[0];
@@ -127,7 +130,7 @@ export function makeIntakeClient(config, fetchImpl = globalThis.fetch, deviceTok
     // Do not retry automatically: a network error after POST may mean the server received it.
     const result = await rpc("submit_case", payload);
     if (!/^[A-Z0-9-]{4,40}$/.test(result.code || "") || !/^[a-f0-9]{32,128}$/.test(result.secret || "")) {
-      throw new Error("ระบบตอบรหัสเคสกลับไม่ครบ ยังยืนยันไม่ได้ว่าเคสถูกบันทึกหรือไม่ อย่ากดส่งซ้ำทันที หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");
+      throw new Error(UNCERTAIN_SUBMISSION);
     }
     return { code: result.code, secret: result.secret, submittedAt: new Date().toISOString() };
   }
