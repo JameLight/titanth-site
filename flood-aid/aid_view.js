@@ -14,3 +14,13 @@ export function postStatusLabel(status) {
     closed: "ปิดแล้ว", hidden: "ถูกซ่อน"
   })[status] || "ไม่ทราบสถานะ";
 }
+
+// The current UI has no consent trail for the sensitive marker, so it never sends true.
+export function postPayload(fields) {
+  return {
+    p_kind: fields.kind, p_province: fields.province, p_district: fields.district?.trim() || null,
+    p_categories: fields.categories, p_people: fields.people ? Number(fields.people) : null,
+    p_vulnerable: false, p_summary: fields.summary?.trim() || "",
+    p_place: fields.place?.trim() || null, p_phone: fields.phone?.trim() || null
+  };
+}

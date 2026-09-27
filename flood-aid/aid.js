@@ -1,6 +1,6 @@
 import { PROVINCES } from "../flood/provinces.js";
 import { AidError, loadConfig, makeAidApi } from "./aid_api.js";
-import { conversationControls, postStatusLabel } from "./aid_view.js";
+import { conversationControls, postPayload, postStatusLabel } from "./aid_view.js";
 
 const $ = id => document.getElementById(id);
 const field = (form, name) => form.elements.namedItem(name);
@@ -252,15 +252,13 @@ function setupEvents() {
     event.preventDefault(); const form = event.currentTarget;
     const categories = [...form.querySelectorAll('input[name="category"]:checked')].map(x => x.value);
     if (!categories.length) { status("เลือกอย่างน้อยหนึ่งหมวด", true); return; }
-    if (field(form, "vulnerable").checked && !field(form, "health_consent").checked) { status("โปรดยืนยันความยินยอมข้อมูลสุขภาพก่อน", true); return; }
     if (!confirm("ลงโพสต์นี้? ทุกคนจะเห็นจังหวัด หมวด และจำนวนคน คนที่คุณเลือกเท่านั้นจึงจะเห็นคำอธิบาย อำเภอ ที่อยู่และเบอร์ เจ้าของระบบเข้าถึงได้")) return;
     run(async () => {
-      await api.post({
-        p_kind: field(form, "kind").value, p_province: field(form, "province").value, p_district: field(form, "district").value.trim() || null,
-        p_categories: categories, p_people: field(form, "people").value ? Number(field(form, "people").value) : null,
-        p_vulnerable: field(form, "vulnerable").checked, p_summary: field(form, "summary").value.trim(),
-        p_place: field(form, "place").value.trim() || null, p_phone: field(form, "phone").value.trim() || null
-      });
+      await api.post(postPayload({
+        kind: field(form, "kind").value, province: field(form, "province").value, district: field(form, "district").value,
+        categories, people: field(form, "people").value, summary: field(form, "summary").value,
+        place: field(form, "place").value, phone: field(form, "phone").value
+      }));
       form.reset(); await loadMine(); await loadBoard();
       status("โพสต์เข้ากระดานแล้ว ยังไม่ใช่การรับเคสหรือการยืนยันว่ามีคนไปช่วย");
     });
@@ -272,7 +270,7 @@ function setupEvents() {
   });
   $("share-details").addEventListener("click", () => {
     if (!selectedThread || !currentThread?.i_am_poster) return;
-    if (!confirm("เปิดคำอธิบาย อำเภอ เครื่องหมายกลุ่มเปราะบาง ที่อยู่ และเบอร์ให้คนนี้? เขาอาจจดหรือส่งต่อได้ และเรียกคืนสิ่งที่เห็นแล้วไม่ได้")) return;
+    if (!confirm("เปิดคำอธิบาย อำเภอ ที่อยู่ และเบอร์ให้คนนี้? เขาอาจจดหรือส่งต่อได้ และเรียกคืนสิ่งที่เห็นแล้วไม่ได้")) return;
     run(async () => { await api.share(selectedThread); await loadThreads(selectedThread); status("เปิดข้อมูลให้คนนี้แล้ว ระบบบันทึกการเปิด"); });
   });
   $("view-details").addEventListener("click", () => run(async () => {
@@ -283,7 +281,6 @@ function setupEvents() {
       for (const [label, key] of [["อำเภอหรือเขต", "district"], ["คำอธิบาย", "summary"], ["ที่อยู่หรือจุดนัด", "place"], ["เบอร์", "phone"]]) {
         $("details").append(node("p", `${label}: ${detail[key] || "ไม่ได้ใส่"}`));
       }
-      $("details").append(node("p", detail.vulnerable ? "มีการทำเครื่องหมายบุคคลเปราะบาง" : "ไม่ได้ทำเครื่องหมายบุคคลเปราะบาง"));
       $("details").hidden = false;
       status("เปิดดูข้อมูลที่ผู้โพสต์เลือกให้แล้ว ระบบบันทึกการดูข้อมูล");
     }
