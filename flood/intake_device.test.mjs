@@ -92,6 +92,15 @@ test("unrecognized server errors still point to an emergency channel", async () 
   await assert.rejects(() => makeIntakeClient(config, fetchImpl).submitCase(item), /403.*1784/);
 });
 
+test("network and malformed JSON responses point to an emergency channel", async () => {
+  const ready = { ok: true, json: async () => [{ intake_open: true, duty_locked: false }] };
+  const offline = async url => { if (url.endsWith("system_totals")) return ready; throw new TypeError("offline"); };
+  await assert.rejects(() => makeIntakeClient(config, offline).submitCase(item), /ติดต่อระบบ.*1784/);
+  const badJson = async url => url.endsWith("system_totals") ? ready
+    : { ok: true, json: async () => { throw new SyntaxError("bad JSON"); } };
+  await assert.rejects(() => makeIntakeClient(config, badJson).submitCase(item), /อ่านคำตอบ.*1784/);
+});
+
 test("stalled claimed cases display a call-now warning without changing the actual status", () => {
   assert.match(caseStatusText({ status: "ACKNOWLEDGED", stale: true }), /ไม่มีการอัปเดต.*1784/);
   assert.match(caseStatusText({ status: "NEED_INFO", stale: true }), /ไม่มีการอัปเดต.*1784/);

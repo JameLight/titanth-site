@@ -74,11 +74,16 @@ export function makeIntakeClient(config, fetchImpl = globalThis.fetch, deviceTok
   const base = config.url.replace(/\/$/, "");
 
   async function rpc(name, payload) {
-    const response = await fetchImpl(`${base}/rest/v1/rpc/${name}`, {
-      method: "POST", credentials: "omit", cache: "no-store", redirect: "error", referrerPolicy: "no-referrer",
-      headers: { "apikey": config.publishableKey, "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    let response;
+    try {
+      response = await fetchImpl(`${base}/rest/v1/rpc/${name}`, {
+        method: "POST", credentials: "omit", cache: "no-store", redirect: "error", referrerPolicy: "no-referrer",
+        headers: { "apikey": config.publishableKey, "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(payload)
+      });
+    } catch {
+      throw new Error("ติดต่อระบบรับเคสไม่ได้ หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");
+    }
     if (!response.ok) {
       const body = await response.json().catch(() => null);
       const code = body?.message;
@@ -89,7 +94,7 @@ export function makeIntakeClient(config, fetchImpl = globalThis.fetch, deviceTok
       }
       throw new Error(`ระบบรับเคสตอบกลับผิดพลาด (${response.status}) หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ`);
     }
-    const result = await response.json();
+    const result = await response.json().catch(() => { throw new Error("อ่านคำตอบจากระบบรับเคสไม่ได้ หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ"); });
     if (!Array.isArray(result) || result.length !== 1 || typeof result[0] !== "object" || !result[0]) {
       throw new Error("คำตอบจากระบบรับเคสไม่ครบ หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");
     }
