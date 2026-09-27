@@ -76,7 +76,7 @@ function reportControl(card, postId, threadId = null) {
   form.append(label, submit);
   form.addEventListener("submit", event => {
     event.preventDefault();
-    run(async () => { await api.report(postId, threadId, reason.value.trim()); reason.value = ""; form.hidden = true; status("ส่งรายงานแล้ว แต่ยังไม่มีเจ้าหน้าที่เฝ้ารายงานตลอดเวลา"); });
+    run(async () => { await api.report(postId, threadId, reason.value.trim()); reason.value = ""; form.hidden = true; status("ส่งรายงานแล้ว เจ้าของดูแลเองคนเดียว ไม่มีการแจ้งเตือนอัตโนมัติ จึงอาจไม่เห็นหรือดำเนินการทันที"); });
   });
   card.append(open, form);
 }
@@ -288,7 +288,7 @@ function setupEvents() {
   $("report-thread-form").addEventListener("submit", event => {
     event.preventDefault(); const form = event.currentTarget;
     if (!currentThread) return;
-    run(async () => { await api.report(currentThread.post_id, selectedThread, field(form, "reason").value.trim()); form.reset(); status("ส่งรายงานแล้ว ยังไม่มีเจ้าหน้าที่เฝ้ารายงานตลอดเวลา"); });
+    run(async () => { await api.report(currentThread.post_id, selectedThread, field(form, "reason").value.trim()); form.reset(); status("ส่งรายงานแล้ว เจ้าของดูแลเองคนเดียว ไม่มีการแจ้งเตือนอัตโนมัติ จึงอาจไม่เห็นหรือดำเนินการทันที"); });
   });
 }
 async function main() {
