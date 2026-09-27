@@ -1,0 +1,75 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { AidError, validConfig, loadConfig, makeAidApi } from "./aid_api.js";
+
+const origin = "https://titanth.com";
+const good = {
+  enabled: true, schemaVersion: 27, termsVersion: "aid-terms-v1-20260927",
+  privacyNoticeVersion: "aid-terms-v1-20260927", privacyNoticeUrl: "/flood-aid/privacy/",
+  url: "https://example.supabase.co/", publishableKey: "sb_publishable_abcdefghijklmnopqrstuvwxyz"
+};
+const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+const memory = () => {
+  const values = new Map();
+  return { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) };
+};
+
+test("starts closed unless enabled, same-version notice, and safe public API are present", () => {
+  assert.equal(validConfig({ ...good, enabled: false }, origin), false);
+  assert.equal(validConfig({ ...good, privacyNoticeVersion: "older" }, origin), false);
+  assert.equal(validConfig({ ...good, privacyNoticeUrl: "https://evil.example/notice" }, origin), false);
+  assert.equal(validConfig({ ...good, url: "https://evil.example/" }, origin), false);
+  assert.equal(validConfig({ ...good, publishableKey: "service_role_secret" }, origin), false);
+  assert.equal(validConfig(good, origin), true);
+});
+
+test("will not activate if notice is unavailable", async () => {
+  const fetcher = async url => url === "./aid-config.json" ? json(good) : new Response("missing", { status: 404 });
+  assert.equal(await loadConfig(fetcher, origin), null);
+  const fetcher2 = async url => url === "./aid-config.json" ? json(good) : new Response('<meta name="aid-terms-version" content="aid-terms-v1-20260927">', { headers: { "content-type": "text/html" } });
+  assert.deepEqual(await loadConfig(fetcher2, origin), good);
+});
+
+test("public board calls only RPC with publishable key and never direct tables", async () => {
+  const seen = [];
+  const fetcher = async (url, init) => {
+    seen.push({ url, init });
+    return json(url.endsWith("aid_totals") ? [{ board_open: true }] : []);
+  };
+  const api = makeAidApi(good, fetcher, memory());
+  await api.totals(); await api.boardPublic("เชียงใหม่");
+  assert.deepEqual(seen.map(x => new URL(x.url).pathname), ["/rest/v1/rpc/aid_totals", "/rest/v1/rpc/aid_board_public"]);
+  assert.ok(seen.every(x => x.init.method === "POST" && x.init.headers.apikey === good.publishableKey && !x.init.headers.Authorization));
+  assert.equal(JSON.parse(seen[1].init.body).p_province, "เชียงใหม่");
+});
+
+test("signup without session does not report the user signed in", async () => {
+  const api = makeAidApi(good, async () => json({ user: { id: "test-user" }, session: null }), memory());
+  assert.equal(await api.signUp("sample@example.test", "test-password"), false);
+  assert.equal(api.hasSession(), false);
+});
+
+test("auth token remains in session storage and refreshes before protected RPC", async () => {
+  const seen = [];
+  const store = memory();
+  const fetcher = async (url, init) => {
+    seen.push({ url, init });
+    if (url.includes("grant_type=password")) return json({ access_token: "old", refresh_token: "refresh-old", expires_in: 1 });
+    if (url.includes("grant_type=refresh_token")) return json({ access_token: "new", refresh_token: "refresh-new", expires_in: 3600 });
+    return json([{ account_code: "A12345" }]);
+  };
+  const api = makeAidApi(good, fetcher, store);
+  await api.signIn("sample@example.test", "test-password");
+  await api.me();
+  assert.equal(seen.at(-1).init.headers.Authorization, "Bearer new");
+  assert.equal(seen.at(-1).url.endsWith("/rest/v1/rpc/aid_me"), true);
+  await api.signOut();
+  assert.equal(api.hasSession(), false);
+});
+
+test("closed board and missing RPC errors remain explicit", async () => {
+  const api = makeAidApi(good, async () => json({ message: "AID_CLOSED", hint: "closed" }, 400), memory());
+  await assert.rejects(api.boardPublic(null), error => error instanceof AidError && error.code === "AID_CLOSED");
+  const missing = makeAidApi(good, async () => json({ code: "PGRST202", message: "Could not find the function" }, 404), memory());
+  await assert.rejects(missing.boardPublic(null), error => error instanceof AidError && error.code === "MISSING_API");
+});

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self' https://*.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+  <meta name="theme-color" content="#103b50">
+  <meta name="robots" content="noindex,nofollow">
+  <title>กระดานช่วยกัน | พร้อมแจ้งน้ำท่วม</title>
+  <link rel="stylesheet" href="./aid.css">
+</head>
+<body>
+  <header class="mast"><a href="/flood/">← กลับไปหน้าแจ้งเหตุน้ำท่วม</a><strong>พร้อมแจ้งน้ำท่วม · กระดานช่วยกัน</strong></header>
+  <main>
+    <section class="emergency" aria-labelledby="emergency-title">
+      <h1 id="emergency-title">อันตรายตอนนี้? โทรก่อน</h1>
+      <div class="call-grid">
+        <a href="tel:1784" class="call">โทร 1784 <small>แจ้งน้ำท่วม · ปภ.</small></a>
+        <a href="tel:1669" class="call medical">โทร 1669 <small>เจ็บป่วยหรือบาดเจ็บฉุกเฉิน</small></a>
+      </div>
+      <p>กระดานนี้ไม่ใช่ช่องแจ้งเหตุ ไม่มีเจ้าหน้าที่เฝ้ารับเรื่อง และไม่มีการรับประกันว่าจะมีคนมาช่วย</p>
+    </section>
+
+    <div id="status" class="status" role="status" aria-live="polite">กำลังตรวจว่ากระดานเปิดหรือไม่…</div>
+    <section id="closed" class="panel" hidden>
+      <h2>กระดานยังไม่เปิดรับข้อมูล</h2>
+      <p>ใช้ <a href="/flood/">หน้าช่วยเตรียมข้อความ</a> แล้วโทรหรือส่งให้หน่วยงานด้วยตัวเองได้ทันที</p>
+    </section>
+
+    <div id="active" hidden>
+      <section class="panel warning">
+        <h2>ก่อนใช้กระดาน</h2>
+        <ul>
+          <li>ใครก็สมัครได้ ระบบไม่ตรวจชื่อ อายุ หรือตัวตน คนที่คุยด้วยอาจไม่ใช่คนที่เขาอ้าง</li>
+          <li>อย่าโอนเงิน อย่าส่งรหัสผ่าน และอย่านัดพบคนแปลกหน้าลำพัง</li>
+          <li>เจ้าของระบบดูข้อมูลในฐานและข้อความที่คุยได้ ยังไม่มีคนเฝ้ารายงานตลอดเวลา</li>
+          <li>ข้อมูลในข้อความคุยอาจอ่านย้อนหลังได้ถึง 30 วันหลังโพสต์ปิด โปรดอย่าพิมพ์ที่อยู่หรือเบอร์ในข้อความ</li>
+        </ul>
+        <p><a id="notice-link" href="#">อ่านประกาศความเป็นส่วนตัวฉบับเต็มก่อนสมัครหรือโพสต์</a></p>
+      </section>
+
+      <section class="panel" aria-labelledby="browse-title">
+        <h2 id="browse-title">ดูว่าจังหวัดไหนขอหรือเสนอช่วย</h2>
+        <p>รายการนี้ไม่แสดงชื่อ ที่อยู่ เบอร์ หรือคำอธิบายของผู้โพสต์</p>
+        <label>เลือกจังหวัด <select id="province-filter"><option value="">ทุกจังหวัด</option></select></label>
+        <button id="refresh-board" type="button" class="secondary">ดูรายการล่าสุด</button>
+        <p id="totals" class="muted"></p>
+        <div id="board" class="cards" aria-live="polite"></div>
+      </section>
+
+      <section id="auth-panel" class="panel" aria-labelledby="auth-title">
+        <h2 id="auth-title">สมัครเพื่อคุยกันเอง</h2>
+        <p>สมัครได้ทันทีเมื่อระบบเปิด แต่ไม่มีการตรวจตัวตนผู้สมัคร และระบบไม่จัดส่งทีมช่วยเหลือ</p>
+        <form id="auth-form">
+          <label>อีเมล <input name="email" type="email" autocomplete="email" required></label>
+          <label>รหัสผ่าน <input name="password" type="password" autocomplete="new-password" minlength="8" required></label>
+          <div class="actions"><button type="submit" data-auth="signup">สมัคร</button><button type="button" data-auth="signin" class="secondary">มีบัญชีแล้ว · เข้าสู่ระบบ</button></div>
+        </form>
+        <p class="muted">ถ้าต้องยืนยันอีเมล ให้ตรวจกล่องอีเมลก่อนเข้าสู่ระบบ อย่าส่งรหัสผ่านให้ใคร</p>
+      </section>
+
+      <section id="account-panel" class="panel" hidden>
+        <h2>บัญชีของฉัน</h2>
+        <p id="account-state"></p>
+        <button id="sign-out" type="button" class="secondary">ออกจากระบบบนเครื่องนี้</button>
+        <div id="profile-needed" hidden>
+          <h3>ตั้งชื่อที่ใช้คุย</h3>
+          <p>ชื่อที่ตั้งเองไม่ได้ยืนยันตัวตน อย่าใช้ชื่อจริงของเด็กหรือบุคคลอื่น</p>
+          <form id="profile-form">
+            <label>ชื่อที่ให้คู่สนทนาเห็น <input name="display_name" maxlength="40" required></label>
+            <label class="check"><input name="accept" type="checkbox" required> ฉันอ่าน<a id="profile-notice" href="#">ประกาศความเป็นส่วนตัวและข้อตกลง</a> รุ่นที่แสดงแล้ว และเข้าใจว่าไม่มีการตรวจตัวตนหรือเจ้าหน้าที่เฝ้า</label>
+            <button type="submit">บันทึกชื่อและข้อตกลง</button>
+          </form>
+        </div>
+      </section>
+
+      <div id="member-tools" hidden>
+        <section class="panel" aria-labelledby="post-title">
+          <h2 id="post-title">ขอช่วย หรือเสนอช่วย</h2>
+          <p>โพสต์จังหวัดกับหมวดให้ทุกคนเห็น ส่วนคำอธิบาย อำเภอ ที่อยู่ และเบอร์ แสดงกับคนที่คุณกดเปิดให้ทีละคนขณะโพสต์ยังเปิด เจ้าของระบบเข้าถึงข้อมูลได้</p>
+          <form id="post-form">
+            <fieldset><legend>ฉันต้องการ</legend><label class="check"><input type="radio" name="kind" value="request" checked> ขอความช่วยเหลือ</label><label class="check"><input type="radio" name="kind" value="offer"> เสนอความช่วยเหลือ</label></fieldset>
+            <label>จังหวัด <select name="province" required><option value="">เลือกจังหวัด</option></select></label>
+            <fieldset id="categories"><legend>หมวดที่ต้องการหรือช่วยได้</legend></fieldset>
+            <label>จำนวนคน (ถ้าทราบ) <input name="people" type="number" min="1" max="999" inputmode="numeric"></label>
+            <label>อำเภอหรือเขต (ไม่ใส่บ้านเลขที่) <input name="district" maxlength="40"></label>
+            <label>คำอธิบายสั้น ๆ (5–160 ตัวอักษร) <textarea name="summary" minlength="5" maxlength="160" required></textarea></label>
+            <p class="help">อย่าใส่ชื่อคน ที่อยู่ เบอร์ อาการป่วย หรือจุดที่ระบุตัวบ้านได้ในคำอธิบาย ตัวกรองอัตโนมัติอาจจับไม่หมด</p>
+            <label>ที่อยู่หรือจุดนัด (ไม่บังคับ) <textarea name="place" maxlength="300"></textarea></label>
+            <label>เบอร์ติดต่อ (ไม่บังคับ) <input name="phone" type="tel" maxlength="40" inputmode="tel"></label>
+            <label class="check"><input name="vulnerable" type="checkbox"> มีผู้สูงอายุ เด็ก คนป่วย หรือผู้พิการ</label>
+            <label class="check"><input name="health_consent" type="checkbox"> ฉันยินยอมให้ใช้ข้อมูลเกี่ยวกับสุขภาพหรือบุคคลเปราะบางที่ฉันเลือกใส่ เพื่อคุยเรื่องการช่วยเหลือ ตามประกาศข้างต้น</label>
+            <p class="help">ระบบยังไม่ได้แยกบันทึกความยินยอมเรื่องสุขภาพไว้ในฐานข้อมูล โปรดใส่เฉพาะเมื่อจำเป็น และอย่าใส่ข้อมูลสุขภาพของคนอื่นโดยไม่มีสิทธิ</p>
+            <button type="submit">ตรวจแล้ว · ลงโพสต์</button>
+          </form>
+        </section>
+
+        <section class="panel" aria-labelledby="my-title">
+          <h2 id="my-title">โพสต์ของฉัน</h2>
+          <button id="refresh-mine" type="button" class="secondary">ดูโพสต์ล่าสุด</button>
+          <div id="mine" class="cards"></div>
+        </section>
+
+        <section class="panel" aria-labelledby="threads-title">
+          <h2 id="threads-title">ห้องคุยของฉัน</h2>
+          <p>ข้อความคุยอาจอ่านย้อนหลังได้หลังปิดโพสต์จนถึงรอบลบ 30 วัน อย่าพิมพ์ข้อมูลที่ไม่อยากให้คู่สนทนาเห็นย้อนหลัง</p>
+          <button id="refresh-threads" type="button" class="secondary">ดูห้องคุยล่าสุด</button>
+          <div id="threads" class="cards"></div>
+          <div id="conversation" hidden>
+            <h3 id="conversation-title"></h3>
+            <p id="conversation-state"></p>
+            <div id="messages" class="messages" aria-live="polite"></div>
+            <div id="details" class="details" hidden></div>
+            <div class="actions"><button id="refresh-messages" type="button" class="secondary">ดูข้อความล่าสุด</button><button id="view-details" type="button" class="secondary" hidden>เปิดดูรายละเอียดที่เจ้าของโพสต์ให้</button><button id="share-details" type="button" class="secondary" hidden>เปิดข้อมูลให้คนนี้</button></div>
+            <form id="message-form"><label>ข้อความถึงคู่สนทนา <textarea name="body" maxlength="1000" required></textarea></label><button type="submit">ส่งข้อความ</button></form>
+            <form id="report-thread-form"><label>รายงานห้องคุยนี้ <input name="reason" maxlength="300" required></label><button type="submit" class="danger">ส่งรายงาน</button></form>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <footer>โครงการนี้ไม่ใช่หน่วยงานรัฐ · <a href="/flood/">กลับหน้าแจ้งเหตุ</a></footer>
+  <script type="module" src="./aid.js"></script>
+</body>
+</html>
