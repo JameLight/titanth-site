@@ -30,7 +30,7 @@ test('the new flood page shell replaces the previous cached shell', async () => 
   await pending;
   assert.ok(shell.includes(`${scope}index.html`));
   assert.ok(shell.includes(`${scope}submission_guard.js`));
-  assert.ok(keys.has('promjaeng-flood-public-v32'));
+  assert.ok(keys.has('promjaeng-flood-public-v33'));
   events.activate({ waitUntil: promise => { pending = promise; } });
   await pending;
   assert.equal(keys.has('promjaeng-flood-public-v20'), false);

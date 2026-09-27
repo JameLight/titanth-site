@@ -1,11 +1,12 @@
 import { NEEDS, CHANNELS, STATUS, makeCase, recordHandoffAttempt, isStale,
   possibleDuplicates, shareText, quickLocationText, ddpmLinePrefillUrl, validateTriage,
   quickLocationQrText, caseQrText, casesCsv, gpsAccuracyWarning } from "./model.js";
-import { listCases, putCase, deleteCase } from "./storage.js";
+import { listCases, getCase, putCase, updateCase, deleteCaseIfUnchanged, reserveCaseAttempt, clearCaseAttempt, finalizeCaseAttempt, closeCaseAttempt } from "./storage.js";
 import { qrSvg } from "./qr.js";
-import { loadIntakeConfig, makeIntakeClient, caseStatusText, stripIntakeSecrets } from "./intake_client.js";
+import { loadIntakeConfig, makeIntakeClient, caseStatusText, createCaseSecret, stripIntakeSecrets } from "./intake_client.js";
+import { beginCaseSubmission, stageIntakeAttempt, clearIntakeAttempt, submissionOutcomeForCase, canRetryCaseAttempt } from "./intake_attempt.js";
 import { createSubmissionGuard } from "./submission_guard.js";
-import { takeReceipt } from "./receipt_lookup.js";
+import { takeReceipt, takeRecoverySecret, clearSecretWhenDialogCloses } from "./receipt_lookup.js";
 import { PROVINCES, canonicalProvince } from "./provinces.js";
 import { NDWC_ALERTS_URL, alertsForProvince, newestAlertTime } from "./official_alerts.js";
 
@@ -31,6 +32,7 @@ const intakeClientPromise = loadIntakeConfig().then(config => config ? makeIntak
 intakeClientPromise.then(client => {
   if (!client) return;
   $("#receipt-lookup").hidden = false;
+  $("#secret-recovery").hidden = client.config.schemaVersion !== 4;
   if (!client.config.enabled) {
     $("#service-ribbon").textContent = "ไม่ใช่เว็บหน่วยงานรัฐ • ปิดรับเคสใหม่ • ผู้มีรหัสมีช่องให้ลองตรวจสถานะหรือขอถอนข้อมูลละเอียด";
     $("#service-footer").textContent = "ปิดรับเคสใหม่ • ผู้มีรหัสมีช่องให้ลองตรวจสถานะหรือขอถอนข้อมูลละเอียด • หากอันตรายโทร 1784 หรือ 1669";
@@ -39,7 +41,7 @@ intakeClientPromise.then(client => {
   $("#service-ribbon").textContent = "ไม่ใช่เว็บหน่วยงานรัฐ • ข้อมูลจะถึงระบบทีมอาสาเฉพาะเมื่อคุณกดส่งและยินยอม • ถ้าอันตรายโทร 1784 หรือ 1669";
   $("#intro-copy").textContent = "กรอกเท่าที่รู้แล้วบันทึกในเครื่อง คุณยังส่งข้อความเองทาง LINE ปภ. หรือโทร 1784 ได้ ถ้าพื้นที่นี้มีทีมอาสาเฝ้า ระบบจะแสดงปุ่มส่งเข้าทีมแยกต่างหาก";
   $("#storage-scope").textContent = "บันทึกในเครื่องก่อน";
-  $("#privacy-copy").textContent = "ข้อมูลเริ่มต้นเก็บในเบราว์เซอร์ของอุปกรณ์นี้ หากกดส่งเข้าทีมอาสาและยินยอม ข้อมูลเคสจะส่งไปยังระบบทีมอาสาด้วย ใครเปิดอุปกรณ์เดียวกันอาจเห็นเคสและรหัสอ่านสถานะ";
+  $("#privacy-copy").textContent = "ข้อมูลเริ่มต้นเก็บในเบราว์เซอร์ของอุปกรณ์นี้ ก่อนกดส่ง ระบบจะแสดงรหัสกู้คืนให้คัดลอกหรือจด แล้วเก็บรหัสกับข้อมูลส่งซ้ำในเครื่องด้วย หากเก็บและอ่านกลับไม่ได้ เว็บจะไม่ส่งเคส ใครเปิดอุปกรณ์เดียวกันอาจเห็นเคสและรหัสกู้คืน การส่งถึงระบบยังไม่แปลว่ามีคนรับเคส";
   $("#service-footer").textContent = "ไม่มีการส่งข้อมูลอัตโนมัติ • การส่งเข้าทีมอาสาต้องกดยืนยันแยก • การส่งถึงระบบยังไม่เท่ากับมีทีมรับเคส";
 });
 
@@ -240,7 +242,8 @@ function lineLink() {
 }
 
 function renderCase(item) {
-  const submissionOutcome = !item.intake && submissionGuard.get(item.caseId);
+  const attempt = item.intakeAttempt;
+  const submissionOutcome = submissionOutcomeForCase(item, submissionGuard);
   const card = node("article", `case-card ${item.routingHint === "RED" ? "urgent" : ""}`);
   const head = node("div", "case-head");
   head.append(node("h3", "", `${item.location.landmark || "พิกัดที่บันทึก"} · ${item.location.province}`));
@@ -250,8 +253,9 @@ function renderCase(item) {
   card.append(head);
   const badges = node("div", "badges");
   badges.append(node("span", `badge ${item.intake || submissionOutcome ? "attempt" : item.status === STATUS.LOCAL_ONLY ? "local" : "attempt"}`,
-    item.intake ? "ระบบทีมอาสารับข้อมูลแล้ว • ยังไม่ยืนยันว่ามีทีมรับเคส" :
+    item.intake ? `ระบบรับข้อมูลแล้ว • ${item.intake.status ? caseStatusText(item.intake) : "ยังไม่ยืนยันว่ามีทีมรับเคส"}` :
       submissionOutcome === "confirmed" ? "ระบบรับข้อมูลแล้ว • อย่าส่งซ้ำ; หากเก็บรหัสไว้ให้ใช้ตรวจสถานะ" :
+      submissionOutcome === "closed" ? "ระบบไม่รับเคสนี้ • รหัสกู้คืนเดิมปิดแล้ว" :
       submissionOutcome === "uncertain" ? "เคสนี้อาจถึงระบบแล้ว • อย่าส่งซ้ำ" :
       item.status === STATUS.LOCAL_ONLY ? "เคสในเครื่อง • เว็บไม่ส่งเรื่องเอง" : "ผู้ใช้ระบุว่าส่งต่อแล้ว • ยังไม่ยืนยันผู้รับ"));
   card.append(badges);
@@ -262,8 +266,9 @@ function renderCase(item) {
     card.append(node("p", "case-warning", `GPS คลาดเคลื่อนประมาณ ${Math.round(item.location.accuracyMeters)} เมตร — ${gpsAccuracyWarning(item.location.accuracyMeters)}`));
   }
   card.append(node("p", "case-warning", item.intake
-    ? `รหัสอ้างอิง ${item.intake.code} ส่งถึงระบบแล้ว ตรวจสถานะเพื่อดูคำรายงานของทีม ถ้าอันตรายให้โทร 1784 หรือ 1669 ทันที`
-    : submissionOutcome ? "อย่ากดส่งเคสนี้ซ้ำ ถ้าเก็บรหัสรับเรื่องไว้ให้ใช้รหัสนั้นตรวจสถานะ หากยังเดือดร้อนโทร 1784 หรือ 1669 ตามเหตุทันที"
+    ? `รหัสอ้างอิง ${item.intake.code} ส่งถึงระบบแล้ว ตรวจสถานะล่าสุดอีกครั้ง ถ้าอันตรายให้โทร 1784 หรือ 1669 ทันที`
+    : submissionOutcome === "closed" ? "ระบบยืนยันว่าไม่รับเคสนี้ด้วยรหัสเดิม หากยังต้องการความช่วยเหลือ ให้สร้างเคสใหม่ด้วยตัวเอง และโทร 1784 หรือ 1669 ตามเหตุทันที"
+    : submissionOutcome ? "ระบบอาจรับข้อมูลแล้ว หากยังเก็บรหัสกู้คืนอยู่ ให้กดตรวจซ้ำด้วยรหัสเดิมหรือใช้ช่องกู้รหัสด้านบน ห้ามสร้างรหัสใหม่สำหรับเคสนี้ ถ้าอันตรายโทร 1784 หรือ 1669 ทันที"
     : item.status === STATUS.LOCAL_ONLY
       ? "การบันทึกเคสไม่ใช่การแจ้งเหตุ เว็บไม่ทราบว่าคุณโทรหรือกดส่งเองแล้วหรือยัง หากยังไม่ได้แจ้ง ให้โทร 1784 หรือ 1669 ตามเหตุ และตรวจคำตอบจากปลายทาง"
       : "คุณระบุว่าส่งต่อแล้ว แต่ยังไม่มีหลักฐานว่ามีผู้รับเคส ถ้าไม่มีการตอบกลับ ให้โทร 1784 หรือ 1669 ตามเหตุ"));
@@ -289,6 +294,12 @@ function renderCase(item) {
     const withdrawButton = button("ยกเลิกเคส/ลบข้อมูลของฉัน", "danger-button", () => withdrawSubmittedCase(item, withdrawButton));
     actions.append(withdrawButton);
     card.append(statusText);
+  } else if (submissionOutcome === "closed") {
+    actions.append(node("p", "case-warning", "รหัสเดิมปิดแล้ว หน้านี้จะไม่ส่งซ้ำจากเคสนี้ หากยังต้องการความช่วยเหลือให้สร้างเคสใหม่ด้วยตัวเอง"));
+  } else if (attempt?.payload?.p_secret) {
+    actions.append(button("ดูรหัสกู้คืนที่เก็บในเครื่อง", "secondary-button", () => showSavedCaseSecretForCase(item.caseId)));
+    const retryButton = button("ตรวจอีกครั้งด้วยรหัสเดิม", "primary-button", () => retryTeamSubmission(item, retryButton));
+    actions.append(retryButton);
   } else if (!submissionOutcome) {
     const sendButton = button("ส่งเข้าทีมอาสา", "primary-button", () => sendToTeam(item, sendButton));
     sendButton.hidden = true;
@@ -342,47 +353,152 @@ function showReceiptRecovery(receipt) {
   const value = `รหัสเคส: ${receipt.code}\nรหัสลับสำหรับดูสถานะ: ${receipt.secret}`;
   const dialog = $("#receipt-recovery-dialog");
   if (typeof dialog.showModal !== "function") { window.prompt("ระบบรับเคสแล้ว คัดลอกรหัสนี้เก็บไว้", value); return; }
-  $("#receipt-recovery-text").value = value;
-  $("#receipt-recovery-close").onclick = () => { dialog.close(); $("#receipt-recovery-text").value = ""; };
+  const field = $("#receipt-recovery-text");
+  const closeButton = $("#receipt-recovery-close");
+  field.value = value;
+  clearSecretWhenDialogCloses(dialog, field, closeButton);
+  closeButton.onclick = () => dialog.close();
   dialog.showModal();
 }
 
+async function showSavedCaseSecretForCase(caseId) {
+  let secret;
+  try { secret = (await getCase(caseId))?.intakeAttempt?.payload?.p_secret; }
+  catch { toast("ยังอ่านรหัสในเครื่องไม่ได้ โหลดหน้าใหม่เพื่อตรวจ หรือใช้รหัสที่จดไว้"); return; }
+  if (!secret) { await refresh().catch(() => {}); toast("ไม่พบรหัสในเครื่อง ใช้รหัสที่จดไว้หรือโหลดหน้าใหม่เพื่อตรวจ"); return; }
+  const dialog = $("#saved-secret-dialog");
+  if (typeof dialog.showModal !== "function") {
+    window.prompt("จดรหัสกู้คืนส่วนตัวไว้ก่อนลบเคสในเครื่อง อย่าส่งให้ผู้อื่น", secret);
+    return;
+  }
+  const field = $("#saved-secret-text");
+  const status = $("#saved-secret-copy-status");
+  field.value = secret;
+  status.textContent = "";
+  const close = () => {
+    field.value = "";
+    status.textContent = "";
+    $("#saved-secret-copy").onclick = null;
+    $("#saved-secret-close").onclick = null;
+  };
+  dialog.addEventListener("close", close, { once: true });
+  $("#saved-secret-close").onclick = () => dialog.close();
+  $("#saved-secret-copy").onclick = async () => {
+    try { await navigator.clipboard.writeText(secret); status.textContent = "คัดลอกแล้ว เก็บไว้ในที่ปลอดภัย"; }
+    catch { field.focus(); field.select(); status.textContent = "คัดลอกอัตโนมัติไม่ได้ แตะค้างที่รหัสเพื่อคัดลอกหรือจดไว้"; }
+  };
+  dialog.showModal();
+}
+
+function confirmSavedSecret(secret) {
+  const dialog = $("#intake-secret-dialog");
+  if (typeof dialog.showModal !== "function") return Promise.resolve(false);
+  $("#intake-secret-text").value = secret;
+  $("#intake-secret-saved").checked = false;
+  $("#intake-secret-copy-status").textContent = "";
+  return new Promise(resolve => {
+    let done = false;
+    function finish(accepted) {
+      if (done) return;
+      done = true;
+      dialog.removeEventListener("close", onClose);
+      dialog.removeEventListener("cancel", onCancel);
+      if (dialog.open) dialog.close();
+      $("#intake-secret-text").value = "";
+      resolve(accepted);
+    }
+    const onClose = () => finish(false);
+    const onCancel = event => { event.preventDefault(); finish(false); };
+    $("#intake-secret-cancel").onclick = () => finish(false);
+    $("#intake-secret-send").onclick = () => {
+      if (!$("#intake-secret-saved").checked) { $("#intake-secret-saved").focus(); return; }
+      finish(true);
+    };
+    $("#intake-secret-copy").onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(secret);
+        $("#intake-secret-copy-status").textContent = "คัดลอกแล้ว โปรดเก็บไว้ในที่ปลอดภัยก่อนกดส่ง";
+      } catch {
+        $("#intake-secret-text").focus();
+        $("#intake-secret-text").select();
+        $("#intake-secret-copy-status").textContent = "คัดลอกอัตโนมัติไม่ได้ แตะค้างที่รหัสเพื่อคัดลอกหรือจดไว้";
+      }
+    };
+    dialog.addEventListener("close", onClose);
+    dialog.addEventListener("cancel", onCancel);
+    dialog.showModal();
+  });
+}
+
+async function submitAttempt(client, item, payload, control) {
+  control.disabled = true;
+  let confirmed = false;
+  try {
+    const receipt = await client.submitPrepared(payload);
+    confirmed = true;
+    submissionGuard.mark(item.caseId, "confirmed");
+    control.textContent = "ระบบรับแล้ว • อย่าส่งซ้ำ";
+    try { if (!await finalizeCaseAttempt(item.caseId, payload.p_secret, receipt)) throw new Error("case changed"); }
+    catch { showReceiptRecovery(receipt); return; }
+    try { await refresh(); }
+    catch { showReceiptRecovery(receipt); return; }
+    toast(`รหัสเคส ${receipt.code} • ${caseStatusText(receipt)} ถ้าอันตรายโทร 1784 หรือ 1669`);
+  } catch (error) {
+    if (error?.code === "SECRET_CLOSED") {
+      submissionGuard.mark(item.caseId, "closed");
+      try { await closeCaseAttempt(item.caseId, payload.p_secret); } catch { /* The marker and current-page warning remain. */ }
+      showError(`ระบบไม่รับเคสนี้: ${error.message} หน้านี้จะไม่ส่งซ้ำ หากยังต้องการความช่วยเหลือ ให้สร้างเคสใหม่ด้วยตัวเองและโทร 1784 หรือ 1669 ตามเหตุ`);
+      await refresh().catch(() => {});
+    } else if (error?.definitive) {
+      const cleared = await clearIntakeAttempt(item, { clearCaseAttempt, guard: submissionGuard });
+      if (cleared) await refresh().catch(() => {});
+      showError(`ระบบไม่รับเคสนี้: ${error.message} หากอันตรายโทร 1784 หรือ 1669`);
+    } else {
+      submissionGuard.mark(item.caseId, "uncertain");
+      control.textContent = "อาจรับแล้ว • ใช้รหัสเดิมตรวจ";
+      showError("ยังยืนยันไม่ได้ว่าระบบรับเคสหรือไม่ ใช้ปุ่มตรวจอีกครั้งด้วยรหัสเดิม หรือใช้รหัสกู้คืนที่เก็บไว้ ห้ามสร้างรหัสใหม่ให้เคสนี้ ถ้าอันตรายโทร 1784 หรือ 1669");
+      await refresh().catch(() => {});
+    }
+  } finally { control.disabled = confirmed || !!submissionGuard.get(item.caseId); }
+}
+
 async function sendToTeam(item, sendButton) {
-  if (submissionGuard.get(item.caseId)) return;
+  if (submissionGuard.get(item.caseId) || item.intakeAttempt) return;
   const client = await intakeClientPromise;
   if (!client || !await intakeConsent(client)) return;
-  if (submissionGuard.get(item.caseId)) return;
+  if (submissionGuard.get(item.caseId) || item.intakeAttempt) return;
   sendButton.disabled = true;
-  let receiptConfirmed = false;
   try {
-    const receipt = await client.submitCase(item);
-    receiptConfirmed = true;
-    submissionGuard.mark(item.caseId, "confirmed");
-    sendButton.textContent = "ระบบรับแล้ว • อย่าส่งซ้ำ";
-    try {
-      await putCase({ ...item, intake: receipt });
-    } catch {
-      showReceiptRecovery(receipt);
-      return;
-    }
-    try { await refresh(); }
-    catch {
-      showReceiptRecovery(receipt);
-      return;
-    }
-    toast(`ระบบบันทึกเคส ${receipt.code} แล้ว ยังไม่มีหลักฐานว่าทีมรับเคส ถ้าอันตรายโทร 1784 หรือ 1669`);
+    await beginCaseSubmission(item, {
+      makeSecret: createCaseSecret,
+      prepare: (source, secret) => client.prepareCaseSubmission(source, secret),
+      confirmSecret: confirmSavedSecret,
+      stage: (source, payload) => stageIntakeAttempt(source, payload, { reserveCaseAttempt, getCase, guard: submissionGuard }),
+      submit: (source, payload) => submitAttempt(client, source, payload, sendButton)
+    });
   } catch (error) {
-    if (!receiptConfirmed && !error?.beforeSubmit && !error?.definitive) {
-      submissionGuard.mark(item.caseId, "uncertain");
-      sendButton.textContent = "อาจรับแล้ว • อย่าส่งซ้ำ";
-    }
-    const route = /1784|1669/.test(error?.message ?? "") ? "" : " หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ";
-    showError(error?.beforeSubmit
-      ? `ยังไม่ได้ส่งเคสเข้าระบบ: ${error.message}${route}`
-      : error?.definitive
-        ? `ระบบไม่รับเคสนี้: ${error.message}${route}`
-        : "ยังยืนยันไม่ได้ว่าระบบรับเคสหรือไม่ อย่ากดส่งซ้ำทันที ถ้าอันตรายโทร 1784 หรือ 1669 หรือส่ง LINE ปภ.");
-  } finally { if (!receiptConfirmed && !submissionGuard.get(item.caseId)) sendButton.disabled = false; }
+    showError(error?.reserved
+      ? error.message
+      : `ยังไม่ได้ส่งเคสเข้าระบบจากหน้านี้: ${error.message || "ตรวจข้อมูลไม่สำเร็จ"} หากอันตรายโทร 1784 หรือ 1669`);
+    await refresh().catch(() => {});
+  } finally { sendButton.disabled = false; }
+}
+
+async function retryTeamSubmission(item, control) {
+  const attempt = item.intakeAttempt;
+  if (!attempt?.payload?.p_secret) return;
+  const client = await intakeClientPromise;
+  if (!client) { showError("ยังเชื่อมระบบตรวจเคสไม่ได้ หากอันตรายโทร 1784 หรือ 1669"); return; }
+  if (!await askConfirm("ระบบอาจรับเคสนี้แล้ว การตรวจซ้ำจะใช้ข้อมูลและรหัสเดิม ไม่สร้างรหัสใหม่ หากอันตรายโทร 1784 หรือ 1669", "ตรวจเคสเดิมด้วยรหัสเดิม")) return;
+  let current;
+  try { current = await getCase(item.caseId); }
+  catch { showError("ยังอ่านข้อมูลส่งซ้ำจากเครื่องไม่ได้ จึงยังไม่ส่ง หากอันตรายโทร 1784 หรือ 1669"); return; }
+  if (!canRetryCaseAttempt(item, current, submissionGuard)) {
+    await refresh().catch(() => {});
+    showError("ข้อมูลเคสเปลี่ยนจากอีกแท็บ จึงยังไม่ส่งซ้ำ กรุณาตรวจสถานะล่าสุด หากอันตรายโทร 1784 หรือ 1669");
+    return;
+  }
+  await submitAttempt(client, current, current.intakeAttempt.payload, control);
 }
 
 async function readIntakeStatus(item, target) {
@@ -430,6 +546,48 @@ $("#receipt-lookup-withdraw").addEventListener("click", async () => {
   finally { button.disabled = false; }
 });
 
+async function recoverFromSecret(withdraw) {
+  const target = $("#secret-recovery-result");
+  let secret;
+  try { secret = takeRecoverySecret($("#secret-recovery-form")); }
+  catch (error) { target.textContent = error.message; return; }
+  const client = await intakeClientPromise;
+  if (!client || client.config.schemaVersion !== 4) {
+    target.textContent = "ยังเชื่อมระบบกู้เคสไม่ได้ หากอันตรายโทร 1784 หรือ 1669";
+    return;
+  }
+  if (withdraw && !await askConfirm(`${WITHDRAW_SCOPE_TEXT} ใช้รหัสกู้คืนที่คุณเก็บไว้เพื่อค้นและถอนเคส`, "ยกเลิกเคสและลบข้อมูลละเอียด")) return;
+  const localBeforeRequest = cases.find(item => item.intake?.secret === secret || item.intakeAttempt?.payload?.p_secret === secret);
+  const control = $(withdraw ? "#secret-recovery-withdraw" : "#secret-recovery-read");
+  control.disabled = true;
+  try {
+    const found = await client.recoverCase(secret);
+    if (withdraw) {
+      const result = await client.withdrawCase(found);
+      target.textContent = `พบรหัสเคส ${found.code} • ${result.status === "WITHDRAWN" ? "ระบบยืนยันยกเลิกและลบข้อมูลละเอียดแล้ว" : "ระบบยืนยันลบข้อมูลละเอียดแล้ว เคสที่ปิดไว้คงสถานะเดิม"} หากมีสำเนาในเครื่อง ให้ลบแยก`;
+      try {
+        const current = localBeforeRequest && await getCase(localBeforeRequest.caseId);
+        if (localBeforeRequest && current && JSON.stringify(current) === JSON.stringify(localBeforeRequest) &&
+            await deleteCaseIfUnchanged(localBeforeRequest.caseId, localBeforeRequest)) {
+          submissionGuard.clear(localBeforeRequest.caseId);
+          await refresh();
+          target.textContent += " • ลบสำเนาในเครื่องนี้แล้ว";
+        } else if (localBeforeRequest) {
+          await refresh().catch(() => {});
+          target.textContent += " • สำเนาในเครื่องเปลี่ยนระหว่างลบ จึงยังไม่ลบ กรุณาตรวจแล้วลบแยก";
+        }
+      } catch { target.textContent += " • ยังยืนยันการลบสำเนาในเครื่องไม่ได้ กรุณาตรวจแล้วลบแยก"; }
+    } else {
+      target.textContent = `พบรหัสเคส ${found.code} • ${caseStatusText(found)} เก็บรหัสเคสและรหัสกู้คืนไว้เอง หากอันตรายโทร 1784 หรือ 1669`;
+    }
+  } catch (error) {
+    target.textContent = `ยังยืนยันผลไม่ได้: ${error.message || "ระบบไม่ตอบ"} หากเพิ่งส่งและเน็ตหลุด อย่าสร้างเคสซ้ำทันที ถ้าอันตรายโทร 1784 หรือ 1669`;
+  } finally { control.disabled = false; }
+}
+
+$("#secret-recovery-form").addEventListener("submit", event => { event.preventDefault(); recoverFromSecret(false); });
+$("#secret-recovery-withdraw").addEventListener("click", () => recoverFromSecret(true));
+
 async function withdrawSubmittedCase(item, control) {
   if (!await askConfirm(`${WITHDRAW_SCOPE_TEXT} เมื่อระบบยืนยันแล้วจะลบสำเนาเคสในอุปกรณ์นี้ด้วย`, "ยกเลิกเคสและลบข้อมูลละเอียด")) return;
   const client = await intakeClientPromise;
@@ -438,7 +596,14 @@ async function withdrawSubmittedCase(item, control) {
   try {
     const result = await client.withdrawCase(item.intake);
     try {
-      await deleteCase(item.caseId);
+      const current = await getCase(item.caseId);
+      if (!current || JSON.stringify(current) !== JSON.stringify(item) ||
+          current.intake?.code !== item.intake.code || current.intake?.secret !== item.intake.secret ||
+          !await deleteCaseIfUnchanged(item.caseId, current)) {
+        await refresh().catch(() => {});
+        toast("ระบบยืนยันลบข้อมูลละเอียดแล้ว แต่สำเนาในอุปกรณ์เปลี่ยนหรือถูกลบจากอีกแท็บ กรุณาตรวจรายการล่าสุดก่อนลบในเครื่อง");
+        return;
+      }
       submissionGuard.clear(item.caseId);
       clearManualCopy();
       await refresh();
@@ -792,7 +957,7 @@ async function handoffCase(item) {
     if (!channel) { toast("กรุณาเลือกช่องทาง 1 ถึง 4"); return; }
     if (!window.confirm("บันทึกว่าคุณพยายามส่งต่อแล้ว? หน้านี้ยังไม่มีหลักฐานว่าปลายทางได้รับเคส")) return;
     try {
-      await putCase(recordHandoffAttempt(item, { channel }));
+      await updateCase(item.caseId, current => recordHandoffAttempt(current, { channel }));
       await refresh();
       toast("บันทึกคำยืนยันของคุณแล้ว ยังไม่มีหลักฐานว่าปลายทางรับเคส");
     } catch (error) { toast(error.message); }
@@ -808,7 +973,7 @@ $("#handoff-form").addEventListener("submit", async event => {
   const channel = new FormData(event.currentTarget).get("channel");
   if (!Object.prototype.hasOwnProperty.call(CHANNELS, channel)) return;
   try {
-    await putCase(recordHandoffAttempt(pendingHandoff, { channel }));
+    await updateCase(pendingHandoff.caseId, current => recordHandoffAttempt(current, { channel }));
     $("#handoff-dialog").close();
     pendingHandoff = null;
     await refresh();
@@ -817,16 +982,38 @@ $("#handoff-form").addEventListener("submit", async event => {
 });
 
 async function removeCase(item) {
+  // Re-read the current row: another tab may have reserved a secret after this
+  // card rendered. The confirmation must describe that newer state.
+  let current;
+  try { current = await getCase(item.caseId); }
+  catch { toast("ยังอ่านเคสล่าสุดในเครื่องไม่ได้ จึงยังไม่ลบ โหลดหน้าใหม่เพื่อตรวจ"); return; }
+  if (!current) { await refresh().catch(() => {}); return; }
+  if (JSON.stringify(current) !== JSON.stringify(item)) {
+    await refresh().catch(() => {});
+    toast("ข้อมูลเคสเปลี่ยนจากอีกแท็บแล้ว กรุณาดูรหัสและสถานะล่าสุดก่อนลบ");
+    return;
+  }
   const priorSubmission = submissionGuard.get(item.caseId);
-  const warning = item.intake
-    ? "การลบในอุปกรณ์จะลบรหัสลับสำหรับอ่านสถานะ แต่ไม่ลบข้อมูลที่ส่งถึงระบบทีมอาสาแล้ว หากต้องลบข้อมูลละเอียดในระบบให้กด ‘ยกเลิกเคส/ลบข้อมูลของฉัน’ ก่อน"
+  const warning = current.intake
+    ? "ก่อนลบ โปรดเก็บรหัสเคสและรหัสลับไว้ต่างหาก การลบในอุปกรณ์ไม่ถอนข้อมูลจากระบบทีมอาสา หากต้องลบข้อมูลละเอียดในระบบให้กด ‘ยกเลิกเคส/ลบข้อมูลของฉัน’ ก่อน"
+    : current.intakeAttempt?.closedReason === "SECRET_CLOSED" || priorSubmission === "closed"
+      ? "ระบบยืนยันว่าไม่รับเคสนี้ด้วยรหัสเดิม การลบในเครื่องจะลบหลักฐานเฉพาะอุปกรณ์นี้ หากยังต้องการความช่วยเหลือ ให้สร้างเคสใหม่ด้วยตัวเองและโทร 1784 หรือ 1669 ตามเหตุ"
+    : current.intakeAttempt?.payload?.p_secret
+      ? "ยังไม่ทราบว่าระบบรับเคสนี้หรือไม่ ก่อนลบ โปรดกด ‘ดูรหัสกู้คืนที่เก็บในเครื่อง’ แล้วคัดลอกหรือจดเก็บไว้ การลบในเครื่องจะลบรหัสและข้อมูลส่งซ้ำ แต่ไม่ถอนข้อมูลจากระบบ หากลบแล้ว ให้ใช้รหัสกู้คืนในช่องด้านบนเพื่อตรวจหรือถอน อย่าสร้างเคสซ้ำ"
     : priorSubmission === "confirmed"
-      ? "ระบบทีมอาสารับข้อมูลนี้แล้ว แต่รหัสรับเรื่องไม่ได้อยู่ในรายการเครื่องนี้ การลบในเครื่องไม่ถอนข้อมูลจากระบบ หากเก็บรหัสเคสและรหัสลับไว้ ให้ใช้ฟอร์มตรวจสถานะ/ถอนข้อมูลด้านบนก่อนลบ อย่าส่งเคสนี้ซ้ำ"
+      ? "ระบบทีมอาสารับข้อมูลนี้แล้ว แต่รหัสรับเรื่องไม่ได้อยู่ในรายการเครื่องนี้ การลบในเครื่องไม่ถอนข้อมูลจากระบบ หากเก็บรหัสกู้คืนหรือรหัสเคสกับรหัสลับไว้ ให้ใช้ฟอร์มตรวจสถานะ/ถอนข้อมูลด้านบนก่อนลบ อย่าส่งเคสนี้ซ้ำ"
       : priorSubmission === "uncertain"
-        ? "ยังไม่ทราบว่าระบบรับข้อมูลนี้หรือไม่ การลบจะลบเคสและเครื่องหมายกันส่งซ้ำเฉพาะในเครื่อง ไม่ถอนข้อมูลจากระบบถ้าระบบรับแล้ว หากไม่มีรหัสรับเรื่อง คุณยังตรวจหรือถอนผ่านฟอร์มนี้ไม่ได้ อย่าส่งเคสซ้ำเพราะลบข้อมูลในเครื่อง"
+        ? "ยังไม่ทราบว่าระบบรับข้อมูลนี้หรือไม่ ก่อนลบให้เก็บรหัสกู้คืนที่เคยจดไว้ การลบในเครื่องไม่ถอนข้อมูลจากระบบ หากมีรหัสกู้คืน ใช้ช่องด้านบนตรวจหรือถอนเคสได้ อย่าส่งเคสซ้ำเพราะลบข้อมูลในเครื่อง"
         : "หากเคยส่งข้อความไปช่องทางอื่น ข้อมูลปลายทางจะไม่ถูกลบ";
   if (!await askConfirm(warning, "ลบเคสนี้ออกจากอุปกรณ์")) return;
-  try { await deleteCase(item.caseId); submissionGuard.clear(item.caseId); clearManualCopy(); await refresh(); toast("ลบเคสในอุปกรณ์นี้แล้ว"); }
+  try {
+    if (!await deleteCaseIfUnchanged(item.caseId, current)) {
+      await refresh();
+      toast("ข้อมูลเคสเปลี่ยนระหว่างยืนยัน ยังไม่ได้ลบ กรุณาตรวจรหัสและสถานะล่าสุด");
+      return;
+    }
+    submissionGuard.clear(item.caseId); clearManualCopy(); await refresh(); toast("ลบเคสในอุปกรณ์นี้แล้ว");
+  }
   catch (error) { toast(error.message); }
 }
 

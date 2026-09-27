@@ -1,7 +1,7 @@
 // A second, minimal store for a case whose POST may already have succeeded.
 // It holds only the local case ID and outcome, never a receipt secret or case details.
 const PREFIX = "promjaeng-flood-submitted-v1:";
-const OUTCOMES = new Set(["confirmed", "uncertain"]);
+const OUTCOMES = new Set(["confirmed", "uncertain", "closed"]);
 
 export function createSubmissionGuard(storage) {
   const memory = new Map();
@@ -18,7 +18,10 @@ export function createSubmissionGuard(storage) {
     mark(caseId, outcome) {
       if (!OUTCOMES.has(outcome)) throw new Error("สถานะการส่งไม่ถูกต้อง");
       memory.set(caseId, outcome);
-      try { storage?.setItem(key(caseId), outcome); } catch { /* Keep the page locked. */ }
+      try {
+        storage?.setItem(key(caseId), outcome);
+        return storage?.getItem(key(caseId)) === outcome;
+      } catch { return false; /* Keep the page locked on this page. */ }
     },
     clear(caseId) {
       memory.delete(caseId);
