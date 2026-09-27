@@ -116,7 +116,7 @@ async function loadBoard() {
   const province = $("province-filter").value || null;
   const totals = first(await api.totals());
   if (!totals?.board_open) throw new AidError("AID_CLOSED", "เจ้าของระบบปิดกระดานชั่วคราว หากอันตราย โทร 1784 หรือ 1669");
-  $("totals").textContent = `คำขอเปิด ${totals.open_requests || 0} · ข้อเสนอเปิด ${totals.open_offers || 0} (ข้อมูล ณ ${dateText(totals.read_at)}) ตัวเลขนี้ไม่บอกว่ามีใครช่วยสำเร็จ`;
+  $("totals").textContent = `ฐานนับโพสต์สถานะเปิด: ขอ ${totals.open_requests || 0} · เสนอ ${totals.open_offers || 0} (ณ ${dateText(totals.read_at)}) อาจรวมโพสต์ของบัญชีที่ถูกระงับซึ่งไม่แสดงในรายการ และไม่บอกว่ามีใครช่วยสำเร็จ`;
   const member = !!profile?.display_name && profile.terms_version === config.termsVersion;
   const rows = asRows(member ? await api.board(province) : await api.boardPublic(province));
   clear($("board"));
