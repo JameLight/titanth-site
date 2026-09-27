@@ -28,6 +28,8 @@ let mediaGeneration = 0;
 const intakeClientPromise = loadIntakeConfig().then(config => config ? makeIntakeClient(config) : null).catch(() => null);
 intakeClientPromise.then(client => {
   if (!client) return;
+  $("#receipt-lookup").hidden = false;
+  if (!client.config.enabled) return;
   $("#service-ribbon").textContent = "ไม่ใช่เว็บหน่วยงานรัฐ • ข้อมูลจะถึงระบบทีมอาสาเฉพาะเมื่อคุณกดส่งและยินยอม • ถ้าอันตรายโทร 1784 หรือ 1669";
   $("#intro-copy").textContent = "กรอกเท่าที่รู้แล้วบันทึกในเครื่อง คุณยังส่งข้อความเองทาง LINE ปภ. หรือโทร 1784 ได้ ถ้าพื้นที่นี้มีทีมอาสาเฝ้า ระบบจะแสดงปุ่มส่งเข้าทีมแยกต่างหาก";
   $("#storage-scope").textContent = "บันทึกในเครื่องก่อน";
@@ -286,7 +288,7 @@ function renderCase(item) {
     sendButton.hidden = true;
     actions.append(sendButton);
     intakeClientPromise.then(async client => {
-      if (!client || !navigator.onLine) return;
+      if (!client || !client.config.enabled || !navigator.onLine) return;
       if (!canonicalProvince(item.location.province)) {
         actions.append(node("p", "intake-status", "ชื่อจังหวัดไม่ตรงรายการ 77 จังหวัด เคสนี้ยังส่งเข้าทีมอาสาไม่ได้ กรุณาสร้างเคสใหม่โดยเลือกจังหวัดจากรายการ หรือส่งข้อความเอง"));
         return;
@@ -385,6 +387,50 @@ async function readIntakeStatus(item, target) {
     target.textContent = caseStatusText(result);
   } catch { target.textContent = "ยังอ่านสถานะจากระบบไม่ได้ ถ้าอันตรายโทร 1784 หรือ 1669"; }
 }
+
+function lookupReceipt() {
+  const form = $("#receipt-lookup-form");
+  const code = form.elements.code.value.trim().toUpperCase();
+  const secret = form.elements.secret.value.trim().toLowerCase();
+  if (!/^[A-Z0-9-]{4,40}$/.test(code) || !/^[a-f0-9]{32,128}$/.test(secret)) {
+    throw new Error("รหัสเคสหรือรหัสลับไม่ครบ กรุณาตรวจรหัสที่เก็บไว้");
+  }
+  return { code, secret };
+}
+
+$("#receipt-lookup-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  const target = $("#receipt-lookup-result");
+  const client = await intakeClientPromise;
+  if (!client) { target.textContent = "ยังเชื่อมระบบสถานะไม่ได้ หากเดือดร้อนโทร 1784 หรือ 1669 ตามเหตุ"; return; }
+  const button = $("#receipt-lookup-read");
+  button.disabled = true;
+  try {
+    const receipt = lookupReceipt();
+    const result = await client.caseStatus(receipt);
+    target.textContent = caseStatusText(result);
+  } catch (error) { target.textContent = error.message || "ยังอ่านสถานะไม่ได้ หากเดือดร้อนโทร 1784 หรือ 1669"; }
+  finally { $("#receipt-lookup-form").elements.secret.value = ""; button.disabled = false; }
+});
+
+$("#receipt-lookup-withdraw").addEventListener("click", async () => {
+  const target = $("#receipt-lookup-result");
+  const client = await intakeClientPromise;
+  if (!client) { target.textContent = "ยังเชื่อมระบบลบข้อมูลไม่ได้ กรุณาลองใหม่เมื่อเชื่อมระบบได้"; return; }
+  let receipt;
+  try { receipt = lookupReceipt(); }
+  catch (error) { target.textContent = error.message; return; }
+  if (!await askConfirm("ระบบจะลบเบอร์ พิกัด จุดสังเกต และรายละเอียดจากฐานข้อมูล แต่ข้อมูลที่ทีมเห็นหรือส่งต่อไปก่อนหน้าอาจยังอยู่กับปลายทางอื่น ถ้ามีเคสในเครื่อง ให้ลบแยกจากรายการด้านล่าง", "ยกเลิกเคสและลบข้อมูล")) return;
+  const button = $("#receipt-lookup-withdraw");
+  button.disabled = true;
+  try {
+    const result = await client.withdrawCase(receipt);
+    target.textContent = result.status === "WITHDRAWN"
+      ? "ระบบยืนยันยกเลิกเคสและลบข้อมูลละเอียดแล้ว หากมีเคสในเครื่อง ให้ลบแยกจากรายการด้านล่าง"
+      : "ระบบยืนยันลบข้อมูลละเอียดแล้ว เคสที่ปิดไว้คงสถานะเดิม หากมีเคสในเครื่อง ให้ลบแยกจากรายการด้านล่าง";
+  } catch (error) { target.textContent = error.definitive ? error.message : "ยังยืนยันผลการลบข้อมูลไม่ได้ อย่าลองซ้ำทันที กรุณาอ่านสถานะหรือติดต่อผู้ดูแลระบบ"; }
+  finally { $("#receipt-lookup-form").elements.secret.value = ""; button.disabled = false; }
+});
 
 async function withdrawSubmittedCase(item, control) {
   if (!await askConfirm("ระบบจะลบเบอร์ พิกัด จุดสังเกต และรายละเอียดจากฐานข้อมูล เคสที่ยังเปิดอยู่จะเปลี่ยนเป็นยกเลิก แต่ยังเก็บจังหวัด เวลา จำนวนคน กลุ่มความต้องการแบบกว้าง (ด่วน/กลุ่มเปราะบาง/อื่นๆ) สถานะ และทีมไว้เพื่อสถิติ ข้อมูลที่ทีมเห็นหรือส่งต่อไปก่อนหน้าอาจยังอยู่กับปลายทางอื่น เมื่อระบบยืนยันแล้วจะลบสำเนาเคสในอุปกรณ์นี้ด้วย", "ยกเลิกเคสและลบข้อมูล")) return;

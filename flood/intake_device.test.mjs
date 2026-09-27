@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { caseStatusText, getOrCreateDeviceToken, makeIntakeClient, validIntakeConfig } from "./intake_client.js";
+import { caseStatusText, getOrCreateDeviceToken, makeIntakeClient, validIntakeConfig, validStatusConfig } from "./intake_client.js";
 
 const config = {
   enabled: true, schemaVersion: 3, url: "https://sample.supabase.co/",
@@ -29,6 +29,26 @@ test("browser token is random, stable, and never generated without persistent st
 test("old schema stays closed until version 3 config is installed", () => {
   assert.equal(validIntakeConfig({ ...config, schemaVersion: 2 }), false);
   assert.equal(validIntakeConfig(config), true);
+});
+
+test("closing new intake can keep receipt status and withdrawal available", async () => {
+  const statusConfig = { ...config, enabled: false, statusEnabled: true };
+  assert.equal(validIntakeConfig(statusConfig), false);
+  assert.equal(validStatusConfig(statusConfig), true);
+  assert.equal(validStatusConfig({ ...statusConfig, statusEnabled: false }), false);
+  const names = [];
+  const fetchImpl = async url => {
+    const name = url.split("/").at(-1);
+    names.push(name);
+    return { ok: true, json: async () => [name === "case_status"
+      ? { code: "NAM-TEST", status: "SENT" }
+      : { code: "NAM-TEST", status: "WITHDRAWN" }] };
+  };
+  const client = makeIntakeClient(statusConfig, fetchImpl);
+  await assert.rejects(() => client.submitCase(item), error => error.beforeSubmit === true);
+  assert.equal((await client.caseStatus({ code: "NAM-TEST", secret: "a".repeat(32) })).status, "SENT");
+  assert.equal((await client.withdrawCase({ code: "NAM-TEST", secret: "a".repeat(32) })).status, "WITHDRAWN");
+  assert.deepEqual(names, ["case_status", "withdraw_case"]);
 });
 
 test("submission sends the device token only with a ready team, and never retries", async () => {

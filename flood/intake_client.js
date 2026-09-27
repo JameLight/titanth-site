@@ -26,11 +26,11 @@ const REJECTED_TEXT = Object.freeze({
   CASE_NOT_FOUND: "ไม่พบเคสที่ตรงกับรหัสนี้ กรุณาตรวจรหัสอ้างอิงและรหัสลับ"
 });
 
-export function validIntakeConfig(value) {
+function validConnectionConfig(value) {
   // Version 3 opts in to the v2.6 payload contract. The live v2.3 RPC does
   // not accept p_device. A config alone is not proof the backend was upgraded;
   // submitCase also checks the v2.6 system_totals RPC before sending anything.
-  if (!value || value.enabled !== true || value.schemaVersion !== 3 ||
+  if (!value || value.schemaVersion !== 3 ||
       typeof value.publishableKey !== "string" || !value.publishableKey.startsWith("sb_publishable_") ||
       typeof value.consentVersion !== "string" || !/^[a-zA-Z0-9._-]{1,40}$/.test(value.consentVersion) ||
       typeof value.privacyNoticeUrl !== "string" || !/^\/(?!\/)[^\s]*$/.test(value.privacyNoticeUrl)) return false;
@@ -41,12 +41,22 @@ export function validIntakeConfig(value) {
   } catch { return false; }
 }
 
+export function validIntakeConfig(value) {
+  return value?.enabled === true && validConnectionConfig(value);
+}
+
+export function validStatusConfig(value) {
+  // Closing new intake must not strand people who already have a receipt.
+  // A separate switch still lets the owner close read/withdraw RPC access.
+  return value?.enabled === false && value?.statusEnabled === true && validConnectionConfig(value);
+}
+
 export async function loadIntakeConfig(fetchImpl = globalThis.fetch) {
   try {
     const response = await fetchImpl("./intake-config.json", { cache: "no-store", credentials: "omit" });
     if (!response.ok) return null;
     const config = await response.json();
-    return validIntakeConfig(config) ? config : null;
+    return validIntakeConfig(config) || validStatusConfig(config) ? config : null;
   } catch { return null; }
 }
 
@@ -71,7 +81,7 @@ function browserDeviceToken() {
 }
 
 export function makeIntakeClient(config, fetchImpl = globalThis.fetch, deviceTokenProvider = browserDeviceToken) {
-  if (!validIntakeConfig(config)) throw new Error("ยังไม่ได้เปิดระบบรับเคสทีมอาสา");
+  if (!validIntakeConfig(config) && !validStatusConfig(config)) throw new Error("ยังไม่ได้เชื่อมระบบเคสทีมอาสา");
   const base = config.url.replace(/\/$/, "");
 
   async function rpc(name, payload) {
@@ -119,6 +129,7 @@ export function makeIntakeClient(config, fetchImpl = globalThis.fetch, deviceTok
   async function submitCase(item) {
     let payload;
     try {
+      if (!validIntakeConfig(config)) throw new Error("ตอนนี้ระบบไม่เปิดรับเคสใหม่ หากเป็นเหตุจริงโทร 1784 หรือส่ง LINE ปภ. ด้วยตัวเอง");
       payload = mapCaseForSubmit(item, config.consentVersion);
       let totals;
       try { totals = await rpc("system_totals", {}); }
