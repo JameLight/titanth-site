@@ -87,11 +87,11 @@ export function makeIntakeClient(config, fetchImpl = globalThis.fetch, deviceTok
         error.definitive = true;
         throw error;
       }
-      throw new Error(`ระบบรับเคสตอบกลับผิดพลาด (${response.status})`);
+      throw new Error(`ระบบรับเคสตอบกลับผิดพลาด (${response.status}) หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ`);
     }
     const result = await response.json();
     if (!Array.isArray(result) || result.length !== 1 || typeof result[0] !== "object" || !result[0]) {
-      throw new Error("คำตอบจากระบบรับเคสไม่ครบ");
+      throw new Error("คำตอบจากระบบรับเคสไม่ครบ หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");
     }
     return result[0];
   }

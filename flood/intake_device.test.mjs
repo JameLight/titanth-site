@@ -85,6 +85,13 @@ test("v2.3 or closed backend never receives a case payload despite a v3 config",
   assert.deepEqual(calls, ["system_totals"]);
 });
 
+test("unrecognized server errors still point to an emergency channel", async () => {
+  const fetchImpl = async url => url.endsWith("system_totals")
+    ? { ok: true, json: async () => [{ intake_open: true, duty_locked: false }] }
+    : { ok: false, status: 403, json: async () => ({ message: "UNEXPECTED" }) };
+  await assert.rejects(() => makeIntakeClient(config, fetchImpl).submitCase(item), /403.*1784/);
+});
+
 test("stalled claimed cases display a call-now warning without changing the actual status", () => {
   assert.match(caseStatusText({ status: "ACKNOWLEDGED", stale: true }), /ไม่มีการอัปเดต.*1784/);
   assert.match(caseStatusText({ status: "NEED_INFO", stale: true }), /ไม่มีการอัปเดต.*1784/);
