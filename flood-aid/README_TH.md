@@ -6,7 +6,7 @@
 
 หน้า candidate นี้ไม่มีช่องเฉพาะสำหรับข้อมูลสุขภาพหรือเครื่องหมายบุคคลเปราะบาง และส่ง p_vulnerable=false เสมอ แต่ RPC aid_post ฝั่ง SQL v2.7 r6 ยังรับค่า p_vulnerable ได้จาก client อื่น และข้อความอิสระยังรับข้อมูลอ่อนไหวได้ จึงเป็นความเสี่ยงฝั่ง server ที่ต้องแก้/ทบทวนก่อนเปิดรับคนจริง
 
-SQL r8 ที่ Claude กำลังตรวจเป็นคนละ candidate; ยังไม่ยืนยันว่า frontend นี้เข้ากันได้ หรือจะใช้ r6 เปิดจริง ต้องทวนสัญญา API, notice, การยินยอม และผลทดสอบหลังตกลงรุ่นฐานที่จะใช้
+SQL r8 เป็นคนละ candidate: Codex ตรวจ migration จาก r6 และการเรียก `aid_post` แบบระบุชื่อ 9 อาร์กิวเมนต์โดยส่ง `p_vulnerable=false` ในฐานทิ้งแล้วผ่านตามขอบเขตนั้น ข้อความนี้ยังไม่ยืนยัน PostgREST, browser หรือ frontend แบบครบเส้นทาง Claude ทดสอบ browser/emulator กับ frontend code ที่ commit `d80d27b` ผ่าน 15/16 โดยติด header ห้ามฝังหน้า; frontend code ที่ commit `88cf06a` ยังไม่ผ่าน end-to-end รอบใหม่ ประกาศ privacy ใน PR นี้ยังอธิบาย r6 ต้องทวนสัญญา API, notice, การยินยอม และผลทดสอบตาม SQL รุ่นที่จะเลือกก่อนเปิดจริง
 
 ## HOLD: โฮสต์ยังไม่ส่ง header ห้ามฝังหน้า
 
@@ -17,9 +17,9 @@ SQL r8 ที่ Claude กำลังตรวจเป็นคนละ cand
 
 ## สัญญาที่ใช้
 
-- SQL sql_v27/aid_board.sql SHA-256 939ab5c2fd50094ac5ca3e5bc63e9e56d6e5db39624761afe734d8fab705f680
-- Full SQL candidate SHA-256 7dc997f6f6ec2bb974c02fe4f38c001a2920ef1f1d4e64dc0246b16d71560bc4
-- RPC contract sql_v27/AID_RPC_CONTRACT.md ที่ Claude สร้างจาก pg_proc ในฐานทิ้ง เวลา 2026-09-27T00:07Z
+- SQL r6 ที่ใช้สร้าง frontend: aid_board.sql SHA-256 939ab5c2fd50094ac5ca3e5bc63e9e56d6e5db39624761afe734d8fab705f680
+- Full SQL r6 candidate SHA-256 7dc997f6f6ec2bb974c02fe4f38c001a2920ef1f1d4e64dc0246b16d71560bc4
+- RPC contract r6 sql_v27/AID_RPC_CONTRACT.md ที่ Claude สร้างจาก pg_proc ในฐานทิ้ง เวลา 2026-09-27T00:07Z; r8 ดู sql_v27/README_TH.md และผลตรวจอิสระล่าสุด
 - ยังไม่มีหลักฐานว่า SQL นี้อยู่ในฐาน production หรือว่าค่าปิดเปิดจริงตรงกัน
 
 ## เปิดใช้ต้องครบ
