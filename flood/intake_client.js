@@ -111,6 +111,11 @@ export function makeIntakeClient(config, fetchImpl = globalThis.fetch, deviceTok
       if (name === "submit_case") throw new Error(UNCERTAIN_SUBMISSION);
       throw new Error("อ่านคำตอบจากระบบรับเคสไม่ได้ หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");
     });
+    if (Array.isArray(result) && result.length === 0 && ["case_status", "withdraw_case"].includes(name)) {
+      const error = new Error(REJECTED_TEXT.CASE_NOT_FOUND);
+      error.definitive = true;
+      throw error;
+    }
     if (!Array.isArray(result) || result.length !== 1 || typeof result[0] !== "object" || !result[0]) {
       if (name === "submit_case") throw new Error(UNCERTAIN_SUBMISSION);
       throw new Error("คำตอบจากระบบรับเคสไม่ครบ หากเป็นเหตุจริงโทร 1784 หรือ 1669 ตามเหตุ");

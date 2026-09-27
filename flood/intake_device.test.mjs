@@ -51,6 +51,21 @@ test("closing new intake can keep receipt status and withdrawal available", asyn
   assert.deepEqual(names, ["case_status", "withdraw_case"]);
 });
 
+test("an empty status or withdrawal response says the code and secret do not match", async () => {
+  const client = makeIntakeClient(config, async () => ({ ok: true, json: async () => [] }));
+  const receipt = { code: "NAM-TEST", secret: "a".repeat(32) };
+  await assert.rejects(() => client.caseStatus(receipt), error => {
+    assert.equal(error.definitive, true);
+    assert.match(error.message, /ไม่พบเคสที่ตรงกับรหัส/);
+    return true;
+  });
+  await assert.rejects(() => client.withdrawCase(receipt), error => {
+    assert.equal(error.definitive, true);
+    assert.match(error.message, /ไม่พบเคสที่ตรงกับรหัส/);
+    return true;
+  });
+});
+
 test("submission sends the device token only with a ready team, and never retries", async () => {
   const calls = [];
   const fetchImpl = async (url, options) => {
