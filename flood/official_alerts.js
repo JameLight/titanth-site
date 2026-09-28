@@ -30,6 +30,27 @@ export function alertTime(dateId, time) {
   return Number.isFinite(at.getTime()) ? at : null;
 }
 
+// duration_hour is the broadcaster's display window, not the duration of the hazard.
+// Recalculate this when rendering, including when the alert came from localStorage.
+export function alertDisplayState(alert, now = new Date()) {
+  const issuedMs = new Date(alert?.at).getTime();
+  const nowMs = new Date(now).getTime();
+  const hours = alert?.hours;
+  if (!Number.isFinite(issuedMs) || !Number.isFinite(nowMs) ||
+      typeof hours !== "number" || !Number.isFinite(hours) || hours <= 0) {
+    return { kind: "unknown", endAt: null };
+  }
+  const endMs = issuedMs + hours * 60 * 60 * 1000;
+  if (!Number.isFinite(endMs) || Math.abs(endMs) > 8.64e15) return { kind: "unknown", endAt: null };
+  const endAt = new Date(endMs).toISOString();
+  if (nowMs < issuedMs) return { kind: "future", endAt };
+  return { kind: nowMs < endMs ? "within-display-window" : "ended", endAt };
+}
+
+export function showAlertMessageByDefault(displayState, fromCache = false) {
+  return displayState?.kind === "within-display-window" && !fromCache;
+}
+
 export function alertsForProvince(data, provinceName, { now = new Date(), days = 7, limit = 5 } = {}) {
   const facts = table(data, "fact_cb");
   const messages = table(data, "dim_message");
@@ -57,7 +78,8 @@ export function alertsForProvince(data, provinceName, { now = new Date(), days =
       typeLabel: label.get(fact.event_id) ?? TYPE_TH[fact.event_id] ?? "การแจ้งเตือน",
       title: String(fact.title ?? ""),
       message: String(text.get(fact.message_id) ?? ""),
-      hours: Number.isFinite(fact.duration_hour) ? fact.duration_hour : null
+      hours: typeof fact.duration_hour === "number" && Number.isFinite(fact.duration_hour) && fact.duration_hour > 0
+        ? fact.duration_hour : null
     }));
 }
 

@@ -16,7 +16,7 @@
       if (!cfg || typeof cfg.enabled !== "boolean") throw new Error("config");
       if (cfg.enabled === true) {
         $("intake-state").textContent = "เปิดตามการตั้งค่า";
-        $("intake-note").textContent = "ส่งได้เฉพาะจังหวัดที่มีทีมเฝ้าเวรอยู่จริง และการส่งถึงระบบยังไม่เท่ากับมีทีมรับเรื่อง ถ้าอันตราย โทร 1784 หรือ 1669 ทันที";
+        $("intake-note").textContent = "ระบบตั้งค่าให้รับเรื่อง แต่หน้านี้ไม่ยืนยันว่ามีคนเฝ้าหรือรับเรื่องแล้ว ถ้าอันตราย โทร 1784 หรือ 1669 ทันที";
         $("intake-state").className = "big";
       } else {
         $("intake-state").textContent = "ปิดอยู่";
@@ -43,14 +43,14 @@
       for (const r of rows) {
         const t = n(r.teams_on_duty), w = n(r.waiting), w10 = n(r.waiting_over_10_min), p = n(r.in_progress), c = n(r.closed_last_24h);
         if ([t, w, w10, p, c].includes(null) || typeof r.province !== "string") throw new Error("value");
-        if (t > 0) onDuty.push(`${r.province} (${t} ทีม)`);
+        if (t > 0) onDuty.push(`${r.province} (${t} รายการตั้งค่า)`);
         sum.waiting += w; sum.waiting10 += w10; sum.progress += p; sum.closed += c;
       }
-      $("duty-count").textContent = `${onDuty.length} จาก 77 จังหวัด`;
-      $("duty-count").className = onDuty.length ? "big ok" : "big off";
+      $("duty-count").textContent = `${onDuty.length} จังหวัดมีรายการตั้งค่า`;
+      $("duty-count").className = "big";
       $("duty-list").replaceChildren(...onDuty.map(x => Object.assign(document.createElement("li"), { textContent: x })));
       const total = sum.waiting + sum.progress + sum.closed;
-      $("cases-summary").textContent = total ? `${total} เรื่องที่นับตอนนี้` : "ไม่มีเรื่องรอ กำลังช่วย หรือปิดใน 24 ชม.";
+      $("cases-summary").textContent = total ? `${total} เรื่องที่นับในฐานนี้` : "ฐานข้อมูลนี้นับ 0 เรื่องในช่วงที่แสดง";
       $("cases-detail").hidden = !total;
       $("c-waiting").textContent = sum.waiting; $("c-waiting10").textContent = sum.waiting10;
       $("c-progress").textContent = sum.progress; $("c-closed").textContent = sum.closed;

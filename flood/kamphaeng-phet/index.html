@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#103b50">
+  <meta name="description" content="กำแพงเพชร: เปิดข้อมูลระดับน้ำ ฝน แผนที่น้ำท่วม และถนนจากหน่วยงานต้นทาง พร้อมเบอร์แจ้งเหตุ ข้อมูลแต่ละแห่งมีเวลาอัปเดตต่างกัน">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./snapshot.js"></script>
+  <title>กำแพงเพชร: ตรวจน้ำ ฝน ถนน | พร้อมแจ้งน้ำท่วม</title>
+</head>
+<body>
+  <a class="skip" href="#urgent-calls">ข้ามไปเบอร์แจ้งเหตุ</a>
+  <header class="top">
+    <div class="wrap">
+      <p class="eyebrow">กำแพงเพชร · ข้อมูลที่ตรวจเช้า 29 ก.ย. 2569</p>
+      <h1>น้ำ ฝน ถนน: <span>กำแพงเพชร</span></h1>
+      <p class="lead">ข้อมูลที่ตรวจพร้อมเวลาต้นทาง หากกำลังเดือดร้อน โทรแจ้งเหตุได้ทันที</p>
+      <div id="snapshot-expired" class="snapshot-expired" role="status">ไม่แสดงตัวเลขชุดเช้า (ช่วง 06:00–08:00 น.ไทย) เปิดลิงก์ต้นทางด้านล่างเพื่อตรวจใหม่ หากมีอันตรายโทร 1784 หรือ 1669</div>
+      <section id="snapshot-current" class="snapshot" aria-label="สรุปสถานการณ์จากข้อมูลที่ตรวจแล้ว" hidden>
+        <p class="snapshot-time">ข้อมูลเช้า 29 ก.ย. 2569 · ซ่อนตัวเลขหลัง 08:00 น. ไทย</p>
+        <div class="snapshot-grid">
+          <p><strong>น้ำปิง อ.เมือง:</strong> P.7A <b>3.44 ม.</b> ต่ำกว่าตลิ่ง <b>1.90 ม.</b> <small>กรมชลประทาน 06:00 น. · เพิ่ม 0.14 ม. จาก 05:00 · ค่าที่สถานี</small></p>
+          <p><strong>บ้านสามเรือน อ.คลองขลุง:</strong> P.78 สูงกว่าตลิ่ง <b>0.31 ม.</b> <small>กรมชลประทาน 06:00 น. · ค่าที่สถานี</small></p>
+          <p><strong>ฝน:</strong> อุตุฯ คาด <b>ฝนหนักบางแห่ง</b> ในจังหวัด <small>พยากรณ์ 06:00 น.</small></p>
+          <p><strong>ถนน:</strong> ทล.1117 รายงาน <b>ผ่านไม่ได้</b> เมื่อ 28 ก.ย. 17:30 <small>ตอนนี้ยังไม่ยืนยัน · โทร 1586</small></p>
+          <p><strong>ภาพน้ำท่วม:</strong> กำแพงเพชรราว <b>100,080 ไร่</b> ในชั้นข้อมูลย้อนหลัง 7 วัน <small>GISTDA ช่วง 23–29 ก.ย. · ไม่ใช่ภาพน้ำ ณ วันนี้</small></p>
+        </div>
+        <p class="snapshot-note">ระดับน้ำเป็นค่าที่สถานี ไม่ใช่น้ำหน้าบ้าน · ไม่มีข้อมูลยืนยันว่าถนนผ่านได้ ดูต้นทางด้านล่างก่อนใช้</p>
+      </section>
+      <div class="urgent" id="urgent-calls" tabindex="-1" aria-label="โทรแจ้งเหตุ">
+        <a href="tel:1784"><strong>โทร 1784</strong><span>ติดน้ำท่วมหรือต้องการความช่วยเหลือ · ปภ.</span></a>
+        <a href="tel:1669"><strong>โทร 1669</strong><span>บาดเจ็บหรือเจ็บป่วยฉุกเฉิน</span></a>
+      </div>
+      <p class="urgent-note">หากอยู่ในอันตราย โทรก่อนดูแผนที่ ไม่ต้องรอเว็บหรือคอมเมนต์ หากโทรไม่ติด ให้แจ้งกำนันหรือผู้ใหญ่บ้านในพื้นที่ด้วย</p>
+    </div>
+  </header>
+
+  <main class="wrap" id="sources">
+    <section class="notice" aria-label="ข้อจำกัดสำคัญ">
+      <strong>ไม่มีแผนที่ใดยืนยันว่าถนนผ่านได้หรือบ้านคุณปลอดภัย</strong>
+      <p>อย่าเดินหรือขับรถผ่านน้ำที่ไหลแรงหรือไม่รู้ความลึก ผิวถนนอาจถูกกัดเซาะใต้ผิวน้ำ ตัวเลขสถานีบอกน้ำ ณ จุดวัด ภาพดาวเทียมมีรอบถ่าย และรายงานถนนอาจเปลี่ยนแล้ว</p>
+    </section>
+
+    <h2>เลือกสิ่งที่ต้องเช็ก</h2>
+    <p>ลิงก์ข้อมูลของหน่วยงานเปิดในแท็บใหม่ ตรวจวัน เวลา และพื้นที่บนหน้าต้นทางก่อนใช้</p>
+    <div class="grid">
+      <section class="card" id="water">
+        <span class="tag">01 · น้ำในแม่น้ำปิง</span>
+        <h3>ดูระดับน้ำที่สถานี</h3>
+        <p>ตารางรายชั่วโมงของกรมชลประทานมี P.7A ต.ในเมือง อ.เมือง, P.26B คลองสวนหมาก อ.คลองลาน และ P.78 บ้านสามเรือน อ.คลองขลุง ผัง กฟผ. มี P.15 อ.คลองขลุงด้วย <strong>เปิดต้นทางเพื่อดูค่ากับวันเวลาล่าสุด</strong> อย่าใช้ตัวเลขที่เคยอ่านจากหน้านี้เป็นค่าปัจจุบัน</p>
+        <a class="go" href="https://water.egat.co.th/telemeter/schematic/BB_anni.php" target="_blank" rel="noopener noreferrer">เปิดผังระดับน้ำ กฟผ. <span aria-hidden="true">↗</span></a>
+        <a class="extra" href="https://hyd-app-db.rid.go.th/hydro2hd_admsl.html" target="_blank" rel="noopener noreferrer">เปิดตารางระดับน้ำกรมชลประทาน <span aria-hidden="true">↗</span></a>
+        <p class="limit">ค่าจาก กฟผ. และตาราง ชป. อาจไม่เท่ากัน ห้ามนำคนละตารางมาหักลบหรือใช้ตัดสินระดับน้ำหน้าบ้าน</p>
+        <a class="extra" href="https://www.thaiwater.net/water/wl" target="_blank" rel="noopener noreferrer">ดู ThaiWater ที่เว็บ สสน. <span aria-hidden="true">↗</span></a>
+        <p class="fine">ThaiWater เป็นลิงก์ไปต้นทางเท่านั้น เว็บนี้ยังไม่ดึงหรือแสดงข้อมูลสถานีของ สสน. ซ้ำ</p>
+      </section>
+
+      <section class="card" id="rain">
+        <span class="tag">02 · ฝนและพยากรณ์</span>
+        <h3>ดูฝนรายสถานีและที่คาด</h3>
+        <p>กรมทรัพยากรน้ำแสดงฝนรายสถานีในกำแพงเพชรพร้อมเวลาวัด เลือกอำเภอและดูชื่อสถานีให้ตรงพื้นที่ของคุณ ค่า “N/A” หมายถึงไม่มีค่ารายงาน ไม่ใช่ฝนหรือน้ำเป็นศูนย์</p>
+        <a class="go" href="https://ews.dwr.go.th/ews/province-data?FilterProvince=%E0%B8%81%E0%B8%B3%E0%B9%81%E0%B8%9E%E0%B8%87%E0%B9%80%E0%B8%9E%E0%B8%8A%E0%B8%A3" target="_blank" rel="noopener noreferrer">เปิดฝนรายสถานี กรมทรัพยากรน้ำ <span aria-hidden="true">↗</span></a>
+        <p>กรมอุตุนิยมวิทยาระบุวันออกประกาศและช่วงเวลาพยากรณ์ในหน้าต้นทาง พยากรณ์ระดับจังหวัดไม่ได้บอกว่าฝนจะตกที่บ้านทุกหลัง</p>
+        <a class="extra" href="https://www.tmd.go.th/forecast/daily" target="_blank" rel="noopener noreferrer">เปิดพยากรณ์กรมอุตุ <span aria-hidden="true">↗</span></a>
+        <a class="extra" href="https://weather.tmd.go.th/composite/index_composite.html" target="_blank" rel="noopener noreferrer">เปิดเรดาร์ฝนรวมทั่วประเทศ <span aria-hidden="true">↗</span></a>
+        <p class="fine">ขยายแผนที่ไปที่กำแพงเพชรและดูเวลาตรวจวัด ภาพที่โหลดไม่ขึ้นไม่ได้แปลว่าไม่มีฝน</p>
+        <p class="fine">ถ้าเว็บไซต์โหลดไม่ขึ้น โทรสายด่วนอุตุนิยมวิทยา <a href="tel:1182">1182</a></p>
+      </section>
+
+      <section class="card" id="roads">
+        <span class="tag">03 · ถนนและรถ</span>
+        <h3>เช็กทางหลวงก่อนออกเดินทาง</h3>
+        <p>ระบบของกรมทางหลวงแสดงรายงานจุดน้ำท่วมและเวลาแจ้งแต่ละรายการ <strong>รายการที่ไม่ขึ้น ไม่ได้แปลว่าถนนปลอดภัย</strong> และสีบนแผนที่ไม่ใช่คำรับรองว่ารถของคุณผ่านได้ หากแผนที่กับรายงานทางหลวงไม่ตรงกัน อย่าสรุปเองว่าถนนเปิดแล้ว</p>
+        <a class="go" href="https://hdms.doh.go.th/dashboard" target="_blank" rel="noopener noreferrer">เปิดระบบถนนน้ำท่วม กรมทางหลวง <span aria-hidden="true">↗</span></a>
+        <p class="callout">หากจำเป็นต้องเดินทาง ให้ถามสถานะทางหลวงที่ <a href="tel:1586">1586</a> หรือทางหลวงชนบทที่ <a href="tel:1146">1146</a> ก่อนออกเดินทาง การโทรไม่ได้ยืนยันว่ารถคันใดขับลุยน้ำได้</p>
+        <details>
+          <summary>ทล.1117 เคยรายงานผ่านไม่ได้ 28 ก.ย. 17:30 · สถานะตอนนี้ยังไม่ยืนยัน</summary>
+          <p>กรมทางหลวงรายงาน ณ <time datetime="2026-09-28T17:30:00+07:00">28 ก.ย. 2569 เวลา 17:30 น.</time> ว่า ทล.1117 คลองแม่ลาย–ช่องเย็น กม.45+000–46+050 <strong>ผ่านไม่ได้ในเวลารายงาน</strong> สถานะปัจจุบันยังไม่ยืนยัน ตรวจระบบหรือโทร 1586 ก่อนเดินทาง</p>
+          <a class="extra" href="https://www.doh.go.th/content/1841" target="_blank" rel="noopener noreferrer">อ่านรายงานกรมทางหลวง <span aria-hidden="true">↗</span></a>
+        </details>
+      </section>
+
+      <section class="card" id="map">
+        <span class="tag">04 · ภาพพื้นที่น้ำท่วม</span>
+        <h3>ดูแผนที่ดาวเทียม</h3>
+        <p>ในแผนที่ GISTDA ให้เลือกจังหวัด “กำแพงเพชร” และดูวันที่ของภาพแต่ละชั้นข้อมูลก่อนเสมอ ในการตรวจเช้า 29 ก.ย. 2569 เราพบชั้นย้อนหลัง 7 วันซึ่งรวมภาพหลายวัน <strong>ไม่ใช่ขอบเขตน้ำท่วม ณ เวลานี้</strong> ข่าว GISTDA ระบุภาพดาวเทียมที่ครอบคลุมจังหวัดถ่าย 26 ก.ย. 2569 แต่ยังไม่ยืนยันว่าสรุปทุกชั้นจากภาพวันเดียวกันทั้งหมด ภาพอาจไม่เห็นน้ำที่เกิดหลังรอบถ่าย ใต้หลังคา ต้นไม้ หรือพื้นที่ที่ยังไม่ได้ถ่าย</p>
+        <a class="go" href="https://disaster.gistda.or.th/flood" target="_blank" rel="noopener noreferrer">เปิดแผนที่น้ำท่วม GISTDA <span aria-hidden="true">↗</span></a>
+        <p class="limit">แผนที่นี้ไม่บอกความลึกของน้ำหน้าบ้านและไม่ใช่แผนที่เส้นทางรถปลอดภัย</p>
+      </section>
+
+      <section class="card" id="warnings">
+        <span class="tag">05 · คำเตือนทางการ</span>
+        <h3>ตรวจวันและช่วงแสดงคำเตือน</h3>
+        <p>เปิดประกาศ Cell Broadcast ที่ศูนย์เตือนภัยพิบัติแห่งชาติ ระเบียนบางฉบับกำหนดช่วงแสดงเพียงไม่กี่ชั่วโมง คำเตือนเก่าไม่ใช่คำสั่งปัจจุบัน</p>
+        <a class="go" href="https://academicndwc.github.io/CBS-DashBoard/" target="_blank" rel="noopener noreferrer">เปิดประกาศ Cell Broadcast <span aria-hidden="true">↗</span></a>
+        <p class="fine">ไม่พบชื่อพื้นที่ในรายการ ไม่ได้แปลว่าพื้นที่ปลอดภัย ให้ฟังคำสั่งเจ้าหน้าที่ในพื้นที่</p>
+      </section>
+
+      <section class="card" id="utilities">
+        <span class="tag">06 · ไฟฟ้าและแจ้งเหตุ</span>
+        <h3>มีสายไฟหรือตู้ไฟใกล้น้ำ?</h3>
+        <p>อย่าเข้าใกล้สายไฟที่ตกในน้ำหรือสัมผัสอุปกรณ์ไฟฟ้าที่เปียกน้ำ แจ้งการไฟฟ้าส่วนภูมิภาค <a href="tel:1129">1129</a> หากมีผู้บาดเจ็บโทร <a href="tel:1669">1669</a></p>
+        <a class="extra" href="https://www.pea.co.th/contact-us" target="_blank" rel="noopener noreferrer">ดูช่องทาง กฟภ. <span aria-hidden="true">↗</span></a>
+      </section>
+    </div>
+
+    <section class="next" aria-labelledby="next-title">
+      <h2 id="next-title">ต้องแจ้งเหตุ แต่จำรายละเอียดไม่ครบ?</h2>
+      <p>โทร 1784 ก่อน แล้วบอกอำเภอ ตำบล จุดสังเกต จำนวนคน กลุ่มที่เคลื่อนย้ายยาก และเบอร์โทรกลับ หากมีอินเทอร์เน็ต ใช้เว็บช่วยเรียงข้อมูลได้ แต่เว็บไม่รับเคส คุณต้องโทรหรือกดส่งไปช่องทางทางการเอง</p>
+      <p>หากต้องไปศูนย์พักพิง ให้ถาม 1784 หรือกำนัน/ผู้ใหญ่บ้านว่าจุดใดเปิดรับอยู่และเดินทางอย่างไร ขณะนี้เรายังไม่มีรายชื่อศูนย์ที่ยืนยันเวลาเปิดรับได้</p>
+      <a href="../">เปิดตัวช่วยเตรียมข้อความ <span aria-hidden="true">→</span></a>
+    </section>
+  </main>
+
+  <footer class="footer"><div class="wrap"><p>“พร้อมแจ้งน้ำท่วม” จัดลิงก์และอธิบายข้อจำกัดของข้อมูล ไม่ใช่เว็บรัฐ ไม่ใช่ผู้ให้บริการแผนที่นำทาง และไม่มีทีมกู้ภัยเฝ้ารับเคส เว็บไม่รับเงินบริจาค</p><p>ข้อมูลภายนอกเปลี่ยนได้ ตรวจเวลาในหน้าเจ้าของข้อมูลทุกครั้ง</p></div></footer>
+</body>
+</html>

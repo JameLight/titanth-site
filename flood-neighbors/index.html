@@ -6,23 +6,25 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
   <meta name="theme-color" content="#123d51">
-  <title>เสนอช่วยแล้วแชร์เอง | พร้อมแจ้งน้ำท่วม</title>
+  <meta name="description" content="กำแพงเพชร: เขียนข้อความเสนอตัวช่วยโทร ส่งต่อข้อมูล หรือแบ่งปันสิ่งของ แล้วแชร์เอง เว็บไม่มีทีมรับเคสหรือตรวจอาสา">
+  <title>กำแพงเพชร · เสนอช่วยแล้วแชร์เอง | พร้อมแจ้งน้ำท่วม</title>
   <link rel="stylesheet" href="./style.css">
   <script type="module" src="./app.js"></script>
 </head>
 <body>
-  <header class="top"><a href="../flood/">← พร้อมแจ้งน้ำท่วม</a><strong>เสนอช่วยแล้วแชร์เอง</strong></header>
+  <header class="top"><a href="../flood/">← พร้อมแจ้งน้ำท่วม</a><strong>กำแพงเพชร · เสนอช่วยเอง</strong></header>
   <main>
     <section class="urgent" aria-labelledby="urgent-title">
-      <h1 id="urgent-title">มีอันตราย? โทรก่อน</h1>
-      <p>หน้านี้ช่วยคุณเขียนข้อความเสนอช่วย แล้วเลือกช่องทางส่งเอง เว็บไม่มีคิวกู้ภัยหรือทีมรับเคสจากหน้านี้</p>
+      <h1 id="urgent-title">กำแพงเพชร: มีอันตราย โทรก่อน</h1>
+      <p>หน้านี้ช่วยเขียนข้อความเสนอช่วยคนในกำแพงเพชร แล้วคุณเลือกช่องทางส่งเอง เว็บไม่มีคิวกู้ภัยหรือทีมรับเคสจากหน้านี้</p>
       <div class="actions"><a class="button red" href="tel:1784">โทร 1784 <small>แจ้งภัยน้ำท่วม · ปภ.</small></a><a class="button green" href="tel:1669">โทร 1669 <small>เจ็บป่วยหรือบาดเจ็บฉุกเฉิน</small></a></div>
+      <p class="fine">อยู่จังหวัดอื่นและต้องการความช่วยเหลือ โทร <a href="tel:1784">1784</a> หรือ <a href="tel:1669">1669</a> เมื่อเจ็บป่วยหรือบาดเจ็บฉุกเฉิน</p>
     </section>
     <section class="card" aria-labelledby="share-title">
       <div class="step">1 · เลือกสิ่งที่คุณช่วยได้</div>
-      <h2 id="share-title">สร้างข้อความเสนอช่วย</h2>
+      <h2 id="share-title">สร้างข้อความเสนอช่วยในกำแพงเพชร</h2>
       <p>ไม่ต้องสมัคร ข้อความอยู่บนเครื่องคุณจนกว่าคุณจะกดแชร์หรือคัดลอก</p>
-      <label for="share-province">จังหวัดที่คุณช่วยได้</label><select id="share-province" required><option value="">เลือกจังหวัด</option></select>
+      <p class="fine"><strong>พื้นที่: จังหวัดกำแพงเพชร</strong> · อย่าเสนอตัวหากคุณยังช่วยตามข้อความไม่ได้จริง</p><input id="share-province" type="hidden" value="กำแพงเพชร">
       <label for="share-kind">ช่วยแบบไหน</label><select id="share-kind"><option value="relay">ช่วยโทรหรือส่งต่อข้อมูล</option><option value="supplies">แบ่งปันน้ำดื่มหรืออาหาร</option></select>
       <label for="share-contact-kind">ให้ติดต่อคุณทางไหน</label><select id="share-contact-kind"><option value="reply_in_app">ตอบกลับโพสต์/แชต</option><option value="phone">เบอร์โทรของฉัน</option><option value="line_id">LINE ID ของฉัน</option></select>
       <label id="share-contact-label" for="share-contact" hidden>เบอร์โทรหรือ LINE ID ของคุณ</label><input id="share-contact" autocomplete="off" inputmode="tel" maxlength="32" placeholder="ใส่ของคุณเองเท่านั้น" hidden>

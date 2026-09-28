@@ -52,3 +52,21 @@ dialog{max-height:90vh;overflow:auto}
 .quick-location-result.gps-uncertain #quick-location-status,.gps-row #gps-status.gps-uncertain{color:#782118;font-weight:800}
 .gps-row #gps-status.gps-uncertain{padding:.35rem .5rem;background:#fff0ed;border-left:4px solid #a82b21}
 .sos-say{margin:0;padding:.6rem .8rem;background:#fff;border:1.5px solid #d7aaa3;border-radius:10px;font-size:1rem;line-height:1.5;color:#513b36}.sos-say strong{color:#782118}
+
+/* Kamphaeng Phet situation first; the dated snapshot is hidden by snapshot.js after its window. */
+.kpp-entry{margin:0 0 .7rem;padding:.8rem 1rem;border:2px solid #397a86;border-radius:12px;background:#ecf8f8;color:#173744}
+.kpp-kicker{margin:0;color:#155663;font-size:.8rem;font-weight:800}
+.kpp-entry h1{margin:.1rem 0 .35rem;font-size:1.25rem;line-height:1.25;color:#103b50}
+.kpp-current{display:grid;grid-template-columns:minmax(0,1fr);gap:.25rem;min-width:0}.kpp-current[hidden],.kpp-expired[hidden]{display:none}
+.kpp-current p,.kpp-expired{margin:0;font-size:1rem;line-height:1.4;overflow-wrap:anywhere}
+.kpp-current .kpp-current-time{font-weight:800;color:#155663}
+.kpp-current small{display:block;color:#465f68;font-size:.95rem;line-height:1.35;overflow-wrap:anywhere}
+.alert-scope{display:block;font-size:.9rem;color:var(--navy)}
+.kpp-mobile-calls{display:none}
+@media(max-width:480px){body{padding-bottom:84px}.kpp-mobile-calls{position:fixed;z-index:30;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem;left:0;right:0;bottom:0;padding:.4rem;background:#103b50;box-shadow:0 -4px 16px #001b2a55}.kpp-mobile-calls a{display:block;min-height:72px;padding:.45rem .4rem;border-radius:8px;background:#fff;color:#8e241c;text-align:center;text-decoration:none;font-size:1.1rem;font-weight:800;line-height:1.2}.kpp-mobile-calls a small{display:block;margin-top:.2rem;color:#173744;font-size:.72rem;font-weight:650}}
+@media(max-width:480px){.toast{bottom:90px;z-index:40}}
+@media print{.kpp-mobile-calls{display:none}}
+.kpp-entry-link{display:inline-block;margin-top:.45rem;color:#075865;font-size:.86rem;font-weight:800;text-decoration:underline;text-underline-offset:3px}
+.kpp-entry a:focus-visible{outline:3px solid #007c9b;outline-offset:3px}
+.emergency.sos .sos-coverage{margin:.65rem 0 0!important;font-size:.86rem;line-height:1.35}
+@media(max-width:650px){.kpp-entry{padding:.65rem .75rem}.kpp-entry h1{font-size:1.2rem}.kpp-current p,.kpp-expired,.kpp-entry-link{font-size:1rem}.kpp-current small{font-size:.92rem}}

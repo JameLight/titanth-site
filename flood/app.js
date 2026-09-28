@@ -1,11 +1,11 @@
 import { NEEDS, CHANNELS, STATUS, makeCase, recordHandoffAttempt, isStale,
   possibleDuplicates, shareText, quickLocationText, ddpmLinePrefillUrl, validateTriage,
   quickLocationQrText, caseQrText, casesCsv, gpsAccuracyWarning } from "./model.js";
-import { listCases, putCase, deleteCase } from "./storage.js";
+import { listCases, putCase as persistCase, deleteCase as removeStoredCase } from "./storage.js";
 import { qrSvg } from "./qr.js";
 import { loadIntakeConfig, makeIntakeClient, caseStatusText, stripIntakeSecrets } from "./intake_client.js";
 import { PROVINCES, canonicalProvince } from "./provinces.js";
-import { NDWC_ALERTS_URL, alertsForProvince, newestAlertTime } from "./official_alerts.js";
+import { NDWC_ALERTS_URL, alertsForProvince, alertDisplayState, showAlertMessageByDefault, newestAlertTime } from "./official_alerts.js";
 
 const $ = selector => document.querySelector(selector);
 const DDPM_LINE_URL = "https://lin.ee/MoS2rXU";
@@ -18,14 +18,25 @@ let gpsRequestGeneration = 0;
 let draftTouched = false;
 let updateAvailable = false;
 let casesLoaded = false;
+let localWrites = 0;
 let quickLocationInProgress = false;
 let pendingMediaText = "";
 let mediaGeneration = 0;
 const intakeClientPromise = loadIntakeConfig().then(config => config ? makeIntakeClient(config) : null).catch(() => null);
+async function putCase(item) {
+  localWrites += 1;
+  try { return await persistCase(item); }
+  finally { localWrites -= 1; }
+}
+async function deleteCase(caseId) {
+  localWrites += 1;
+  try { return await removeStoredCase(caseId); }
+  finally { localWrites -= 1; }
+}
 intakeClientPromise.then(client => {
   if (!client) return;
   $("#service-ribbon").textContent = "ไม่ใช่เว็บหน่วยงานรัฐ • ข้อมูลจะถึงระบบทีมอาสาเฉพาะเมื่อคุณกดส่งและยินยอม • ถ้าอันตรายโทร 1784 หรือ 1669";
-  $("#intro-copy").textContent = "กรอกเท่าที่รู้แล้วบันทึกในเครื่อง คุณยังส่งข้อความเองทาง LINE ปภ. หรือโทร 1784 ได้ ถ้าพื้นที่นี้มีทีมอาสาเฝ้า ระบบจะแสดงปุ่มส่งเข้าทีมแยกต่างหาก";
+  $("#intro-copy").textContent = "กรอกเท่าที่รู้แล้วบันทึกในเครื่อง คุณยังส่งข้อความเองทาง LINE ปภ. หรือโทร 1784 ได้ การตั้งค่ารับเคสไม่ได้ยืนยันว่ามีคนเฝ้าหรือรับเรื่อง คำเตือนและสถานการณ์ด้านบนแสดงเฉพาะกำแพงเพชร";
   $("#storage-scope").textContent = "บันทึกในเครื่องก่อน";
   $("#privacy-copy").textContent = "ข้อมูลเริ่มต้นเก็บในเบราว์เซอร์ของอุปกรณ์นี้ หากกดส่งเข้าทีมอาสาและยินยอม ข้อมูลเคสจะส่งไปยังระบบทีมอาสาด้วย ใครเปิดอุปกรณ์เดียวกันอาจเห็นเคสและรหัสอ่านสถานะ";
   $("#service-footer").textContent = "ไม่มีการส่งข้อมูลอัตโนมัติ • การส่งเข้าทีมอาสาต้องกดยืนยันแยก • การส่งถึงระบบยังไม่เท่ากับมีทีมรับเคส";
@@ -107,7 +118,7 @@ function askConfirm(message, title = "ยืนยันการทำราย
 }
 
 function hasUnsavedDraft() {
-  if (!casesLoaded || cases.length || draftTouched || quickLocationInProgress || lastQuickLocationText || pendingHandoff ||
+  if (!casesLoaded || localWrites || draftTouched || quickLocationInProgress || lastQuickLocationText || pendingHandoff ||
       $("#confirm-dialog").open || $("#handoff-dialog").open) return true;
   const manualCopy = $("#manual-copy");
   if (manualCopy && !manualCopy.hidden) return true;
@@ -160,25 +171,53 @@ function safeDateText(value) {
 }
 
 const ALERT_CACHE_PREFIX = "promjaeng-official-alerts-v1:";
+let alertExpiryTimer = null;
+let lastAlertRender = null;
 
 function renderOfficialAlerts(province, result, fromCache = false) {
+  clearTimeout(alertExpiryTimer);
+  lastAlertRender = { province, result, fromCache };
   const target = $("#official-alerts-list");
   target.replaceChildren();
   const { alerts, fetchedAt, newest } = result;
-  const cacheAge = Date.now() - new Date(fetchedAt).getTime();
+  const now = new Date();
+  const cacheAge = now.getTime() - new Date(fetchedAt).getTime();
   const cacheWarning = fromCache && cacheAge > 24 * 60 * 60 * 1000 ? " • สำเนาเก่าเกิน 24 ชั่วโมง ห้ามใช้แทนประกาศปัจจุบัน" : "";
   $("#official-alerts-status").textContent = `${fromCache ? "แสดงข้อมูลที่เคยดึงไว้ในเครื่อง (อาจเก่า)" : "ดึงข้อมูลแล้ว"} สำหรับ ${province} • ดึงเมื่อ ${safeDateText(fetchedAt)} • ประกาศล่าสุดในไฟล์ ${safeDateText(newest)}${cacheWarning}`;
   if (!alerts.length) {
     target.append(node("p", "alert-empty", "ไม่พบประกาศในข้อมูลย้อนหลัง 7 วันสำหรับจังหวัดนี้ ไม่ใช่การยืนยันว่าพื้นที่ปลอดภัย"));
     return;
   }
+  let nextEndMs = Infinity;
   for (const alert of alerts) {
+    const display = alertDisplayState(alert, now);
     const card = node("article", "official-alert-card");
-    card.append(node("h3", "", alert.title || alert.typeLabel), node("p", "alert-meta", `${safeDateText(alert.at)} • ${alert.typeLabel}`));
-    if (alert.message) card.append(node("p", "", alert.message));
+    let status;
+    if (display.kind === "ended") status = `หมดช่วงแสดงที่ระบุเมื่อ ${safeDateText(display.endAt)} • ข้อมูลย้อนหลัง ไม่ได้แปลว่าภัยสิ้นสุด`;
+    else if (display.kind === "within-display-window") status = `อยู่ในช่วงแสดงที่ระบุถึง ${safeDateText(display.endAt)} • ไม่ยืนยันสถานการณ์ที่จุดของท่าน`;
+    else if (display.kind === "future") status = "ยังไม่ถึงเวลาออกประกาศตามข้อมูลไฟล์ • ตรวจแหล่งทางการ";
+    else status = "ไม่ทราบช่วงแสดงของประกาศ • ยืนยันไม่ได้ว่ายังใช้ได้";
+    if (fromCache) status = `สำเนาในเครื่อง อาจมีประกาศใหม่ • ${status}`;
+    const statusClass = display.kind === "within-display-window" && !fromCache ? "alert-meta" : "case-warning";
+    card.append(node("p", statusClass, status), node("h3", "", alert.title || alert.typeLabel), node("p", "alert-meta", `${safeDateText(alert.at)} • ${alert.typeLabel}`));
+    if (alert.message && showAlertMessageByDefault(display, fromCache)) {
+      card.append(node("p", "", alert.message));
+    } else if (alert.message) {
+      const history = node("details", "");
+      history.append(node("summary", "", "เปิดอ่านข้อความประกาศ (ตรวจวันเวลาและสถานะก่อนใช้)"), node("p", "", alert.message));
+      card.append(history);
+    }
+    if (display.kind === "within-display-window") nextEndMs = Math.min(nextEndMs, new Date(display.endAt).getTime());
     target.append(card);
   }
+  if (Number.isFinite(nextEndMs)) {
+    alertExpiryTimer = setTimeout(() => renderOfficialAlerts(province, result, fromCache), Math.max(1, Math.min(nextEndMs - Date.now() + 1, 2147483647)));
+  }
 }
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && lastAlertRender) renderOfficialAlerts(lastAlertRender.province, lastAlertRender.result, lastAlertRender.fromCache);
+});
 
 $("#load-official-alerts").addEventListener("click", async () => {
   const chosen = $("#alert-province").value || canonicalProvince(form.elements.province.value);
@@ -203,6 +242,8 @@ $("#load-official-alerts").addEventListener("click", async () => {
     try { saved = JSON.parse(localStorage.getItem(ALERT_CACHE_PREFIX + province) || "null"); } catch { /* no valid copy */ }
     if (saved?.fetchedAt && Array.isArray(saved.alerts)) renderOfficialAlerts(province, saved, true);
     else {
+      clearTimeout(alertExpiryTimer);
+      lastAlertRender = null;
       $("#official-alerts-list").replaceChildren();
       $("#official-alerts-status").textContent = "ยังดึงข้อมูลคำเตือนไม่ได้ กรุณาเปิดหน้า ศภช. จากลิงก์ด้านล่าง หรือโทร 1784 หากมีอันตราย";
     }
@@ -781,10 +822,6 @@ for (const province of PROVINCES) {
   const option = document.createElement("option");
   option.value = province;
   $("#province-options").append(option);
-  const alertOption = document.createElement("option");
-  alertOption.value = province;
-  alertOption.textContent = province;
-  $("#alert-province").append(alertOption);
 }
 function updateForecastLink() {
   const province = canonicalProvince($("#alert-province").value || form.elements.province.value);

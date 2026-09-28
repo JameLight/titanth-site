@@ -5,10 +5,10 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://jktnyuhrbithgbsvcrwa.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#103b50">
-  <meta name="description" content="สถานะจริงของระบบพร้อมแจ้งน้ำท่วม: มีทีมเฝ้าเวรกี่จังหวัด มีเรื่องรอกี่เรื่อง และสิ่งที่ระบบยังไม่ได้ทำ ตัวเลขอ่านสดจากฐานข้อมูล ไม่มีข้อมูลส่วนบุคคล">
+  <meta name="description" content="กำแพงเพชร: ทางโทรฉุกเฉินและลิงก์สถานการณ์น้ำ ฝน ถนน พร้อมสถานะระบบช่วยเรียงข้อความ ตัวเลขทีมและเรื่องด้านล่างเป็นข้อมูลรวมทุกจังหวัด">
   <link rel="icon" href="../icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./status.css">
-  <title>สถานะระบบ | พร้อมแจ้งน้ำท่วม</title>
+  <title>กำแพงเพชร · สถานะระบบ | พร้อมแจ้งน้ำท่วม</title>
 </head>
 <body>
   <div class="calls">
@@ -17,8 +17,10 @@
   </div>
   <main>
     <p class="back"><a href="../">← กลับหน้าช่วยเหลือ</a></p>
-    <h1>ระบบนี้ทำอะไรได้แล้วบ้าง ตอนนี้</h1>
-    <p class="lead">สถานะรับเรื่องอ่านจากการตั้งค่า ส่วนจำนวนทีมและเรื่องอ่านจากฐานข้อมูลเมื่อเปิดหน้านี้หรือกด “อ่านใหม่” แสดงเฉพาะตัวเลขรวม ไม่มีชื่อ เบอร์ หรือตำแหน่งของใคร</p>
+    <h1>กำแพงเพชร: ดูทางช่วยและสถานะเว็บ</h1>
+    <p class="lead">ถ้ากำลังเดือดร้อน ให้โทร 1784 หรือ 1669 ตามเหตุ อย่ารอการตอบจากเว็บนี้</p>
+    <a class="focus-link" href="../kamphaeng-phet/">ดูน้ำ ฝน และถนนกำแพงเพชร <span aria-hidden="true">→</span></a>
+    <p class="scope">ด้านล่างเป็นสถานะเครื่องมือช่วยเรียงข้อความและฐานข้อมูลของระบบ <strong>จำนวนทีมและเรื่องเป็นข้อมูลรวมทุกจังหวัด ไม่ใช่จำนวนเฉพาะกำแพงเพชร</strong> อ่านเมื่อเปิดหน้านี้หรือกด “อ่านใหม่” และไม่แสดงข้อมูลส่วนตัว</p>
 
     <section class="card" aria-labelledby="h-help">
       <h2 id="h-help">หน้าเตรียมข้อความ</h2>
@@ -33,18 +35,19 @@
     </section>
 
     <section class="card" aria-labelledby="h-duty">
-      <h2 id="h-duty">จังหวัดที่มีทีมเฝ้าเวรอยู่ตอนนี้</h2>
+      <h2 id="h-duty">รายการทีมในฐานข้อมูลรวมทุกจังหวัด</h2>
       <p class="big" id="duty-count">กำลังอ่าน…</p>
+      <p>ตัวเลขที่ตั้งค่าในฐานข้อมูลไม่ยืนยันว่ามีคนอยู่เวรหรือพร้อมรับเรื่อง</p>
       <ul id="duty-list" class="list"></ul>
     </section>
 
     <section class="card" aria-labelledby="h-cases">
-      <h2 id="h-cases">เรื่องในระบบของทีมอาสา</h2>
+      <h2 id="h-cases">เรื่องในฐานข้อมูลรวมทุกจังหวัด</h2>
       <p class="big" id="cases-summary">กำลังอ่าน…</p>
       <dl id="cases-detail" class="detail" hidden>
         <dt>รอทีมรับ</dt><dd id="c-waiting"></dd>
         <dt>รอเกิน 10 นาที</dt><dd id="c-waiting10"></dd>
-        <dt>ทีมกำลังช่วย</dt><dd id="c-progress"></dd>
+        <dt>สถานะ “กำลังช่วย” ในฐานข้อมูล</dt><dd id="c-progress"></dd>
         <dt>ปิดแล้วใน 24 ชั่วโมง</dt><dd id="c-closed"></dd>
       </dl>
     </section>
@@ -60,7 +63,7 @@
       </ul>
     </section>
   </main>
-  <footer>ไม่ใช่เว็บหน่วยงานรัฐ • ข้อมูลรวมจากฐานข้อมูลของระบบพร้อมแจ้งน้ำท่วม</footer>
+  <footer>ไม่ใช่เว็บหน่วยงานรัฐหรือช่องแจ้งเหตุ • ตัวเลขทีมและเรื่องเป็นข้อมูลรวมทุกจังหวัด</footer>
   <script src="./status.js"></script>
 </body>
 </html>

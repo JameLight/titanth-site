@@ -5,13 +5,13 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://academicndwc.github.io; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#103b50">
-  <meta name="description" content="ช่วยเตรียมข้อความขอความช่วยเหลือน้ำท่วมให้ครบ แล้วส่งเข้าช่องทางทางการเอง: โทร 1784, LINE @1784DDPM หรือ 1669 เว็บนี้ไม่ได้ส่งเรื่องให้ใคร">
+  <meta name="description" content="กำแพงเพชร: สรุปน้ำ ฝน ถนน พร้อมเวลาและลิงก์หน่วยงาน โทร 1784 หากต้องการความช่วยเหลือ หรือ 1669 เมื่อเจ็บป่วยฉุกเฉิน">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="TITANTH">
   <meta property="og:locale" content="th_TH">
   <meta property="og:url" content="https://titanth.com/flood/">
-  <meta property="og:title" content="ติดน้ำท่วม? โทร 1784 • เจ็บป่วยหรือบาดเจ็บฉุกเฉิน โทร 1669">
-  <meta property="og:description" content="โทรได้โดยไม่ต้องใช้เน็ต • เว็บนี้ช่วยเรียงข้อความให้ครบ คุณต้องโทรหรือกดส่งเอง • ไม่ใช่เว็บหน่วยงานรัฐ • ไม่มีทีมเฝ้ารับเรื่อง">
+  <meta property="og:title" content="กำแพงเพชร: น้ำ ฝน ถนน และเบอร์ขอความช่วยเหลือ">
+  <meta property="og:description" content="ข้อมูลมีเวลาและลิงก์หน่วยงาน โทร 1784 หรือ 1669 ตามเหตุ • ไม่ใช่เว็บรัฐ • ไม่มีทีมเฝ้ารับเรื่อง">
   <meta property="og:image" content="https://titanth.com/flood/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -20,7 +20,7 @@
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./styles.css">
-  <title>ติดน้ำท่วม? โทร 1784 | พร้อมแจ้งน้ำท่วม</title>
+  <title>กำแพงเพชร: น้ำ ฝน ถนน | พร้อมแจ้งน้ำท่วม</title>
 </head>
 <body>
   <div class="test-ribbon" id="service-ribbon">ไม่ใช่เว็บหน่วยงานรัฐ • ไม่มีทีมเฝ้ารับเรื่อง • เว็บไม่ส่งเรื่องเอง</div>
@@ -30,23 +30,36 @@
   </header>
   <main class="layout">
     <section class="primary">
+      <section class="kpp-entry" aria-labelledby="kpp-entry-title">
+        <p class="kpp-kicker">กำแพงเพชร · ตรวจข้อมูลเช้า 29 ก.ย. 2569</p>
+        <h1 id="kpp-entry-title">สถานการณ์น้ำ ฝน ถนน</h1>
+        <p id="snapshot-expired" class="kpp-expired" role="status">ไม่แสดงตัวเลขชุดเช้า (ช่วง 06:00–08:00 น.ไทย) <a href="./kamphaeng-phet/">เปิดข้อมูลต้นทางและดูเวลาล่าสุด →</a></p>
+        <div id="snapshot-current" class="kpp-current" hidden>
+          <p class="kpp-current-time">ตรวจเช้า 29 ก.ย. 2569 · ดูเวลาของแต่ละบรรทัด · ตัวเลขซ่อนหลัง 08:00 น.</p>
+          <p><strong>น้ำปิง อ.เมือง:</strong> P.7A 3.44 ม. ต่ำกว่าตลิ่ง 1.90 ม. <small>กรมชลประทาน 29 ก.ย. 06:00 น. · เพิ่ม 0.14 ม. จาก 05:00 · เฉพาะที่สถานี</small></p>
+          <p><strong>บ้านสามเรือน อ.คลองขลุง:</strong> P.78 สูงกว่าตลิ่ง 0.31 ม. <small>กรมชลประทาน 29 ก.ย. 06:00 น. · เฉพาะที่สถานี</small></p>
+          <p><strong>ฝน:</strong> อุตุฯ คาดฝนหนักบางแห่ง <small>พยากรณ์ 29 ก.ย. 06:00 น.</small></p>
+          <p><strong>ภาพย้อนหลัง 7 วัน:</strong> ราว 100,080 ไร่ <small>GISTDA ชั้นข้อมูล 23–29 ก.ย. · ไม่ใช่พื้นที่ท่วมขณะนี้</small></p>
+          <p><strong>ถนน:</strong> ทล.1117 เคยรายงานผ่านไม่ได้ <small>กรมทางหลวง 28 ก.ย. 17:30 น. · ตอนนี้ยังไม่ยืนยัน โทร 1586 ก่อนเดินทาง</small></p>
+        </div>
+        <a class="kpp-entry-link" href="./kamphaeng-phet/">ดูต้นทางน้ำ ฝน ถนน กำแพงเพชรและเวลาแต่ละจุด →</a>
+      </section>
       <section class="emergency sos" aria-labelledby="emergency-title">
-        <h1 id="emergency-title" class="sos-title">ติดน้ำท่วม? <span>โทร 1784 เพื่อแจ้งเหตุ</span></h1>
-        <p class="sos-coverage">เว็บนี้ช่วยเรียงข้อความให้ครบ ใช้ได้ทุกจังหวัด แล้วคุณโทรหรือกดส่งเอง</p>
+        <h2 id="emergency-title" class="sos-title">ติดน้ำท่วม? <span>โทร 1784 เพื่อแจ้งเหตุ</span></h2>
         <div class="sos-actions">
           <a href="tel:1784" class="sos-button sos-call">📞 โทร 1784 <small>แจ้งน้ำท่วม กู้ภัย • ปภ. 24 ชม.</small></a>
           <a href="tel:1669" class="sos-button sos-medical">🚑 โทร 1669 <small>เจ็บป่วยหรือบาดเจ็บฉุกเฉิน</small></a>
-          <a href="tel:199" class="sos-button sos-fire">🚒 โทร 199 <small>แจ้งไฟไหม้ • ใน กทม. ใช้แจ้งน้ำท่วมได้</small></a>
           <p class="sos-say"><strong>เวลาโทร บอก:</strong> อยู่ที่ไหน จุดสังเกต กี่คน ใครป่วย ต้องการอะไร เบอร์โทรกลับ</p>
           <button type="button" id="quick-location" class="sos-button sos-location" hidden>📍 ใช้ตำแหน่งฉัน <small>เฉพาะที่เกิดเหตุ • เว็บไม่ส่งให้</small></button>
         </div>
+        <p class="sos-coverage">หน้านี้เน้นกำแพงเพชร หากอยู่จังหวัดอื่น โทร 1784 เพื่อแจ้งเหตุ คุณต้องโทรหรือกดส่งข้อความเอง</p>
         <div id="quick-location-row" class="quick-location-result" hidden>
           <p id="quick-location-status" role="status" aria-live="polite"></p>
           <a id="quick-location-line" class="sos-button sos-line" href="https://lin.ee/MoS2rXU" rel="noopener noreferrer" hidden>เปิด LINE ปภ. <small>ต้องกด “ส่ง” ใน LINE เอง</small></a>
           <div id="quick-location-more" class="quick-location-more" hidden><p class="quick-location-fallback">LINE ไม่มีข้อความหรือไม่ครบ? กลับมาหน้านี้ กด “คัดลอกข้อความ” แล้ววางใน LINE ตรวจข้อความและกดส่งเอง ถ้ากลับมาแล้วปุ่มหาย ให้กด “ใช้ตำแหน่งฉัน” ใหม่ หรือโทร 1784</p><button type="button" id="quick-location-share" class="secondary-button">แชร์ให้ญาติหรืออาสา</button><button type="button" id="quick-location-copy" class="secondary-button">คัดลอกข้อความ</button><button type="button" id="quick-location-media" class="secondary-button">แนบรูป/เสียงแล้วแชร์</button><button type="button" id="quick-location-qr" class="secondary-button" hidden>แสดง QR ให้คนที่มีสัญญาณสแกน</button></div>
           <div id="quick-location-qr-panel" class="qr-panel" hidden></div>
         </div>
-        <div class="sos-more"><a href="tel:1418" class="sos-small">โทร 1418 <small>มูลนิธิป่อเต็กตึ๊ง (เอกชน)</small></a><a href="https://lin.ee/MoS2rXU" target="_blank" rel="noopener noreferrer" class="sos-small">แชต LINE ปภ. <small>@1784DDPM</small></a></div>
+        <div class="sos-more"><a href="https://lin.ee/MoS2rXU" target="_blank" rel="noopener noreferrer" class="sos-small">แชต LINE ปภ. <small>@1784DDPM · ต้องกดส่งเอง</small></a></div>
         <p class="sos-note">เว็บนี้ไม่ได้ส่งเรื่องเอง คุณต้องโทรหรือกดส่งใน LINE เอง แล้วดูคำตอบจากปลายทาง</p>
         <div class="delivery-explainer" aria-label="ข้อมูลไปถึงใคร"><strong>ข้อมูลไปถึงใคร</strong><p>เมื่อคุณโทรหรือกดส่งใน LINE คุณติดต่อปลายทางนั้นด้วยตัวเอง เว็บนี้ไม่ทราบว่าอีกฝ่ายได้รับหรืออ่านแล้วหรือยัง</p></div>
         <p class="sos-note"><strong>อยากเสนอช่วย?</strong> <a href="../flood-neighbors/">สร้างข้อความเสนอช่วยแล้วแชร์เอง ↗</a> ต้องใช้อินเทอร์เน็ตเพื่อเปิดหน้านี้</p>
@@ -68,32 +81,25 @@
         </ul>
         <p>ที่มา: กรมป้องกันและบรรเทาสาธารณภัย การไฟฟ้าส่วนภูมิภาค กรมควบคุมโรค</p>
       </details>
-      <section class="bkk-links" aria-labelledby="bkk-links-title">
-        <h2 id="bkk-links-title">กรุงเทพฯ: ตรวจน้ำท่วมถนนและภาพจราจร</h2>
-        <div class="bkk-links-actions">
-          <a href="https://floodbangkok.bangkok.go.th/road-flood" target="_blank" rel="noopener noreferrer">ดูจุดวัดน้ำท่วมถนน <span>สำนักการระบายน้ำ กทม. ↗</span></a>
-          <a href="https://cpudapp.bangkok.go.th/bmatraffic/" target="_blank" rel="noopener noreferrer">ดูกล้องและสภาพจราจร <span>สำนักการจราจรและขนส่ง กทม. ↗</span></a>
-        </div>
-        <p>ลิงก์เปิดเว็บ กทม. โดยตรง ตรวจเวลาและจุดที่แสดงก่อนใช้วางแผนเดินทาง ข้อมูลบนแผนที่ไม่ใช่การยืนยันว่าทุกเส้นทางปลอดภัย หากติดอยู่ในน้ำให้โทร 1784 หรือ 1669 ตามเหตุ</p>
-      </section>
+      <p class="offline-help">ข้อมูลสถานีและถนนเปลี่ยนได้ ตรวจเวลาที่ต้นทางก่อนตัดสินใจเดินทาง ไม่มีรายงานใดยืนยันว่ารถผ่านน้ำได้</p>
       <section class="official-alerts" aria-labelledby="official-alerts-title">
         <h2 id="official-alerts-title">ติดตามคำเตือนภัยจากหน่วยงานรัฐ</h2>
         <p>เว็บนี้ส่ง Cell Broadcast ไปยังโทรศัพท์ไม่ได้ การแจ้งเตือนบนมือถือออกโดยหน่วยงานที่มีสิทธิ์ผ่านเครือข่ายโทรศัพท์ และอาจไม่ถึงเครื่องที่ปิดหรือไม่มีสัญญาณ</p>
+        <p>รายการนี้รวมประกาศย้อนหลัง ระยะเวลาที่ระบุคือ <strong>ช่วงแสดงข้อความ</strong> ไม่ใช่เวลาที่ภัยสิ้นสุด ประกาศที่หมดช่วงแสดงหรือไม่ทราบช่วงแสดงจะซ่อนเนื้อหาไว้จนกดเปิดเอง ตรวจคำเตือนล่าสุดจากเจ้าหน้าที่ในพื้นที่เสมอ</p>
         <details><summary>เปิดรับการแจ้งเตือนภัยบนมือถือ</summary><ul><li>iPhone: การตั้งค่า → การแจ้งเตือน → เลื่อนลงล่างสุด → ข้อความแจ้งเตือนจากรัฐบาล <a href="https://support.apple.com/th-th/102516" target="_blank" rel="noopener noreferrer">ดูคู่มือ Apple ↗</a></li><li>Android: การตั้งค่า → การแจ้งเตือน → การแจ้งเหตุฉุกเฉินแบบไร้สาย (ชื่อเมนูอาจต่างกันตามรุ่น) <a href="https://support.google.com/android/answer/9319337?hl=th" target="_blank" rel="noopener noreferrer">ดูคู่มือ Android ↗</a></li></ul></details>
-        <div class="alert-lookup"><label for="alert-province">ดูคำเตือนย้อนหลัง 7 วันตามจังหวัด</label><div class="alert-lookup-controls"><select id="alert-province"><option value="">เลือกจังหวัด</option></select><button id="load-official-alerts" type="button" class="secondary-button">ดูข้อมูลล่าสุด</button></div></div>
+        <div class="alert-lookup"><strong class="alert-scope">คำเตือนย้อนหลัง 7 วัน: กำแพงเพชร</strong><input id="alert-province" type="hidden" value="กำแพงเพชร"><div class="alert-lookup-controls"><button id="load-official-alerts" type="button" class="secondary-button">โหลดประกาศย้อนหลังจาก ปภ.</button></div></div>
         <p id="official-alerts-status" role="status" aria-live="polite">ดึงข้อมูลเมื่อคุณกดปุ่มเท่านั้น ต้องใช้อินเทอร์เน็ต</p>
         <div id="official-alerts-list" class="official-alerts-list" aria-live="polite"></div>
         <p class="alert-source">ข้อมูลจาก <a href="https://catalog.disaster.go.th/th/dataset/cell-broadcast" target="_blank" rel="noopener noreferrer">ชุดข้อมูล Cell Broadcast ของ ปภ. ↗</a> ผ่านไฟล์ของ <a href="https://academicndwc.github.io/CBS-DashBoard/" target="_blank" rel="noopener noreferrer">ศูนย์เตือนภัยพิบัติแห่งชาติ ↗</a> ไฟล์นี้อาจอัปเดตช้าหรือเปลี่ยนรูปแบบ ไม่พบประกาศไม่ได้แปลว่าปลอดภัย หากมีอันตรายให้โทร 1784 หรือ 1669 ตามเหตุ</p>
         <details><summary>ดูข้อมูลน้ำ ฝน และแหล่งทางการอื่น</summary>
           <p>ลิงก์เหล่านี้เปิดเว็บของแต่ละหน่วยงานเมื่อคุณกดเท่านั้น ตรวจจังหวัด สถานี และเวลาของข้อมูลก่อนใช้ ข้อมูลบางจุดอาจเก่าหรือไม่ครอบคลุมพื้นที่ของคุณ และการเปิดลิงก์ไม่ใช่การแจ้งเหตุ</p>
           <ul>
-            <li><a id="tmd-forecast-link" href="https://www.tmd.go.th/" target="_blank" rel="noopener noreferrer">พยากรณ์อากาศ 7 วัน (เลือกจังหวัดด้านบนก่อน) — กรมอุตุนิยมวิทยา ↗</a></li>
-            <li><a href="https://weather.tmd.go.th/" target="_blank" rel="noopener noreferrer">เรดาร์ฝน — กรมอุตุนิยมวิทยา ↗</a></li>
+            <li><a id="tmd-forecast-link" href="https://www.tmd.go.th/weatherForecast7DaysWidget?province=%E0%B8%81%E0%B8%B3%E0%B9%81%E0%B8%9E%E0%B8%87%E0%B9%80%E0%B8%9E%E0%B8%8A%E0%B8%A3" target="_blank" rel="noopener noreferrer">พยากรณ์อากาศ 7 วัน จังหวัดกำแพงเพชร — กรมอุตุนิยมวิทยา ↗</a></li>
+            <li><a href="https://weather.tmd.go.th/composite/index_composite.html" target="_blank" rel="noopener noreferrer">เรดาร์ฝนรวมทั่วประเทศ (ขยายดูพื้นที่และเวลา) — กรมอุตุนิยมวิทยา ↗</a></li>
             <li><a href="https://www.thaiwater.net/water/wl" target="_blank" rel="noopener noreferrer">ระดับน้ำในแม่น้ำและคลอง — สสน. ↗</a></li>
             <li><a href="https://ews.dwr.go.th/ews/index.php" target="_blank" rel="noopener noreferrer">เตือนภัยน้ำป่าและดินถล่ม — กรมทรัพยากรน้ำ ↗</a></li>
             <li><a href="https://app.rid.go.th/reservoir/" target="_blank" rel="noopener noreferrer">น้ำในเขื่อนใหญ่ — กรมชลประทาน ↗</a></li>
             <li><a href="https://egatwater.egat.co.th/" target="_blank" rel="noopener noreferrer">ประกาศระบายน้ำเขื่อน — กฟผ. ↗</a></li>
-            <li><a href="https://monitoring.mrcmekong.org/" target="_blank" rel="noopener noreferrer">ระดับน้ำโขงสำหรับจังหวัดริมโขง — คณะกรรมาธิการแม่น้ำโขง ↗</a></li>
             <li><a href="https://tmd.go.th/warning-and-events/warning-storm" target="_blank" rel="noopener noreferrer">ประกาศเตือนภัยลักษณะอากาศ — กรมอุตุนิยมวิทยา ↗</a></li>
             <li><a href="https://disaster.gistda.or.th/flood" target="_blank" rel="noopener noreferrer">ข้อมูลน้ำท่วม — GISTDA ↗</a></li>
             <li>แอป Thai Disaster Alert ของ ปภ.: <a href="https://apps.apple.com/th/app/thai-disaster-alert/id1593150344" target="_blank" rel="noopener noreferrer">iPhone ↗</a> · <a href="https://play.google.com/store/apps/details?id=com.THAIDAlert.DPM" target="_blank" rel="noopener noreferrer">Android ↗</a> (เป็นแอปผ่านอินเทอร์เน็ต ไม่ใช่ Cell Broadcast)</li>
@@ -103,7 +109,7 @@
       <noscript><p class="error">แบบฟอร์มนี้ใช้ไม่ได้เมื่อปิด JavaScript ให้โทร 1784 หรือแจ้ง LINE @1784DDPM โดยตรง</p></noscript>
       <div class="intro">
         <h2>เตรียมข้อความขอความช่วยเหลือน้ำท่วม</h2>
-        <p id="intro-copy">กรอกเท่าที่รู้ หน้านี้จะจัดเป็นข้อความให้ แล้วคุณส่งเองทาง LINE @1784DDPM หรืออ่านให้เจ้าหน้าที่ 1784 ฟัง เคสที่บันทึกจะอยู่ในเบราว์เซอร์เครื่องนี้</p>
+        <p id="intro-copy">กรอกเท่าที่รู้ หน้านี้จะจัดเป็นข้อความให้ แล้วคุณส่งเองทาง LINE @1784DDPM หรืออ่านให้เจ้าหน้าที่ 1784 ฟัง เคสที่บันทึกจะอยู่ในเบราว์เซอร์เครื่องนี้ คำเตือนและสถานการณ์ด้านบนแสดงเฉพาะกำแพงเพชร</p>
       </div>
       <section class="composer" aria-labelledby="form-title">
         <div class="section-heading"><h2 id="form-title">บันทึกข้อมูลเคส</h2><span id="storage-scope">เคสเก็บในเครื่อง</span></div>
@@ -150,6 +156,11 @@
   <dialog id="receipt-recovery-dialog" aria-labelledby="receipt-recovery-title"><h2 id="receipt-recovery-title">ระบบรับเคสแล้ว แต่เครื่องเก็บรหัสไม่ได้</h2><p>คัดลอกรหัสนี้เก็บไว้เพื่ออ่านสถานะภายหลัง อย่าส่งรหัสลับให้คนอื่น</p><textarea id="receipt-recovery-text" readonly rows="4"></textarea><div class="dialog-actions"><button type="button" id="receipt-recovery-close" class="primary-button">ปิดหลังเก็บรหัสแล้ว</button></div></dialog>
   <dialog id="media-dialog" aria-labelledby="media-title"><h2 id="media-title">แนบรูปหรือเสียงเพื่อส่งเอง</h2><p>เลือกถ่ายรูปหรืออัดเสียงจากอุปกรณ์ ถ้าเบราว์เซอร์ไม่เปิดกล้อง/ไมค์ ให้เลือกไฟล์ที่ถ่ายไว้ รูปหรือเสียงอาจมีใบหน้า เสียง และข้อมูลตำแหน่งอยู่ในไฟล์ ตรวจให้ดีก่อนแชร์</p><div class="media-inputs"><label>ถ่ายหรือเลือกรูป<input id="media-photo" type="file" accept="image/*" capture="environment"></label><label>อัดหรือเลือกเสียง<input id="media-audio" type="file" accept="audio/*" capture="microphone"></label></div><p id="media-status" role="status" aria-live="polite">ไฟล์ยังอยู่ในอุปกรณ์นี้ เว็บไม่อัปโหลดหรือเก็บไฟล์ไว้ในเคส</p><textarea id="media-manual-text" readonly rows="5" hidden aria-label="ข้อความสำหรับคัดลอกเอง"></textarea><a id="media-open-external" class="media-open-external" href="./?openExternalBrowser=1" target="_blank" rel="noopener noreferrer" hidden>ถ้าเปิดจาก LINE ให้เปิดหน้านี้ใน Safari/Chrome หลังคัดลอกข้อความ (เคสในเครื่องอาจไม่ตามไป) ↗</a><p>ปุ่มแชร์จะเปิดเมนูของเครื่อง คุณต้องเลือกปลายทางและกดส่งเอง หน้านี้ไม่รู้ว่าปลายทางได้รับหรือยัง หากอันตรายให้โทร 1784 หรือ 1669</p><div class="dialog-actions"><button type="button" id="media-cancel" class="text-button">ปิดและล้างไฟล์</button><button type="button" id="media-share" class="primary-button">เปิดเมนูแชร์พร้อมข้อความ</button></div></dialog>
   <div id="toast" role="status" aria-live="polite" class="toast" hidden></div>
+  <nav class="kpp-mobile-calls" aria-label="โทรแจ้งเหตุด่วน">
+    <a href="tel:1784">โทร 1784<small>ขอความช่วยเหลือน้ำท่วม</small></a>
+    <a href="tel:1669">โทร 1669<small>เจ็บป่วยฉุกเฉิน</small></a>
+  </nav>
   <script type="module" src="./app.js"></script>
+  <script type="module" src="./kamphaeng-phet/snapshot.js"></script>
 </body>
 </html>

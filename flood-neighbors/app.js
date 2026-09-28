@@ -1,14 +1,7 @@
-import { PROVINCES } from "../flood/provinces.js";
 import { checkOffer, shareOfferText } from "./model.js";
 
 const $ = id => document.getElementById(id);
 const select = $("share-province");
-for (const province of PROVINCES) {
-  const option = document.createElement("option");
-  option.value = province;
-  option.textContent = province;
-  select.append(option);
-}
 
 function currentOffer() {
   return checkOffer({
