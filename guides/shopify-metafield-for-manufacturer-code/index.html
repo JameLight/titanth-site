@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>How to store the manufacturer product code in Shopify (metafield or side sheet) and check it with your export | TITANTH</title>
-<meta name="description" content="Where to keep the manufacturer or supplier product code (NS-PID) in Shopify: a variant metafield or a side sheet, and what does and does not appear in your product CSV export.">
+<meta name="description" content="Where to keep the manufacturer or supplier product code (NS-PID) in Shopify: a defined product metafield for one product-level code, or a variant metafield or side sheet when codes differ by variant.">
 <link rel="canonical" href="https://titanth.com/guides/shopify-metafield-for-manufacturer-code/">
-<meta property="og:type" content="article"><meta property="og:title" content="How to store the manufacturer product code in Shopify (metafield or side sheet) and check it with your export | TITANTH"><meta property="og:description" content="Where to keep the manufacturer or supplier product code (NS-PID) in Shopify: a variant metafield or a side sheet, and what does and does not appear in your product CSV export."><meta property="og:url" content="https://titanth.com/guides/shopify-metafield-for-manufacturer-code/"><meta property="og:site_name" content="TITANTH">
+<meta property="og:type" content="article"><meta property="og:title" content="How to store the manufacturer product code in Shopify (metafield or side sheet) and check it with your export | TITANTH"><meta property="og:description" content="Where to keep the manufacturer or supplier product code (NS-PID) in Shopify: a defined product metafield for one product-level code, or a variant metafield or side sheet when codes differ by variant."><meta property="og:url" content="https://titanth.com/guides/shopify-metafield-for-manufacturer-code/"><meta property="og:site_name" content="TITANTH">
 <meta name="twitter:card" content="summary">
 <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
 <link rel="stylesheet" href="/site.css">
@@ -20,7 +20,9 @@
 <main>
 <p class="crumbs"><a href="/">Home</a> › <a href="/guides/">Guides</a> › Metafield for maker&#x27;s code</p>
 <h1>Storing the maker's code in Shopify</h1>
-<p class="answer"><strong>Short answer:</strong> Keep one maker's code per variant. Two places hold one code per variant whatever your export contains: a variant metafield, which you edit in the bulk editor but which does not appear in the product CSV, or a side sheet keyed by SKU. Shopify's sample files also show a Google Shopping MPN column, but our own test export on 25 September 2026 did not include it. Shopify's documentation says a defined product metafield appears in the CSV export; in Shopify's sample file its value sits only on the product's first row.</p>
+<p class="answer"><strong>Short answer:</strong> Shopify has no dedicated NS-PID field. If one confirmed maker code describes the product, a defined product metafield can travel through Product CSV import/export. If codes differ by variant, use a variant metafield in Shopify's bulk editor or a side sheet keyed by SKU; variant metafields are not in Product CSV. Keep the maker's code for each exact variant and verify it with the supplier.</p>
+<h2>Product CSV route when one maker code fits the product</h2>
+<p>In Shopify admin, define a single-line product metafield under Settings → Custom data (or Metafields and metaobjects) → Products, for example <code>Manufacturer code</code> with namespace/key <code>custom.mfr_code</code>. Shopify says a defined product metafield appears in Product CSV import/export under a header such as <code>Manufacturer code (product.metafields.custom.mfr_code)</code>. Export a fresh CSV and check the actual header. Use this route only after confirming the code belongs to the exact item; one field cannot represent different codes across variants. When importing changes, test on a controlled product and re-export: Shopify warns that included blank columns can clear values and variant-related columns have dependencies. TITANTH review worksheets are not Shopify import files. <a href="https://help.shopify.com/en/manual/products/import-export/using-csv">Shopify CSV documentation</a>.</p>
 <h2>Steps for a variant metafield</h2>
 <ol class="steps">
 <li>Shopify admin → Settings → Custom data → <strong>Variants</strong> → Add definition. Name: "Manufacturer code". Namespace and key: <code>custom.manufacturer_code</code>. Type: single line text. Save.</li>
