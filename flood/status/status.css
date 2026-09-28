@@ -12,3 +12,5 @@ h1{font-size:1.6rem;line-height:1.3;color:var(--navy);margin:.4rem 0 .4rem}.lead
 .readtime{display:flex;justify-content:space-between;align-items:center;gap:.5rem;color:var(--muted);font-size:.9rem}
 .readtime button{border:1.5px solid var(--navy);background:#fff;color:var(--navy);font-weight:700;border-radius:8px;padding:.4rem .8rem;font:inherit}
 footer{text-align:center;color:var(--muted);font-size:.85rem;padding:1.2rem .8rem 2rem}
+/* KFR-96 (Claude): targets at least 44px */
+.back a{display:inline-flex;align-items:center;min-height:44px;padding:.35rem 0}.readtime button{min-height:44px}

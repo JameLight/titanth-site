@@ -32,10 +32,10 @@
     <section class="primary">
       <section class="emergency sos" aria-labelledby="emergency-title">
         <h1 id="emergency-title" class="sos-title">ติดน้ำท่วม? <span>โทร 1784 เพื่อแจ้งเหตุ</span></h1>
-        <p class="sos-coverage">เว็บนี้ช่วยเรียงข้อความให้ครบ ใช้ได้ทุกจังหวัด แล้วคุณโทรหรือกดส่งเอง</p>
         <div class="sos-actions">
           <a href="tel:1784" class="sos-button sos-call">📞 โทร 1784 <small>แจ้งน้ำท่วม กู้ภัย • ปภ. 24 ชม.</small></a>
           <a href="tel:1669" class="sos-button sos-medical">🚑 โทร 1669 <small>เจ็บป่วยหรือบาดเจ็บฉุกเฉิน</small></a>
+          <p class="sos-coverage">เว็บนี้ช่วยเรียงข้อความให้ครบ ใช้ได้ทุกจังหวัด แล้วคุณโทรหรือกดส่งเอง</p>
           <a href="tel:199" class="sos-button sos-fire">🚒 โทร 199 <small>แจ้งไฟไหม้ • ใน กทม. ใช้แจ้งน้ำท่วมได้</small></a>
           <p class="sos-say"><strong>เวลาโทร บอก:</strong> อยู่ที่ไหน จุดสังเกต กี่คน ใครป่วย ต้องการอะไร เบอร์โทรกลับ</p>
           <button type="button" id="quick-location" class="sos-button sos-location" hidden>📍 ใช้ตำแหน่งฉัน <small>เฉพาะที่เกิดเหตุ • เว็บไม่ส่งให้</small></button>
@@ -82,7 +82,7 @@
         <h2 id="official-alerts-title">ติดตามคำเตือนภัยจากหน่วยงานรัฐ</h2>
         <p>เว็บนี้ส่ง Cell Broadcast ไปยังโทรศัพท์ไม่ได้ การแจ้งเตือนบนมือถือออกโดยหน่วยงานที่มีสิทธิ์ผ่านเครือข่ายโทรศัพท์ และอาจไม่ถึงเครื่องที่ปิดหรือไม่มีสัญญาณ</p>
         <details><summary>เปิดรับการแจ้งเตือนภัยบนมือถือ</summary><ul><li>iPhone: การตั้งค่า → การแจ้งเตือน → เลื่อนลงล่างสุด → ข้อความแจ้งเตือนจากรัฐบาล <a href="https://support.apple.com/th-th/102516" target="_blank" rel="noopener noreferrer">ดูคู่มือ Apple ↗</a></li><li>Android: การตั้งค่า → การแจ้งเตือน → การแจ้งเหตุฉุกเฉินแบบไร้สาย (ชื่อเมนูอาจต่างกันตามรุ่น) <a href="https://support.google.com/android/answer/9319337?hl=th" target="_blank" rel="noopener noreferrer">ดูคู่มือ Android ↗</a></li></ul></details>
-        <div class="alert-lookup"><label for="alert-province">ดูคำเตือนย้อนหลัง 7 วันตามจังหวัด</label><div class="alert-lookup-controls"><select id="alert-province"><option value="">เลือกจังหวัด</option></select><button id="load-official-alerts" type="button" class="secondary-button">ดูข้อมูลล่าสุด</button></div></div>
+        <div class="alert-lookup"><label for="alert-province">ดูคำเตือนล่าสุดไม่เกิน 5 รายการในช่วง 7 วันตามจังหวัด</label><div class="alert-lookup-controls"><select id="alert-province"><option value="">เลือกจังหวัด</option></select><button id="load-official-alerts" type="button" class="secondary-button">ดูข้อมูลล่าสุด</button></div></div>
         <p id="official-alerts-status" role="status" aria-live="polite">ดึงข้อมูลเมื่อคุณกดปุ่มเท่านั้น ต้องใช้อินเทอร์เน็ต</p>
         <div id="official-alerts-list" class="official-alerts-list" aria-live="polite"></div>
         <p class="alert-source">ข้อมูลจาก <a href="https://catalog.disaster.go.th/th/dataset/cell-broadcast" target="_blank" rel="noopener noreferrer">ชุดข้อมูล Cell Broadcast ของ ปภ. ↗</a> ผ่านไฟล์ของ <a href="https://academicndwc.github.io/CBS-DashBoard/" target="_blank" rel="noopener noreferrer">ศูนย์เตือนภัยพิบัติแห่งชาติ ↗</a> ไฟล์นี้อาจอัปเดตช้าหรือเปลี่ยนรูปแบบ ไม่พบประกาศไม่ได้แปลว่าปลอดภัย หากมีอันตรายให้โทร 1784 หรือ 1669 ตามเหตุ</p>
