@@ -164,8 +164,8 @@ test("an alert is active only inside the display time its sender set", () => {
 
 test("the first screen says the site takes no reports, and the dated tiles need the script", () => {
   const html = fs.readFileSync(new URL("../../../flood/kamphaeng-phet/index.html", import.meta.url), "utf8");
-  const role = html.indexOf('<p class="role">'), hero = html.indexOf('id="heroTitle"');
-  assert.ok(role > 0 && role < hero, "the role line comes before the hero title");
+  const role = html.indexOf('<p class="role">'), alerts = html.indexOf('id="activeAlerts"'), hero = html.indexOf('id="heroTitle"');
+  assert.ok(role > 0 && role < alerts && alerts < hero, "the role line comes before the alerts, so a long alert cannot push it under the call bar");
   assert.match(html.slice(role, html.indexOf("</p>", role)), /ไม่ใช่หน่วยงานรัฐ ไม่รับแจ้งเหตุ/);
   assert.match(html, /<div class="tiles" id="tiles" hidden>/, "hidden until the script shows them");
 });
