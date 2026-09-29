@@ -50,13 +50,26 @@ test("flat run: hours are the span, and 'at least' only when no earlier reading 
   assert.equal(K.flatRun([...Array(12).fill(6.6), 6.62], 12), null, "a 2 cm step breaks the run");
 });
 
-test("flat run: a gap of two or more missing hours ends the run; one missing hour is bridged", () => {
+test("flat run: any missing hour ends the run, and the wording says only what was measured", () => {
   const codexCase = [6.6, ...Array(18).fill(null), ...Array(11).fill(6.6)];
   assert.equal(K.flatRun(codexCase, codexCase.length - 1), null, "18 unknown hours must not count as flat");
   const oneMissing = [...Array(6).fill(6.6), null, ...Array(6).fill(6.6)];
-  assert.deepEqual(K.flatRun(oneMissing, 12), { h: 12, fromStart: true });
-  const gapThenRun = [...Array(5).fill(6.6), null, null, ...Array(12).fill(6.6)];
-  assert.deepEqual(K.flatRun(gapThenRun, 18), { h: 11, fromStart: true }, "ended by missing data, so 'at least'");
+  assert.equal(K.flatRun(oneMissing, 12), null, "a missing hour is not evidence of steady water");
+  const afterGap = [...Array(6).fill(6.6), null, ...Array(12).fill(6.6)];
+  const fl = K.flatRun(afterGap, 18);
+  assert.deepEqual(fl, { h: 11, fromStart: true }, "ended by missing data, so 'at least'");
+  assert.equal(K.flatNote(fl), "เปลี่ยนไม่เกิน 1 ซม. มาอย่างน้อย 11 ชม.");
+  assert.equal(K.flatNote({ h: 20, fromStart: false }), "เปลี่ยนไม่เกิน 1 ซม. มา 20 ชม.");
+  assert.equal(K.flatNote(null), "");
+});
+
+test("forecast notice says only what is known about its age", () => {
+  const now = Date.parse("2026-09-29T14:30:00+07:00");
+  assert.equal(K.forecastNotice(now - 60 * 60e3, now), "", "one hour old: no notice");
+  const old = K.forecastNotice(Date.parse("2026-09-28T13:14:00+07:00"), now);
+  assert.equal(old, "พยากรณ์ชุดนี้ดึงเมื่อ 28 ก.ย. 13:14 น. ยังไม่มีชุดที่ดึงใหม่ใน 6 ชั่วโมงที่ผ่านมา อาจไม่ใช่ฉบับล่าสุด ดูฉบับล่าสุดที่เว็บกรมอุตุนิยมวิทยา");
+  assert.ok(!old.includes("ดึงฉบับใหม่ไม่ได้"), "no claim about why");
+  assert.equal(K.forecastNotice(NaN, now), "ไม่ทราบเวลาที่ดึงพยากรณ์ชุดนี้ อาจไม่ใช่ฉบับล่าสุด ดูฉบับล่าสุดที่เว็บกรมอุตุนิยมวิทยา");
 });
 
 test("TMD's Thai-time stamp is read as Thai time", () => {

@@ -8,7 +8,8 @@
   "use strict";
   const STALE_H = 3; // a station whose newest reading is more than 3 hours before the shown hour has no recent data
   const FLAT_MIN = 12; // readings needed before a run within 1 cm is reported
-  const FLAT_GAP = 2; // two or more missing hours in a row end a flat run: what the water did then is unknown
+  const FLAT_GAP = 1; // any missing hour ends a flat run: nothing shows what the water did in that hour
+  const MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
 
   // Metres to whole centimetres, so comparisons are free of floating-point noise.
   const cmOf = (x) => Math.round(x * 100);
@@ -55,8 +56,8 @@
     return { d, h, t: d === 0 ? `ทรงตัวใน ${h} ชม.` : `${d > 0 ? "ขึ้น" : "ลด"} ${(Math.abs(d) / 100).toFixed(2)} ม. ใน ${h} ชม.` };
   }
 
-  // A gauge whose last FLAT_MIN or more readings stay within 1 cm may be stuck, or the water may really be steady.
-  // A single missing hour is bridged; FLAT_GAP missing hours in a row end the run, because nothing is known about them.
+  // A gauge whose last FLAT_MIN or more hourly readings, with no hour missing, stay within 1 cm may be stuck,
+  // or the water may really be steady. A missing hour ends the run, because nothing is known about it.
   // Returns null, or { h: hours between the first and last reading of the run,
   //   fromStart: the run was ended by missing data or the start of the window, so it may be longer ("อย่างน้อย") }.
   function flatRun(series, i) {
@@ -89,6 +90,24 @@
     return { drop: cmOf(mx) - cmOf(series[ja]), peakIdx: mi, atStart: mi === firstIdx };
   }
 
+  // Row and sheet wording for a flat run; the hours are hours with a reading in every one of them.
+  function flatNote(fl) {
+    return fl ? `เปลี่ยนไม่เกิน 1 ซม. มา${fl.fromStart ? "อย่างน้อย" : ""} ${fl.h} ชม.` : "";
+  }
+
+  function thDateTime(ms) {
+    const d = new Date(ms + 7 * 3600e3), p = (n) => String(n).padStart(2, "0");
+    return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())} น.`;
+  }
+
+  // Notice for an old forecast. An old fetch time alone does not show why no newer forecast is stored,
+  // so the notice states only what is known: when this one was fetched, and that it may not be the latest.
+  function forecastNotice(fetchedMs, nowMs) {
+    if (!Number.isFinite(fetchedMs)) return "ไม่ทราบเวลาที่ดึงพยากรณ์ชุดนี้ อาจไม่ใช่ฉบับล่าสุด ดูฉบับล่าสุดที่เว็บกรมอุตุนิยมวิทยา";
+    if (nowMs - fetchedMs <= 6 * 3600e3) return "";
+    return `พยากรณ์ชุดนี้ดึงเมื่อ ${thDateTime(fetchedMs)} ยังไม่มีชุดที่ดึงใหม่ใน 6 ชั่วโมงที่ผ่านมา อาจไม่ใช่ฉบับล่าสุด ดูฉบับล่าสุดที่เว็บกรมอุตุนิยมวิทยา`;
+  }
+
   // "YYYY-MM-DD HH:MM[:SS]" written in Thai time (as TMD stamps its responses) to milliseconds; NaN when unreadable.
   function thaiStampMs(s) {
     const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/.exec(String(s || ""));
@@ -106,5 +125,5 @@
     return date === thaiDate(nowMs) ? "วันนี้" : date === thaiDate(nowMs + 24 * 3600e3) ? "พรุ่งนี้" : "";
   }
 
-  return { STALE_H, FLAT_MIN, FLAT_GAP, cmOf, lastIdx, cls, gapText, isOld, trend, change8, flatRun, peakDrop, thaiStampMs, thaiDate, dayLabel };
+  return { STALE_H, FLAT_MIN, FLAT_GAP, cmOf, lastIdx, cls, gapText, isOld, trend, change8, flatRun, flatNote, forecastNotice, peakDrop, thaiStampMs, thaiDate, dayLabel };
 });

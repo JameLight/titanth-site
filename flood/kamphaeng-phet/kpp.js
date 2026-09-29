@@ -51,7 +51,7 @@
   function valueAt(s, i) { const j = lastIdx(s.s, i); return j < 0 ? null : s.s[j]; }
   const trend = (s, i) => K.trend(s.s, i);
   const flatRun = (s, i) => K.flatRun(s.s, i);
-  const flatText = (fl) => (fl ? `เปลี่ยนไม่เกิน 1 ซม. มา${fl.fromStart ? "อย่างน้อย" : ""} ${fl.h} ชม.` : "");
+  const flatText = K.flatNote;
   // A station whose newest reading is more than STALE_H hours before the shown hour has no recent data:
   // it is marked "ไม่มีข้อมูลล่าสุด" with the time of its last reading and is never counted as normal.
   const C = (i) => (id) => { const s = D.river.stations[id]; if (!s) return "stale"; const j = lastIdx(s.s, i); return fresh === "old" || j < 0 || i - j > STALE_H ? "stale" : cls(s.s[j], s); };
@@ -272,13 +272,11 @@
     const F = D.forecast, box = $("days"), warn = $("rainOld"); box.innerHTML = ""; warn.hidden = true;
     if (!F || !F.days || !F.days.length) { box.innerHTML = `<p class="note">ยังดึงพยากรณ์ไม่ได้ในรอบนี้</p>`; return; }
     const now = Date.now(), today = K.thaiDate(now);
-    // Show when this forecast was fetched; if that is more than 6 hours ago the updater could not get a newer one.
+    // Show when this forecast was fetched; if that is unknown or more than 6 hours ago, say it may not be the latest.
     const fAt = K.thaiStampMs(F.fetched_at || F.build_at), known = Number.isFinite(fAt);
     $("rainSrc").textContent = "พยากรณ์ 7 วัน กรมอุตุนิยมวิทยา" + (known ? ` · ดึงเมื่อ ${whenText(fAt)}` : "");
-    if (!known || now - fAt > 6 * HOUR) {
-      warn.hidden = false;
-      warn.textContent = (known ? `พยากรณ์ชุดนี้ดึงเมื่อ ${thDateTime(fAt)} ` : "ไม่ทราบว่าพยากรณ์ชุดนี้ดึงเมื่อไร ") + "ระบบยังดึงฉบับใหม่ไม่ได้ อาจไม่ใช่ฉบับล่าสุด ดูฉบับล่าสุดที่เว็บกรมอุตุนิยมวิทยา";
-    }
+    const notice = K.forecastNotice(fAt, now);
+    if (notice) { warn.hidden = false; warn.textContent = notice; }
     const days = F.days.filter((x) => x.date >= today).slice(0, 2);
     days.forEach((x) => {
       const [, m, dd] = x.date.split("-").map(Number), label = K.dayLabel(x.date, now);
