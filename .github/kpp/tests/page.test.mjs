@@ -239,6 +239,11 @@ test("map pins sit where RID's station map puts the gauges, each inside the dist
   const ids = Object.keys(GEO.stations);
   const fx = fit(ids.map((id) => [+rid[id].long, GEO.stations[id][0]])), fy = fit(ids.map((id) => [+rid[id].lat, GEO.stations[id][1]]));
   const pos = { ...GEO.stations, ...extra };
+  // Every gauge on the page has a pin: none is left out any more (P.26B once was, before its position was taken from RID).
+  const noPin = read("../../../flood/kamphaeng-phet/kpp.js").match(/const NO_PIN = new Set\((\[[^\]]*\])?\);/);
+  assert.ok(noPin, "NO_PIN is declared");
+  assert.deepEqual(noPin[1] ? JSON.parse(noPin[1]) : [], []);
+  for (const id of Object.keys(amp)) if (id !== "P.12C") assert.ok(pos[id], `${id} has a map position`);
   for (const [id, p] of Object.entries(pos)) {
     assert.ok(Math.hypot(p[0] - fx(+rid[id].long), p[1] - fy(+rid[id].lat)) < 1, `${id} pin is at RID's coordinates`);
   }

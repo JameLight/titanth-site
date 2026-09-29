@@ -26,9 +26,9 @@
   const GISTDA_UNTIL = Date.parse("2026-10-02T23:59:00+07:00");
   const PCT = { TH6201: 0.47, TH6202: 0, TH6203: 0.16, TH6204: 5.16, TH6205: 8.88, TH6206: 0, TH6207: 0, TH6208: 3.64, TH6209: 0.62, TH6210: 5.26, TH6211: 0.08 };
   // P.50A is projected with the same straight-line fit as the other gauges, from RID's station map (16.63924N 99.24183E).
-  // P.26B is listed in the river panel but not pinned on the map.
+  // Every gauge is pinned at its position on RID's station map (GEO.stations, and EXTRA_POS for P.50A).
   const EXTRA_POS = { "P.50A": [86.6, 135.1] };
-  const NO_PIN = new Set(["P.26B"]);
+  const NO_PIN = new Set();
   const REDUCED = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
   const SCROLL = { behavior: REDUCED ? "auto" : "smooth" };
 
@@ -227,7 +227,7 @@
     GEO.districts.forEach((d) => { const p = PCT[d.pcode]; const b = p == null || p === 0 ? 0 : p < 1 ? 1 : p <= 5 ? 2 : 3; el("path", { d: d.d, class: "d f" + b }, map); });
     GEO.districts.filter((d) => d.pcode !== "TH6205" && d.pcode !== "TH6201").forEach((d) => { const t = el("text", { x: d.cx, y: d.cy, "text-anchor": "middle", class: "dl" }, map); t.textContent = d.name.replace("วรลักษบุรี", "ฯ").replace("ทรายทองวัฒนา", "ทรายทองฯ"); });
     GEO.rivers.forEach((r, i) => { const main = i === 0; el("path", { d: r.d, class: "rv", "stroke-width": main ? 4.5 : 2.4 }, map); el("path", { d: r.d, class: "rf", "stroke-width": main ? 2 : 1.2 }, map); });
-    const LAB = { "P.2A": ["ตาก (ต้นน้ำ)", 10, 4], "P.7A": ["ตัวเมือง", 10, -8], "P.15": ["ปิง คลองขลุง", -10, -8, "end"], "P.16": ["ขาณุฯ", 10, 4], "P.47A": ["โป่งน้ำร้อน", -10, 14, "end"], "P.78": ["สามเรือน", -10, 14, "end"], "P.50A": ["คลองวังเจ้า", 10, -8] };
+    const LAB = { "P.2A": ["ตาก (ต้นน้ำ)", 10, 4], "P.7A": ["ตัวเมือง", 10, -8], "P.15": ["ปิง คลองขลุง", -10, -8, "end"], "P.16": ["ขาณุฯ", 10, 4], "P.47A": ["โป่งน้ำร้อน", -10, 14, "end"], "P.78": ["สามเรือน", -10, 14, "end"], "P.50A": ["คลองวังเจ้า", 10, -8], "P.26B": ["คลองสวนหมาก", -10, 14, "end"] };
     const posOf = (id) => (NO_PIN.has(id) ? null : GEO.stations[id] || EXTRA_POS[id] || null);
     Object.keys(D.river.stations).forEach((id) => { const pos = posOf(id), lab = LAB[id]; if (!pos || !lab) return; const t = el("text", { x: pos[0] + lab[1], y: pos[1] + lab[2], class: "sl", "text-anchor": lab[3] || "start" }, map); t.textContent = lab[0]; });
     Object.keys(D.river.stations).forEach((id) => {
