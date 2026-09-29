@@ -64,20 +64,20 @@ dialog{max-height:90vh;overflow:auto}
 .kpp-level{position:relative;display:flex;flex-direction:column;min-width:0;min-height:130px;padding:.72rem;border:1.5px solid;border-radius:14px;overflow:hidden}
 .kpp-level-high{background:#fff0e9;border-color:#c65c44;color:#77281c}.kpp-level-city{background:#eaf5fb;border-color:#497f9a;color:#194b63}
 .kpp-level-symbol{position:absolute;right:.55rem;top:.3rem;font-size:1.65rem;font-weight:900;line-height:1;opacity:.55}
-.kpp-level-place{font-size:.82rem;font-weight:800;line-height:1.3;padding-right:1rem}
+.kpp-level-place{font-size:.9rem;font-weight:800;line-height:1.3;padding-right:1rem}
 .kpp-level strong{font-size:clamp(1.5rem,3vw,2rem);line-height:1.15;margin-top:.38rem;font-variant-numeric:tabular-nums}
-.kpp-level>span:last-child{font-size:.83rem;font-weight:700;line-height:1.3}
-.kpp-current .kpp-current-note{font-size:.86rem;color:#3c5965}.kpp-current-note strong{color:#8b2e23}
+.kpp-level>span:last-child{font-size:.9rem;font-weight:700;line-height:1.3}
+.kpp-current .kpp-current-note{font-size:.9rem;color:#3c5965}.kpp-current-note strong{color:#8b2e23}
 .kpp-mini-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}
 .kpp-mini-facts p{display:grid;grid-template-columns:1.5rem 1fr;column-gap:.45rem;align-items:start;background:#fff;border:1px solid #cbdde1;border-radius:11px;padding:.65rem;font-size:.88rem}
 .kpp-mini-facts p>span{grid-row:span 2;color:#145d78;font-size:1.35rem;line-height:1}
-.kpp-mini-facts strong{line-height:1.3}.kpp-mini-facts small{grid-column:2;color:#4a626c;font-size:.81rem;line-height:1.3;margin-top:.15rem}
+.kpp-mini-facts strong{line-height:1.3}.kpp-mini-facts small{grid-column:2;color:#4a626c;font-size:.9rem;line-height:1.3;margin-top:.15rem}
 .kpp-expired{display:grid;gap:.2rem;background:#fff7df;color:#634718;border:1px solid #ddc788;border-radius:12px;padding:.8rem;font-size:.92rem}
 .kpp-source-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.55rem;margin-top:.7rem}
 .kpp-source-grid a{display:flex;flex-direction:column;justify-content:center;min-width:0;min-height:100px;padding:.65rem;border:1.5px solid #a6cbd4;border-radius:13px;background:#fff;text-decoration:none;color:#123e51;overflow-wrap:anywhere}
-.kpp-source-grid a span{font-size:1.8rem;font-weight:900;line-height:1;color:#176d88}.kpp-source-grid a strong{display:block;font-size:.96rem;line-height:1.25;margin:.2rem 0}.kpp-source-grid a small{display:block;color:#425e6b;font-size:.77rem;line-height:1.3}
+.kpp-source-grid a span{font-size:1.8rem;font-weight:900;line-height:1;color:#176d88}.kpp-source-grid a strong{display:block;font-size:.96rem;line-height:1.25;margin:.2rem 0}.kpp-source-grid a small{display:block;color:#425e6b;font-size:.9rem;line-height:1.3}
 .kpp-source-grid a:hover,.kpp-source-grid a:focus-visible{border-color:#146f83;background:#e6f6fa}
-.kpp-source-limit{font-size:.82rem;line-height:1.4;color:#52666c;margin:.55rem 0 0}
+.kpp-source-limit{font-size:.9rem;line-height:1.4;color:#52666c;margin:.55rem 0 0}
 .alert-scope{display:block;font-size:.9rem;color:var(--navy)}
 .kpp-mobile-calls{display:none}
 @media(max-width:480px){body{padding-bottom:84px}.kpp-mobile-calls{position:fixed;z-index:30;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.4rem;left:0;right:0;bottom:0;padding:.4rem;background:#103b50;box-shadow:0 -4px 16px #001b2a55}.kpp-mobile-calls a{display:block;min-height:72px;padding:.45rem .4rem;border-radius:8px;background:#fff;color:#8e241c;text-align:center;text-decoration:none;font-size:1.1rem;font-weight:800;line-height:1.2}.kpp-mobile-calls a small{display:block;margin-top:.2rem;color:#173744;font-size:.72rem;font-weight:650}}
@@ -87,4 +87,4 @@ dialog{max-height:90vh;overflow:auto}
 .kpp-entry a:focus-visible{outline:3px solid #007c9b;outline-offset:3px}
 .emergency.sos .sos-coverage{margin:.65rem 0 0!important;font-size:.86rem;line-height:1.35}
 @media(max-width:650px){.kpp-entry{padding:.75rem}.kpp-source-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.kpp-mini-facts{grid-template-columns:1fr}}
-@media(max-width:360px){.kpp-level{min-height:128px;padding:.58rem}.kpp-level strong{font-size:1.5rem}.kpp-source-grid a{min-height:90px;padding:.55rem}.kpp-source-grid a small{font-size:.75rem}}
+@media(max-width:360px){.kpp-level{min-height:128px;padding:.58rem}.kpp-level strong{font-size:1.5rem}.kpp-source-grid a{min-height:90px;padding:.55rem}}
