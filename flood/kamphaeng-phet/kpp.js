@@ -306,14 +306,16 @@
   let alertsKey = null;
   function alerts(force) {
     const A = D.alerts, act = $("activeAlerts"), calm = $("alertCalm"), past = $("alertPast");
-    const now = Date.now(), active = A ? K.activeAlerts(A.items, now) : [];
-    const key = A ? `${A.checked_at}|${(A.items || []).length}|${active.map((x) => x.id).join(",")}` : "none";
+    const now = Date.now(), active = A ? K.activeAlerts(A.items, now) : [], upcoming = A ? K.upcomingAlerts(A.items, now) : [];
+    const key = A ? `${A.checked_at}|${(A.items || []).length}|${active.map((x) => x.id).join(",")}|${upcoming.map((x) => x.id).join(",")}` : "none";
     if (!force && key === alertsKey) return;
     alertsKey = key;
     act.innerHTML = ""; calm.innerHTML = ""; past.innerHTML = "";
     if (!A) { calm.innerHTML = `<p class="calm">ยังตรวจประกาศของ ปภ. ไม่ได้ในรอบนี้</p>`; return; }
     active.forEach((x) => { const d = document.createElement("div"); d.className = "alertbox"; d.innerHTML = `<b>ประกาศทางการ ปภ. ${esc(thDateTime(Date.parse(x.sent_at)))}</b>${esc(x.text)}`; act.appendChild(d); });
     if (!active.length) calm.innerHTML = `<p class="calm">ยังไม่พบประกาศที่กำลังแสดงของ ปภ. สำหรับกำแพงเพชร ในข้อมูลประกาศที่บันทึกเมื่อ ${esc(thDateTime(Date.parse(A.checked_at)))} การไม่พบประกาศไม่ได้แปลว่าปลอดภัย</p>`;
+    // An alert dated later than this device's clock: a neutral note apart from the red box, without its text.
+    if (upcoming.length) calm.innerHTML += `<p class="calm">มีประกาศของ ปภ. ที่ระบุเวลาเริ่ม ${upcoming.map((x) => esc(thDateTime(Date.parse(x.sent_at)))).join(", ")} ซึ่งยังไม่ถึงตามนาฬิกาของเครื่องนี้ นาฬิกาเครื่องอาจคลาดเคลื่อน ตรวจประกาศที่ต้นทาง <a href="https://www.disaster.go.th/" target="_blank" rel="noopener">เว็บ ปภ. ↗</a></p>`;
     const old = K.pastAlerts(A.items, now);
     if (old.length) past.innerHTML = `<details><summary>ประกาศที่ผ่านมาใน 7 วัน (${old.length})</summary>${old.map((x) => `<p class="note"><b>${esc(thDateTime(Date.parse(x.sent_at)))}</b> ${esc(x.text)} (ตั้งให้แสดงบนมือถือ ${x.duration_h} ชั่วโมง)</p>`).join("")}</details>`;
   }

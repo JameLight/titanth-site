@@ -298,3 +298,16 @@ test("Codex 16:22: the tiles, which hold dated figures, appear only when the scr
   assert.equal(pg.$("tiles").hidden, false);
 });
 
+
+test("Codex 17:03: an alert dated later than the clock is never shown as in effect, only noted apart", () => {
+  const alerts = { source: "ปภ.", checked_at: "2026-09-29T14:22:00+07:00", items: [{ id: "CB-9", sent_at: "2026-09-29T15:10:00+07:00", duration_h: 2, title: "t", text: "ข้อความทดสอบ" }] };
+  const pg = openPage({ data: dataSet({ alerts }), now: at("09-29T15:00") }); // 10 minutes before its start time
+  assert.equal(pg.alerts().active.length, 0, "not in the red box");
+  assert.match(pg.alerts().calm, /มีประกาศของ ปภ\. ที่ระบุเวลาเริ่ม 29 ก\.ย\. 15:10 น\. ซึ่งยังไม่ถึงตามนาฬิกาของเครื่องนี้ นาฬิกาเครื่องอาจคลาดเคลื่อน ตรวจประกาศที่ต้นทาง/);
+  assert.ok(!pg.alerts().calm.includes("ข้อความทดสอบ"), "the alert text is not shown before its time");
+  pg.clock.now = at("09-29T15:09"); pg.minute();
+  assert.equal(pg.alerts().active.length, 0, "1 minute before: still not in effect");
+  pg.clock.now = at("09-29T15:10"); pg.minute();
+  assert.equal(pg.alerts().active.length, 1, "at its start time the minute check shows it");
+  assert.ok(!pg.alerts().calm.includes("ยังไม่ถึง"));
+});
