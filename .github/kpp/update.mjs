@@ -199,7 +199,7 @@ export function parseCB(data, nowMs, province = "62", days = 7) {
     });
   }
   items.sort((a, b) => Date.parse(b.sent_at) - Date.parse(a.sent_at));
-  return { source: "ปภ. ข้อความเตือนเข้ามือถือ (Cell Broadcast) ข้อมูลเปิด", source_url: "https://catalog.disaster.go.th/th/dataset/cell-broadcast", checked_at: toThaiIso(new Date(nowMs).toISOString()), items };
+  return { source: "ปภ. ข้อความเตือนเข้ามือถือ (Cell Broadcast)", source_url: "https://catalog.disaster.go.th/th/dataset/cell-broadcast", checked_at: toThaiIso(new Date(nowMs).toISOString()), items };
 }
 
 // ---------- TMD 7-day forecast ----------
@@ -218,7 +218,7 @@ export function parseTMD(data, provinceTh = "กำแพงเพชร") {
       tmax: Number(f.MaximumTemperature[i]),
     };
   }).sort((a, b) => a.date.localeCompare(b.date));
-  return { source: "กรมอุตุนิยมวิทยา พยากรณ์อากาศ 7 วัน (ข้อมูลเปิด)", source_url: "https://www.tmd.go.th/weatherForecast7Days?province=กำแพงเพชร", fetched_at: String(data?.header?.LastBuildDate || ""), days }; // TMD stamps each response with the request time
+  return { source: "กรมอุตุนิยมวิทยา พยากรณ์อากาศ 7 วัน", source_url: "https://www.tmd.go.th/weatherForecast7Days?province=กำแพงเพชร", fetched_at: String(data?.header?.LastBuildDate || ""), days }; // TMD stamps each response with the request time
 }
 
 // ---------- main ----------
