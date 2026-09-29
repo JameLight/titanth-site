@@ -117,8 +117,10 @@
 
   function hero() {
     const s = D.river.stations["P.7A"], v = valueAt(s, LAST), c = C(LAST)("P.7A"), tr = trend(s, LAST);
-    const j0 = lastIdx(s.s, LAST), oldP = j0 >= 0 && LAST - j0 > STALE_H, notNow = fresh !== "fresh" || oldP;
-    const at = whenText(oldP ? START + j0 * HOUR : OBS), pre = notNow ? `เมื่อ ${at} ` : "";
+    // When the town gauge's newest reading is before the shown hour (late or stopped), or the whole set is late,
+    // every line gives that reading's own time.
+    const r0 = K.readingAt(s.s, LAST, START, fresh), notNow = r0.notNow;
+    const at = whenText(r0.j >= 0 ? r0.ms : OBS), pre = notNow ? `เมื่อ ${at} ` : "";
     // Big text: how far the river is from the next RID level. RID's own class stays visible in the small line below.
     // The phrase after the distance never breaks inside a word ("ถึงเกณฑ์เฝ้าระวัง" stays on one line).
     const [big, tail] = v == null ? ["ไม่มีข้อมูลล่าสุด", ""] : c === "ok" || (c === "stale" && cls(v, s) === "ok") ? [`อีก ${cm(s.watch - v)} ซม.`, "ถึงเกณฑ์เฝ้าระวัง"]
@@ -131,8 +133,10 @@
     const u = D.river.stations["P.2A"];
     if (u) {
       const p = K.peakDrop(u.s, LAST), when = p ? thDateTime(START + p.peakIdx * HOUR) : "";
+      // The Tak gauge gives its own reading time; it can differ from the town gauge's.
+      const ru = K.readingAt(u.s, LAST, START, fresh), uPre = ru.j >= 0 && ru.notNow ? `เมื่อ ${whenText(ru.ms)} ` : "";
       // Lead with the place, so a quick reader does not take the upstream fall for the town.
-      $("hUp").innerHTML = nw((notNow ? `เมื่อ ${at} ` : "") + (!p || p.drop < 5 ? `ต้นน้ำ จ.ตาก (ไม่ใช่ตัวเมือง): ${trend(u, LAST).w}`
+      $("hUp").innerHTML = nw(uPre + (!p || p.drop < 5 ? `ต้นน้ำ จ.ตาก (ไม่ใช่ตัวเมือง): ${trend(u, LAST).w}`
         : p.atStart ? `ต้นน้ำ จ.ตาก (ไม่ใช่ตัวเมือง): ลดลงอย่างน้อย ${p.drop} ซม. ตั้งแต่ ${when} (ช่วงเวลาที่หน้านี้มีข้อมูล)` : `ต้นน้ำ จ.ตาก (ไม่ใช่ตัวเมือง): ลดลง ${p.drop} ซม. จากจุดสูงสุดเมื่อ ${when}`));
     }
     drawXsec(s, v, tr.k === "up" && !notNow);
@@ -162,15 +166,16 @@
       const s = D.river.stations[id], b = stopEls[id];
       if (!s || !b) continue;
       const v = valueAt(s, i), c = C(i)(id), tr = trend(s, i), fl = flatRun(s, i);
-      const j = lastIdx(s.s, i), old = j >= 0 && i - j > STALE_H;
+      const r = K.readingAt(s.s, i, START, fresh), line = K.rowLine(s.s, i, fresh);
       const flat = flatText(fl);
-      // A stopped gauge shows when its last reading was; a flat gauge shows no trend; early replay hours show none either.
-      const sub = j < 0 ? `ไม่มีค่าในช่วง ${N} ชม. ที่แสดง` : old ? `ไม่มีค่าใหม่ตั้งแต่ ${thDateTime(START + j * HOUR)}`
-        : fresh === "old" ? `ค่าเมื่อ ${whenText(START + j * HOUR)}` : fl || tr.h === 0 ? "" : tr.t;
-      const subK = old || j < 0 || fresh === "old" ? "flat" : tr.k;
+      // A stopped gauge shows when its last reading was; a reading from before the shown hour shows its own time, not a
+      // trend; a flat gauge shows no trend; early replay hours show none either.
+      const sub = line === "none" ? `ไม่มีค่าในช่วง ${N} ชม. ที่แสดง` : line === "stopped" ? `ไม่มีค่าใหม่ตั้งแต่ ${thDateTime(r.ms)}`
+        : line === "at" ? `ค่าเมื่อ ${whenText(r.ms)}` : line === "trend" ? tr.t : "";
+      const subK = line === "trend" ? tr.k : "flat";
       b.querySelector(".dot").innerHTML = shapeSVG(c, 24);
       b.querySelector(".nm").innerHTML = `${esc(s.name)}<small>${esc(s.place)}</small>`;
-      const main = old || fresh === "old" ? `<span class="oldv">${nw("ค่าเดิม " + gapText(v, s))}</span>` : nw(gapText(v, s));
+      const main = r.old || fresh === "old" ? `<span class="oldv">${nw("ค่าเดิม " + gapText(v, s))}</span>` : nw(gapText(v, s));
       b.querySelector(".val").innerHTML = main + (sub ? `<small class="${subK}">${nw(sub)}</small>` : "") + (flat ? `<small class="stuck">${nw(flat)}</small>` : "");
       b.setAttribute("aria-label", `${s.name} ${CLS[c]} ${gapText(v, s)}` + (sub ? " " + sub : "") + (flat ? " " + flat : ""));
     }
@@ -239,12 +244,14 @@
   function openSheet(id, from) {
     const s = D.river.stations[id]; if (!s) return;
     opener = from || document.activeElement;
-    const v = valueAt(s, LAST), c = C(LAST)(id), tr = trend(s, LAST), j = lastIdx(s.s, LAST), fl = flatRun(s, LAST), msg = [];
+    // The sheet is about its newest reading j, whose time is in the header; a flat run is the one that ends at j,
+    // and its note gives j's time when j is not the shown hour.
+    const v = valueAt(s, LAST), c = C(LAST)(id), tr = trend(s, LAST), j = lastIdx(s.s, LAST), fl = j >= 0 ? flatRun(s, j) : null, msg = [];
     $("shName").textContent = s.name; $("shPlace").textContent = s.place + " · กรมชลประทาน " + (j >= 0 ? thDateTime(START + j * HOUR) : "ไม่มีค่าในช่วงที่แสดง");
     $("shGap").innerHTML = nw(gapText(v, s)); $("shTrend").innerHTML = nw(j >= 0 && LAST - j > STALE_H ? "ไม่ทราบ" : fl ? "ไม่แน่ใจ" : tr.t); $("shCls").innerHTML = shapeSVG(c, 14) + " " + CLS[c];
     if (j < 0) msg.push(`ยังไม่มีค่าระดับน้ำของจุดนี้ในช่วง ${N} ชม. ที่แสดง`);
     else if (LAST - j > STALE_H) msg.push(`จุดนี้ยังไม่มีค่าใหม่ ค่าล่าสุดเมื่อ ${thDateTime(START + j * HOUR)}`);
-    if (fl) msg.push(`ค่าที่จุดนี้${flatText(fl)} อาจเป็นเครื่องวัดค้าง หรือน้ำนิ่งจริง เว็บกรมชลประทานแสดงค่าเดียวกัน ถ้าอยู่ใกล้จุดนี้ ให้ดูสภาพน้ำจริง ถามผู้นำชุมชน หรือโทร 1784`);
+    if (fl) msg.push(`ค่าที่จุดนี้${j < LAST ? `จนถึง ${thDateTime(START + j * HOUR)} ` : ""}${flatText(fl)} อาจเป็นเครื่องวัดค้าง หรือน้ำนิ่งจริง เว็บกรมชลประทานแสดงค่าเดียวกัน ถ้าอยู่ใกล้จุดนี้ ให้ดูสภาพน้ำจริง ถามผู้นำชุมชน หรือโทร 1784`);
     const sf = $("shFlat"); sf.hidden = !msg.length; sf.innerHTML = nw(msg.join(" · "));
     drawChart(s);
     $("app").inert = true; $("sheet").hidden = false; $("scrim").hidden = false; $("shClose").focus();

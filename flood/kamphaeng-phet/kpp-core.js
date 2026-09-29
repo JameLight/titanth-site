@@ -58,11 +58,14 @@
 
   // A gauge whose last FLAT_MIN or more hourly readings, with no hour missing, stay within 1 cm may be stuck,
   // or the water may really be steady. A missing hour ends the run, because nothing is known about it.
+  // The run must reach the shown hour: with no reading at i, nothing is known about the water at i, so no run.
   // Returns null, or { h: hours between the first and last reading of the run,
   //   fromStart: the run was ended by missing data or the start of the window, so it may be longer ("อย่างน้อย") }.
   function flatRun(series, i) {
+    const i0 = Math.min(i, series.length - 1);
+    if (i0 < 0 || series[i0] == null) return null;
     let hi = -Infinity, lo = Infinity, n = 0, first = -1, last = -1, gap = 0, open = true;
-    for (let k = Math.min(i, series.length - 1); k >= 0; k--) {
+    for (let k = i0; k >= 0; k--) {
       const v = series[k];
       if (v == null) { if (last >= 0 && ++gap >= FLAT_GAP) break; continue; }
       gap = 0;
@@ -73,6 +76,28 @@
     }
     if (n < FLAT_MIN) return null;
     return { h: last - first, fromStart: open };
+  }
+
+  // The reading a line shows at hour i. The newest reading at or before i can be an hour or more before i (a late or
+  // stopped gauge), or the whole data set can be late (fresh "slow" or "old"); a line must then say when its reading was,
+  // using that gauge's own reading time, never the shown hour or another gauge's time.
+  // Returns { j: index of the reading (-1: none), ms: its time (NaN: none), behind: j is before i,
+  //   old: more than STALE_H hours before i, notNow: a line about it must give its time }.
+  function readingAt(series, i, startMs, fresh) {
+    const j = lastIdx(series, i), behind = j >= 0 && j < i;
+    return { j, ms: j >= 0 ? startMs + j * 3600e3 : NaN, behind, old: j >= 0 && i - j > STALE_H, notNow: fresh !== "fresh" || behind };
+  }
+
+  // What the small line under a river row's value says at hour i: "none" (no reading in the window), "stopped" (no new
+  // reading for more than STALE_H hours), "at" (the reading's time, because it is before i or the whole set is old),
+  // "flat" (the flat note says it, so no trend), "trend", or "" (too early in the window for a 3-hour change).
+  function rowLine(series, i, fresh) {
+    const r = readingAt(series, i, 0, fresh);
+    if (r.j < 0) return "none";
+    if (r.old) return "stopped";
+    if (fresh === "old" || r.behind) return "at";
+    if (flatRun(series, i)) return "flat";
+    return trend(series, i).h === 0 ? "" : "trend";
   }
 
   // Highest reading in the whole window up to i, and how far the newest reading is below it.
@@ -105,7 +130,7 @@
   function forecastNotice(fetchedMs, nowMs) {
     if (!Number.isFinite(fetchedMs)) return "ไม่ทราบเวลาที่ดึงพยากรณ์ชุดนี้ อาจไม่ใช่ฉบับล่าสุด ดูฉบับล่าสุดที่เว็บกรมอุตุนิยมวิทยา";
     if (nowMs - fetchedMs <= 6 * 3600e3) return "";
-    return `พยากรณ์ชุดนี้ดึงเมื่อ ${thDateTime(fetchedMs)} ยังไม่มีชุดที่ดึงใหม่ใน 6 ชั่วโมงที่ผ่านมา อาจไม่ใช่ฉบับล่าสุด ดูฉบับล่าสุดที่เว็บกรมอุตุนิยมวิทยา`;
+    return `พยากรณ์ชุดนี้ดึงเมื่อ ${thDateTime(fetchedMs)} เว็บนี้ยังไม่มีชุดที่ดึงใหม่ใน 6 ชั่วโมงที่ผ่านมา อาจไม่ใช่ฉบับล่าสุด ดูฉบับล่าสุดที่เว็บกรมอุตุนิยมวิทยา`;
   }
 
   // "YYYY-MM-DD HH:MM[:SS]" written in Thai time (as TMD stamps its responses) to milliseconds; NaN when unreadable.
@@ -125,5 +150,5 @@
     return date === thaiDate(nowMs) ? "วันนี้" : date === thaiDate(nowMs + 24 * 3600e3) ? "พรุ่งนี้" : "";
   }
 
-  return { STALE_H, FLAT_MIN, FLAT_GAP, cmOf, lastIdx, cls, gapText, isOld, trend, change8, flatRun, flatNote, forecastNotice, peakDrop, thaiStampMs, thaiDate, dayLabel };
+  return { STALE_H, FLAT_MIN, FLAT_GAP, cmOf, lastIdx, cls, gapText, isOld, trend, change8, flatRun, flatNote, readingAt, rowLine, forecastNotice, peakDrop, thaiStampMs, thaiDate, dayLabel };
 });

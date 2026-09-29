@@ -63,11 +63,59 @@ test("flat run: any missing hour ends the run, and the wording says only what wa
   assert.equal(K.flatNote(null), "");
 });
 
+test("flat run: no claim for an hour that has no reading, now or while replaying", () => {
+  const twelve = Array(12).fill(6.6);
+  assert.equal(K.flatRun([...twelve, null], 12), null, "the newest hour is missing");
+  assert.equal(K.flatRun([...twelve, null, null], 13), null, "the newest two hours are missing");
+  const replay = [...twelve, null, ...twelve];
+  assert.equal(K.flatRun(replay, 12), null, "the replayed hour is missing");
+  assert.deepEqual(K.flatRun(replay, 11), { h: 11, fromStart: true }, "the hour before it has a reading and a run");
+  assert.deepEqual(K.flatRun(replay, 24), { h: 11, fromStart: true }, "the run after the gap reaches the shown hour");
+  assert.equal(K.flatRun([], 0), null);
+  const late = [...twelve, null];
+  assert.deepEqual(K.flatRun(late, K.lastIdx(late, 12)), { h: 11, fromStart: true },
+    "the details sheet asks for the run that ends at its newest reading, and states that reading's time");
+});
+
+test("a line about a reading gives that gauge's own reading time when it is not the shown hour", () => {
+  const start = Date.parse("2026-09-28T06:00:00+07:00"), H = 3600e3, last = 32;
+  const cur = Array(33).fill(4.2);
+  const behind2 = [...Array(31).fill(4.2), null, null]; // the town gauge's newest reading is 2 hours before the shown hour
+  for (const fresh of ["fresh", "slow"]) {
+    const r = K.readingAt(behind2, last, start, fresh);
+    assert.equal(r.j, 30, fresh);
+    assert.equal(r.ms, start + 30 * H, `${fresh}: the gauge's own time, not the newest time of another gauge`);
+    assert.equal(r.behind, true);
+    assert.equal(r.old, false);
+    assert.equal(r.notNow, true, `${fresh}: the line must give the time`);
+    assert.equal(K.rowLine(behind2, last, fresh), "at", `${fresh}: the row gives the time, not a trend`);
+  }
+  for (const k of [1, 3]) {
+    const s = [...Array(33 - k).fill(4.2), ...Array(k).fill(null)];
+    assert.equal(K.rowLine(s, last, "fresh"), "at", `${k} hour(s) behind`);
+    assert.equal(K.readingAt(s, last, start, "fresh").ms, start + (32 - k) * H);
+  }
+  assert.equal(K.readingAt(cur, last, start, "fresh").notNow, false, "a reading at the shown hour in a fresh set needs no time");
+  assert.equal(K.readingAt(cur, last, start, "slow").notNow, true, "a late set always gives the time");
+  assert.equal(K.readingAt(cur, last, start, "slow").ms, start + last * H);
+  assert.equal(K.rowLine(cur, last, "fresh"), "flat", "33 equal readings: the flat note, no trend");
+  const rising = cur.map((v, i) => v + i * 0.03);
+  assert.equal(K.rowLine(rising, last, "fresh"), "trend");
+  assert.equal(K.rowLine(rising, last, "slow"), "trend", "a slow set keeps the trend; the top bar says the set is late");
+  assert.equal(K.rowLine(rising, last, "old"), "at");
+  assert.equal(K.rowLine([...Array(28).fill(4.2), ...Array(5).fill(null)], last, "fresh"), "stopped", "more than 3 hours");
+  assert.equal(K.rowLine(Array(33).fill(null), last, "fresh"), "none");
+  assert.equal(K.rowLine(rising, 0, "fresh"), "", "the first hour of the window has no 3-hour change");
+  const none = K.readingAt(Array(3).fill(null), 2, start, "fresh");
+  assert.equal(none.j, -1);
+  assert.ok(Number.isNaN(none.ms));
+});
+
 test("forecast notice says only what is known about its age", () => {
   const now = Date.parse("2026-09-29T14:30:00+07:00");
   assert.equal(K.forecastNotice(now - 60 * 60e3, now), "", "one hour old: no notice");
   const old = K.forecastNotice(Date.parse("2026-09-28T13:14:00+07:00"), now);
-  assert.equal(old, "พยากรณ์ชุดนี้ดึงเมื่อ 28 ก.ย. 13:14 น. ยังไม่มีชุดที่ดึงใหม่ใน 6 ชั่วโมงที่ผ่านมา อาจไม่ใช่ฉบับล่าสุด ดูฉบับล่าสุดที่เว็บกรมอุตุนิยมวิทยา");
+  assert.equal(old, "พยากรณ์ชุดนี้ดึงเมื่อ 28 ก.ย. 13:14 น. เว็บนี้ยังไม่มีชุดที่ดึงใหม่ใน 6 ชั่วโมงที่ผ่านมา อาจไม่ใช่ฉบับล่าสุด ดูฉบับล่าสุดที่เว็บกรมอุตุนิยมวิทยา");
   assert.ok(!old.includes("ดึงฉบับใหม่ไม่ได้"), "no claim about why");
   assert.equal(K.forecastNotice(NaN, now), "ไม่ทราบเวลาที่ดึงพยากรณ์ชุดนี้ อาจไม่ใช่ฉบับล่าสุด ดูฉบับล่าสุดที่เว็บกรมอุตุนิยมวิทยา");
 });
