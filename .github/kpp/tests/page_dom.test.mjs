@@ -92,6 +92,7 @@ function openPage({ data, geo = { W: 100, H: 100, districts: [], rivers: [], sta
     status: () => strip($("stWord").innerHTML), age: () => $("age").textContent,
     hero: () => ({ big: strip($("hVerdict").innerHTML), chip: $("hTrend").hidden ? null : strip($("hTrend").innerHTML), watch: strip($("hWatch").innerHTML), sentence: strip($("hSentence").innerHTML), up: strip($("hUp").innerHTML) }),
     row, clockText: () => $("clock").textContent,
+    glasses: () => made.filter((e) => e.className === "gcard").map((b) => ({ name: (b.innerHTML.match(/<span class="gn">([^<]*)<\/span>/) || [])[1], text: strip(b.innerHTML.replace(/<\/span>/g, "</span> ").replace(/<small>/g, " <small>")), svg: b.innerHTML.slice(0, b.innerHTML.indexOf("</svg>")), click: () => b.listeners.click.forEach((f) => f()) })),
     replay(i) { const sc = $("scrub"); sc.value = String(i); sc.listeners.input.forEach((f) => f()); },
     sheet(id) { const b = stops().find((x) => nameOf(x).startsWith(META[id][0])); b.listeners.click.forEach((f) => f()); return { place: $("shPlace").textContent, gap: strip($("shGap").innerHTML), cls: strip($("shCls").innerHTML), trend: strip($("shTrend").innerHTML), note: $("shFlat").hidden ? "" : strip($("shFlat").innerHTML) }; },
     alerts: () => ({ active: $("activeAlerts").children.map((d) => strip(d.innerHTML)), calm: strip($("alertCalm").innerHTML), past: strip($("alertPast").innerHTML) }),
@@ -310,4 +311,29 @@ test("Codex 17:03: an alert dated later than the clock is never shown as in effe
   pg.clock.now = at("09-29T15:10"); pg.minute();
   assert.equal(pg.alerts().active.length, 1, "at its start time the minute check shows it");
   assert.ok(!pg.alerts().calm.includes("ยังไม่ถึง"));
+});
+
+test("3D glasses: one per gauge in flow order, same reading and colour as the river row, a stopped gauge shows no water", () => {
+  const pg = openPage({ data: dataSet({ series: { "P.78": Array(N).fill(6.6), "P.50A": [...Array(20).fill(3.76), ...blank(13)] } }), now: at("09-29T14:30") });
+  const g = pg.glasses();
+  assert.equal(g.length, 8);
+  assert.deepEqual(g.map((x) => x.name), ["ตาก (ต้นน้ำ)", "คลองวังเจ้า", "ตัวเมือง", "บ้านโป่งน้ำร้อน", "คลองสวนหมาก", "คลองขลุง", "บ้านสามเรือน", "ขาณุฯ"]);
+  const sam = g[6];
+  assert.match(sam.text, /ล้นตลิ่ง 0\.31 ม\. วิกฤติ/);
+  assert.match(sam.svg, /stroke="var\(--crit\)"/, "water over the rim is drawn spilling");
+  const wang = g[1];
+  assert.match(wang.text, /ค่าเดิม ล้นตลิ่ง 0\.06 ม\. ไม่มีข้อมูลล่าสุด ไม่มีค่าใหม่ตั้งแต่ 29 ก\.ย\. 01:00 น\./);
+  assert.doesNotMatch(wang.svg, /url\(#gw1\)"\/>/, "no water drawn for a gauge without a recent reading");
+  assert.match(wang.svg, /stroke-dasharray="5 4"/, "the empty glass is dashed");
+  assert.match(g[2].text, /ต่ำกว่าตลิ่ง .* ปกติ/);
+  g[6].click();
+  assert.equal(pg.$("shPlace").textContent.includes("อ.คลองขลุง"), true, "tapping a glass opens that gauge's sheet");
+  assert.deepEqual(pg.errors, []);
+});
+
+test("3D glasses follow the replay hour", () => {
+  const pg = openPage({ data: dataSet(), now: at("09-29T14:30") });
+  pg.replay(0);
+  assert.match(pg.glasses()[2].text, /ต่ำกว่าตลิ่ง/);
+  assert.deepEqual(pg.errors, []);
 });

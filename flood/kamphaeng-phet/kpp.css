@@ -1,6 +1,6 @@
 :root{
   --bg:#edf3f2; --surface:#ffffff; --surface2:#e2ebe9; --ink:#10262d; --muted:#4b636b; --line:#c7d6d3;
-  --water:#2f86c4; --water2:#8cc3e8; --earth:#c9b48f; --earth2:#a88f63; --house:#5a4632;
+  --water:#2f86c4; --water2:#8cc3e8; --waterDeep:#1f5f8f; --earth:#c9b48f; --earth2:#a88f63; --house:#5a4632;
   --ok:#1e8e3e; --okInk:#146c2e; --okBg:#e0f2e6; --watch:#f2a900; --watchInk:#5c4300; --watchBg:#fdf0cc; --crit:#d93025; --critInk:#b3261e; --critBg:#fbe0dd; --stale:#9aa0a6; --staleBg:#eceeef;
   --f0:#e6eeec; --f1:#cfe3f1; --f2:#8fc0e4; --f3:#3f8fca;
   --bar:#10262d; --barInk:#ffffff; --callBg:#d93025; --link:#1d6fa5;
@@ -11,7 +11,7 @@
   :root{
     color-scheme:dark;
     --bg:#0c1b20; --surface:#132a31; --surface2:#1a3740; --ink:#e7f1f0; --muted:#9fb7bd; --line:#2a4a52;
-    --water:#4a9ad6; --water2:#2c5f82; --earth:#6b5a3e; --earth2:#8a7450; --house:#e6d3b3;
+    --water:#4a9ad6; --water2:#2c5f82; --waterDeep:#1d4a66; --earth:#6b5a3e; --earth2:#8a7450; --house:#e6d3b3;
     --ok:#4cc27a; --okInk:#4cc27a; --okBg:#173a27; --watch:#f2b53a; --watchInk:#f6d58b; --watchBg:#3a2d0c; --crit:#ff6f63; --critInk:#ff9a90; --critBg:#44211d; --stale:#8d969c; --staleBg:#253238;
     --f0:#16303a; --f1:#2a5878; --f2:#276a99; --f3:#4c9fd8;
     --bar:#e7f1f0; --barInk:#0c1b20; --callBg:#c5221f; --link:#8ccaf5;
@@ -164,3 +164,15 @@ summary{cursor:pointer;font-weight:700;padding:10px 0}
 .paused .fill,.paused .ripple,.paused .chev,.paused .map .rf,.paused .ribbon::after,.paused .branch::after{animation:none}
 .paused .chev{opacity:0}
 @media (prefers-reduced-motion: reduce){.fill,.ripple,.chev,.map .rf,.ribbon::after,.branch::after{animation:none}.chev{opacity:0}}
+
+/* 3D glasses: one per gauge, in the order the water flows. The rim is the bank. */
+.model{display:inline-block;font-size:14px;font-weight:700;background:var(--surface2);color:var(--ink);border-radius:999px;padding:2px 10px;margin:0 0 6px}
+.glasses{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,9em),1fr));gap:10px;margin-top:8px} /* em-based: two per row on phones, four on wide screens, one per row with very large text */
+.gcard{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;align-items:center;text-align:center;background:var(--bg);border-radius:16px;padding:10px 6px 12px;min-width:0}
+.gcard:focus-visible{outline:3px solid var(--water);outline-offset:2px}
+.gcard svg{width:100%;max-width:120px;height:auto;display:block}
+.gcard .gn{font-size:16px;font-weight:800;line-height:1.25}
+.gcard .gp{font-size:14px;color:var(--muted);line-height:1.3}
+.gcard .gv{font-size:15px;font-weight:800;line-height:1.3;margin-top:2px}
+.gcard .gs{font-size:14px;font-weight:700}
+.gcard small{display:block;font-size:14px;font-weight:600;color:var(--muted);line-height:1.3}

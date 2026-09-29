@@ -176,6 +176,8 @@ test("the first screen says the site takes no reports, and the dated tiles need 
   assert.match(roleText, /โทร 1784/);
   assert.doesNotMatch(roleText, /ด้านล่าง|ด้านบน/);
   assert.match(html, /<div class="tiles" id="tiles" hidden>/, "hidden until the script shows them");
+  // The 3D glasses say plainly that they are a picture to explain the gauges, not the water in the area.
+  assert.match(html, /<p class="model">ภาพอธิบาย ไม่ใช่ภาพน้ำท่วมจริงในพื้นที่<\/p>/);
 });
 
 test("the page title and share texts do not promise automatic or current data", () => {

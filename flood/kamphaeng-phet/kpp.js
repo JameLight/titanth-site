@@ -215,6 +215,53 @@
   }
 
   let mapDots = {};
+  // The glasses: one per gauge in the order the water flows, from the same reading, colour and staleness rules as the
+  // gauge's river row. The rim is the bank and a glass shows the 6 m below it. It explains the gauge; it is not the
+  // water in anyone's street. A gauge with no recent reading shows an empty dashed glass and its last value with time.
+  const GORDER = ["P.2A", "P.50A", "P.7A", "P.47A", "P.26B", "P.15", "P.78", "P.16"];
+  const GNAME = Object.assign({ "P.2A": "ตาก (ต้นน้ำ)" }, SHORT);
+  const GRANGE = 6;
+  let glassEls = {};
+  function glassSVG(k, s, v, c) {
+    const X = 30, Wd = 60, TOP = 30, BOT = 150, RY = 9, Hh = BOT - TOP;
+    const yOf = (x) => (BOT - Math.max(0, Math.min(1, (x - (s.bank - GRANGE)) / GRANGE)) * Hh).toFixed(1);
+    const live = c !== "stale" && v != null, over = live && v > s.bank;
+    const water = !live ? "" :
+      `<path d="M${X},${yOf(v)} L${X},${BOT} A${Wd / 2},${RY} 0 0 0 ${X + Wd},${BOT} L${X + Wd},${yOf(v)} Z" fill="url(#gw${k})"/>` +
+      `<ellipse cx="60" cy="${yOf(v)}" rx="${Wd / 2}" ry="${RY}" fill="${over ? "var(--crit)" : "var(--water2)"}"/>` +
+      (over ? `<path d="M${X},${TOP} q-6,10 -4,26 M${X + Wd},${TOP} q6,10 4,26" stroke="var(--crit)" stroke-width="5" fill="none" stroke-linecap="round"/>` : "");
+    return `<svg viewBox="0 0 120 170" aria-hidden="true" focusable="false"><defs><linearGradient id="gw${k}" x1="0" x2="1" y1="0" y2="0">` +
+      `<stop offset="0" stop-color="var(--waterDeep)"/><stop offset=".45" stop-color="${over ? "var(--crit)" : "var(--water)"}"/><stop offset="1" stop-color="var(--waterDeep)"/></linearGradient></defs>` +
+      `<ellipse cx="60" cy="${TOP}" rx="${Wd / 2}" ry="${RY}" fill="none" stroke="var(--muted)" stroke-width="1.5"/>` +
+      `<path d="M${X},${TOP} L${X},${BOT} A${Wd / 2},${RY} 0 0 0 ${X + Wd},${BOT} L${X + Wd},${TOP}" fill="var(--surface2)" fill-opacity=".55" stroke="var(--muted)" stroke-width="1.5"${live ? "" : ' stroke-dasharray="5 4"'}/>` +
+      water +
+      `<ellipse cx="60" cy="${yOf(s.watch)}" rx="${Wd / 2}" ry="${RY}" fill="none" stroke="var(--watch)" stroke-width="2.5" stroke-dasharray="5 3"/>` +
+      `<path d="M${X},${TOP} A${Wd / 2},${RY} 0 0 0 ${X + Wd},${TOP}" fill="none" stroke="var(--ink)" stroke-width="2"/></svg>`;
+  }
+  function buildGlasses() {
+    const box = $("glasses"); if (!box) return;
+    box.innerHTML = ""; glassEls = {};
+    GORDER.forEach((id) => {
+      if (!D.river.stations[id]) return;
+      const b = document.createElement("button"); b.className = "gcard"; b.type = "button";
+      b.addEventListener("click", () => openSheet(id, b));
+      box.appendChild(b); glassEls[id] = b;
+    });
+  }
+  function paintGlasses(i) {
+    const cx = ctx();
+    GORDER.forEach((id, k) => {
+      const s = D.river.stations[id], b = glassEls[id]; if (!s || !b) return;
+      const r = K.readingAt(s.s, i, cx), v = r.j >= 0 ? s.s[r.j] : null, c = C(i)(id);
+      const place = (s.place.match(/อ\.\S+/) || [""])[0];
+      const val = v == null ? "ไม่มีค่า" : c === "stale" ? "ค่าเดิม " + gapText(v, s) : gapText(v, s);
+      const since = v != null && c === "stale" ? "ไม่มีค่าใหม่ตั้งแต่ " + thDateTime(r.ms) : "";
+      b.innerHTML = glassSVG(k, s, v, c) + `<span class="gn">${esc(GNAME[id] || s.name)}</span><span class="gp">${esc(place)}</span>` +
+        `<span class="gv c-${c}">${nw(val)}</span><span class="gs c-${c}">${CLS[c]}</span>` + (since ? `<small>${nw(since)}</small>` : "");
+      b.setAttribute("aria-label", `${s.name} ${CLS[c]} ${val}` + (since ? " " + since : "") + " แตะเพื่อดูกราฟ");
+    });
+  }
+
   function buildMap() {
     const map = $("mapSvg"); map.innerHTML = ""; mapDots = {};
     if (!GEO) { $("mapNote").textContent = "แผนที่โหลดไม่ขึ้น ลองโหลดหน้าใหม่"; return; } // geo.js did not load
@@ -426,7 +473,7 @@
     const sc = $("scrub"); sc.max = String(LAST); sc.value = String(LAST);
     $("play").textContent = REDUCED ? "เลื่อนแถบเพื่อดูเวลา" : `▶ ย้อนดู ${N} ชม.`;
     // Each part is drawn on its own, so one that fails (for example the map when geo.js did not load) leaves the rest.
-    for (const f of [freshness, status, hero, buildRibbon, () => paintRibbon(LAST), buildMap, () => paintMap(LAST), () => alerts(true), () => rain(true)]) {
+    for (const f of [freshness, status, hero, buildRibbon, () => paintRibbon(LAST), buildGlasses, () => paintGlasses(LAST), buildMap, () => paintMap(LAST), () => alerts(true), () => rain(true)]) {
       try { f(); } catch (e) { if (window.console) console.error(e); }
     }
     try { clockKey = clockKeyNow(); } catch (e) { clockKey = ""; }
@@ -444,7 +491,7 @@
     try {
       freshness();
       const key = clockKeyNow();
-      if (key !== clockKey) { clockKey = key; status(); hero(); paintRibbon(i); buildMap(); paintMap(i); }
+      if (key !== clockKey) { clockKey = key; status(); hero(); paintRibbon(i); paintGlasses(i); buildMap(); paintMap(i); }
     } catch (e) { if (window.console) console.error(e); }
     try { alerts(false); } catch (e) { if (window.console) console.error(e); }
     try { rain(false); } catch (e) { if (window.console) console.error(e); }
@@ -468,11 +515,11 @@
       if (best) openSheet(best, mapDots[best].g);
     });
     const scrub = $("scrub");
-    scrub.addEventListener("input", () => { paintRibbon(+scrub.value); paintMap(+scrub.value); });
+    scrub.addEventListener("input", () => { paintRibbon(+scrub.value); paintGlasses(+scrub.value); paintMap(+scrub.value); });
     $("play").addEventListener("click", () => {
       if (timer) { clearInterval(timer); timer = null; $("play").textContent = `▶ ย้อนดู ${N} ชม.`; return; }
-      let i = 0; scrub.value = "0"; paintRibbon(0); paintMap(0); $("play").textContent = "■ หยุด";
-      timer = setInterval(() => { i++; scrub.value = String(i); paintRibbon(i); paintMap(i); if (i >= LAST) { clearInterval(timer); timer = null; $("play").textContent = `▶ ย้อนดู ${N} ชม.`; } }, 500);
+      let i = 0; scrub.value = "0"; paintRibbon(0); paintGlasses(0); paintMap(0); $("play").textContent = "■ หยุด";
+      timer = setInterval(() => { i++; scrub.value = String(i); paintRibbon(i); paintGlasses(i); paintMap(i); if (i >= LAST) { clearInterval(timer); timer = null; $("play").textContent = `▶ ย้อนดู ${N} ชม.`; } }, 500);
     });
     if (REDUCED) $("play").disabled = true;
     $("shClose").addEventListener("click", closeSheet); $("scrim").addEventListener("click", closeSheet);
