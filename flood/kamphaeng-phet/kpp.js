@@ -7,6 +7,8 @@
   const $ = (id) => document.getElementById(id);
   const el = (t, a, p) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  // Escaped text in which each number stays on one line with its unit (for example "1.48 ม." never splits).
+  const nw = (s) => esc(s).replace(/(\d[\d.]*) (ม\.|ซม\.|ชม\.)/g, '<span class="nw">$1 $2</span>');
   const IN_KPP = ["P.7A", "P.15", "P.16", "P.47A", "P.26B", "P.78"];
   const CLS = { ok: "ปกติ", watch: "เฝ้าระวัง", crit: "วิกฤติ", stale: "ไม่มีข้อมูลล่าสุด" };
   const COL = { ok: "var(--ok)", watch: "var(--watch)", crit: "var(--crit)", stale: "var(--stale)" };
@@ -40,13 +42,28 @@
   }
   const gapText = (v, s) => { if (v == null) return "ไม่มีข้อมูล"; const g = s.bank - v; return g >= 0 ? `ต่ำกว่าตลิ่ง ${g.toFixed(2)} ม.` : `ล้นตลิ่ง ${(-g).toFixed(2)} ม.`; };
   const C = (i) => (id) => { const s = D.river.stations[id]; if (!s) return "stale"; const v = valueAt(s, i); return fresh === "old" || v == null ? "stale" : cls(v, s); };
+  // A gauge whose last 12 readings stay within 1 cm may be stuck. Returns null when it moves, else
+  // { h: hourly slots from the first to the last flat reading, fromStart: the flat run reaches the start of the data }.
+  // The official colour and counts are not changed; the page only adds a note.
+  function flatRun(s, i) {
+    let hi = -Infinity, lo = Infinity, n = 0, first = -1, last = -1;
+    for (let k = Math.min(i, s.s.length - 1); k >= 0; k--) {
+      const v = s.s[k]; if (v == null) continue;
+      const h2 = Math.max(hi, v), l2 = Math.min(lo, v);
+      if (Math.round((h2 - l2) * 100) > 1) break;
+      hi = h2; lo = l2; n++; first = k; if (last < 0) last = k;
+    }
+    return n >= 12 ? { h: last - first + 1, fromStart: first === 0 } : null;
+  }
 
   function freshness() {
     const age = (Date.now() - OBS) / 60000;
     fresh = age < 0 ? "fresh" : age <= 120 ? "fresh" : age <= 360 ? "slow" : "old";
-    const a = $("age"), h = Math.floor(Math.max(0, age) / 60), m = Math.round(Math.max(0, age) % 60);
+    const a = $("age"), mins = Math.round(Math.max(0, age)), h = Math.floor(mins / 60), m = mins % 60;
+    const today = th(OBS).toISOString().slice(0, 10) === th(Date.now()).toISOString().slice(0, 10);
+    const ago = `${h ? h + " ชม." : ""}${h && m ? " " : ""}${m || !h ? m + " นาที" : ""}`;
     a.className = "age" + (fresh === "slow" ? " slow" : fresh === "old" ? " old" : "");
-    a.textContent = `${D && D.river && D.river.live ? "ข้อมูลสด " : "ข้อมูล "}${thDateTime(OBS)}` + (age < 0 ? "" : ` · ${h ? h + " ชม. " : ""}${m} นาทีที่แล้ว`) + (fresh === "slow" ? " · ข้อมูลช้า" : fresh === "old" ? " · เก่าแล้ว" : "");
+    a.textContent = `${D && D.river && D.river.live ? "สด " : "ข้อมูล "}${today ? thHM(OBS) : thDateTime(OBS)}` + (age < 0 ? "" : ` · ${ago}${ago.endsWith(".") ? " " : ""}ที่แล้ว`) + (fresh === "slow" ? " · ข้อมูลช้า" : fresh === "old" ? " · เก่าแล้ว" : "");
     document.body.classList.toggle("paused", fresh !== "fresh");
   }
 
@@ -58,29 +75,40 @@
     const txt = fresh === "old" ? "ไม่มีข้อมูลล่าสุด ดูต้นทางหรือโทร 1784"
       : [n.crit ? `วิกฤติ ${n.crit} จุด` : "", n.watch ? `เฝ้าระวัง ${n.watch} จุด` : "", !n.crit && !n.watch ? "ปกติทุกจุด" : ""].filter(Boolean).join(" · ") + (p7 ? " · น้ำปิงตัวเมือง" + trend(p7, LAST).w : "");
     $("stWord").innerHTML = shapeSVG(worst) + "<span>" + esc(txt) + "</span>";
-    $("tRiver").textContent = fresh === "old" ? "–" : `${n.crit + n.watch}/6`;
+    const t = $("tRiver");
+    t.textContent = fresh === "old" ? "–" : `${n.crit + n.watch}/6`;
+    t.className = fresh === "old" ? "" : n.crit ? "c-crit" : n.watch ? "c-watch" : "";
   }
 
   function drawXsec(s, v, rising) {
     const x = $("xsec"); x.innerHTML = "";
-    const bankY = 46, bedY = 176, Y = (L) => bedY - (L / s.bank) * (bedY - bankY);
+    const bankY = 46, bedY = 176, Y = (L) => bedY - (L / s.bank) * (bedY - bankY), over = v != null && v > s.bank;
     const chan = "M58,46 C84,46 96,176 124,176 L220,176 C248,176 258,46 284,46";
     const defs = el("defs", {}, x), cp = el("clipPath", { id: "ch" }, defs); el("path", { d: chan + " Z" }, cp);
     el("path", { d: "M0,46 L58,46 C84,46 96,176 124,176 L220,176 C248,176 258,46 284,46 L340,46 L340,196 L0,196 Z", fill: "var(--earth)" }, x);
     el("path", { d: "M0,46 L58,46 M284,46 L340,46", stroke: "var(--earth2)", "stroke-width": 3, fill: "none" }, x);
-    const h = el("g", { transform: "translate(12,20)" }, x);
-    el("path", { d: "M2 12 L14 2 L26 12 V26 H2 Z", fill: "var(--house)" }, h); el("rect", { x: 11, y: 16, width: 6, height: 10, fill: "var(--surface)" }, h);
+    const house = (a) => { const h = el("g", Object.assign({ transform: "translate(12,20)" }, a), x); el("path", { d: "M2 12 L14 2 L26 12 V26 H2 Z", fill: "var(--house)" }, h); el("rect", { x: 11, y: 16, width: 6, height: 10, fill: "var(--surface)" }, h); };
+    house({});
     const tl = el("text", { x: 8, y: 62, class: "t-muted" }, x); tl.textContent = "ฝั่งตัวเมือง";
     if (v != null) {
       const g = el("g", { "clip-path": "url(#ch)" }, x), wy = Y(v), f = el("g", { class: "fill" }, g);
       el("rect", { x: 40, y: wy + 3, width: 260, height: Math.max(0, bedY - wy + 10), fill: "var(--water)" }, f);
       let d = `M40 ${wy + 3}`; for (let k = 0; k < 15; k++) d += " q10 -5 20 0"; d += " v10 h-300 z";
       el("path", { class: "ripple", d, fill: "var(--water)" }, f);
-      if (rising) for (let k = 0; k < 3; k++) { const cx = 150 + k * 22; el("path", { class: "chev" + (k ? " chev" + (k + 1) : ""), d: `M${cx - 7} ${wy + 34} l7 -7 l7 7`, stroke: "#fff", "stroke-width": 3, fill: "none", "stroke-linecap": "round" }, f); }
+      if (rising) for (let k = 0; k < 3; k++) { const cx = 150 + k * 22, cy = (over ? bankY : wy) + 34; el("path", { class: "chev" + (k ? " chev" + (k + 1) : ""), d: `M${cx - 7} ${cy} l7 -7 l7 7`, stroke: "#fff", "stroke-width": 3, fill: "none", "stroke-linecap": "round" }, f); }
+      if (over) {
+        // Above the bank the water spreads over the land on both sides, up to its level.
+        // The top stays inside the picture (y >= 6) and is at least a thin sheet so a small overflow is still visible.
+        const top = Math.max(6, Math.min(wy, bankY - 8));
+        const oc = el("clipPath", { id: "ov" }, defs); el("rect", { x: 0, y: 0, width: 340, height: bankY }, oc); el("path", { d: chan + " Z" }, oc); // land above the bank line, plus the channel so the two waters overlap without a seam
+        let o = `M0 ${top + 3}`; for (let k = 0; k < 20; k++) o += " q10 -5 20 0"; o += ` V${bankY + 4} H0 Z`;
+        el("path", { class: "ripple", d: o, fill: "var(--water)" }, el("g", { class: "fill" }, el("g", { "clip-path": "url(#ov)" }, x)));
+        house({ opacity: 0.35 }); // the part of the house under water still shows faintly
+      }
       const n = el("text", { x: 172, y: bedY - 10, "text-anchor": "middle", class: "t-water" }, x); n.textContent = `น้ำ ${v.toFixed(2)} ม.`;
     }
     el("line", { x1: 40, x2: 304, y1: bankY, y2: bankY, stroke: "var(--crit)", "stroke-width": 2, "stroke-dasharray": "6 4" }, x);
-    const b = el("text", { x: 336, y: bankY - 6, "text-anchor": "end", class: "t-crit" }, x); b.textContent = `ตลิ่ง ${s.bank.toFixed(2)} ม.`;
+    const b = el("text", { x: 336, y: bankY - 6, "text-anchor": "end", class: over ? "t-crit t-halo" : "t-crit" }, x); b.textContent = `ตลิ่ง ${s.bank.toFixed(2)} ม.`;
     el("line", { x1: 60, x2: 282, y1: Y(s.watch), y2: Y(s.watch), stroke: "var(--watch)", "stroke-width": 2, "stroke-dasharray": "4 4" }, x);
     const w = el("text", { x: 336, y: Y(s.watch) + 4, "text-anchor": "end", class: "t-watch" }, x); w.textContent = "เริ่มเฝ้าระวัง";
   }
@@ -91,14 +119,14 @@
     $("hVerdict").innerHTML = shapeSVG(c, 26) + `<span class="c-${c}">${CLS[c]}</span>`;
     const t = $("hTrend"); t.className = "chip " + tr.k; t.textContent = tr.t;
     const j = lastIdx(s.s, LAST - 8), d8 = v != null && j >= 0 ? v - s.s[j] : null;
-    $("hSentence").textContent = pre + gapText(v, s) + (d8 == null ? "" : ` · ${d8 >= 0 ? "ขึ้น" : "ลด"} ${Math.abs(d8).toFixed(2)} ม. ใน ${LAST - j} ชม.`);
-    $("hWatch").textContent = v == null ? "" : v < s.watch ? `อีก ${cm(s.watch - v)} ซม. ถึงระดับเฝ้าระวังของกรมชลประทาน (${s.watch.toFixed(2)} ม.)` : v <= s.bank ? "อยู่ในระดับเฝ้าระวังของกรมชลประทานแล้ว" : "สูงกว่าตลิ่งแล้ว";
+    $("hSentence").innerHTML = nw(pre + gapText(v, s) + (d8 == null ? "" : ` · ${d8 >= 0 ? "ขึ้น" : "ลด"} ${Math.abs(d8).toFixed(2)} ม. ใน ${LAST - j} ชม.`));
+    $("hWatch").innerHTML = nw(v == null ? "" : v < s.watch ? `อีก ${cm(s.watch - v)} ซม. ถึงระดับเฝ้าระวังของกรมชลประทาน (${s.watch.toFixed(2)} ม.)` : v <= s.bank ? "อยู่ในระดับเฝ้าระวังของกรมชลประทานแล้ว" : "สูงกว่าตลิ่งแล้ว");
     const u = D.river.stations["P.2A"];
     if (u) {
       let mx = -Infinity, mi = -1;
       for (let i = Math.max(0, LAST - 8); i <= LAST; i++) if (u.s[i] != null && u.s[i] > mx) { mx = u.s[i]; mi = i; }
       const uv = valueAt(u, LAST), du = uv != null && mi >= 0 ? uv - mx : 0;
-      $("hUp").textContent = du < -0.05 ? `ต้นน้ำที่ตาก: ลดลง ${cm(du)} ซม. จากจุดสูงสุดเมื่อ ${thDateTime(START + mi * HOUR)}` : `ต้นน้ำที่ตาก: ${trend(u, LAST).w}`;
+      $("hUp").innerHTML = nw(du < -0.05 ? `ต้นน้ำที่ตาก: ลดลง ${cm(du)} ซม. จากจุดสูงสุดเมื่อ ${thDateTime(START + mi * HOUR)}` : `ต้นน้ำที่ตาก: ${trend(u, LAST).w}`);
     }
     drawXsec(s, v, tr.k === "up" && fresh === "fresh");
   }
@@ -122,11 +150,12 @@
   }
   function paintRibbon(i) {
     for (const id in stopEls) {
-      const s = D.river.stations[id], v = valueAt(s, i), c = C(i)(id), tr = trend(s, i), b = stopEls[id];
+      const s = D.river.stations[id], v = valueAt(s, i), c = C(i)(id), tr = trend(s, i), b = stopEls[id], fl = flatRun(s, i);
+      const flat = fl ? `ค่าไม่ขยับ ${fl.h} ชม.` : "";
       b.querySelector(".dot").innerHTML = shapeSVG(c, 24);
       b.querySelector(".nm").innerHTML = `${esc(s.name)}<small>${esc(s.place)}</small>`;
-      b.querySelector(".val").innerHTML = `${esc(gapText(v, s))}<small class="${tr.k}">${esc(tr.t)}</small>`;
-      b.setAttribute("aria-label", `${s.name} ${CLS[c]} ${gapText(v, s)} ${tr.w}`);
+      b.querySelector(".val").innerHTML = `${nw(gapText(v, s))}<small class="${tr.k}">${nw(tr.t)}</small>` + (flat ? `<small class="stuck">${nw(flat)}</small>` : "");
+      b.setAttribute("aria-label", `${s.name} ${CLS[c]} ${gapText(v, s)} ${tr.w}` + (flat ? " " + flat : ""));
     }
     $("clock").textContent = i === LAST ? "ตอนนี้ (" + thDateTime(START + i * HOUR) + ")" : thDateTime(START + i * HOUR);
     $("riverTime").textContent = "กรมชลประทาน · " + thDateTime(START + i * HOUR);
@@ -144,7 +173,7 @@
     Object.keys(D.river.stations).forEach((id) => {
       const pos = GEO.stations[id]; if (!pos) return;
       const g = el("g", { tabindex: 0, role: "button", class: "pin" }, map);
-      g.addEventListener("click", () => openSheet(id));
+      // Clicks and taps are handled once on the whole map (see wire): a tap near a pin opens it.
       g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openSheet(id); } });
       mapDots[id] = { g, x: pos[0], y: pos[1] };
     });
@@ -186,7 +215,9 @@
   function openSheet(id) {
     const s = D.river.stations[id], v = valueAt(s, LAST), c = C(LAST)(id), tr = trend(s, LAST);
     $("shName").textContent = s.name; $("shPlace").textContent = s.place + " · กรมชลประทาน " + thDateTime(OBS);
-    $("shGap").textContent = gapText(v, s); $("shTrend").textContent = tr.t; $("shCls").innerHTML = shapeSVG(c, 14) + " " + CLS[c];
+    $("shGap").innerHTML = nw(gapText(v, s)); $("shTrend").innerHTML = nw(tr.t); $("shCls").innerHTML = shapeSVG(c, 14) + " " + CLS[c];
+    const fl = flatRun(s, LAST), sf = $("shFlat");
+    if (sf) { sf.hidden = !fl; sf.innerHTML = nw(fl ? `ค่าที่จุดนี้เท่าเดิมมา${fl.fromStart ? "อย่างน้อย" : ""} ${fl.h} ชม. อาจเป็นเครื่องวัดค้าง หรือน้ำนิ่งจริง ตรวจกับเว็บกรมชลประทานก่อนใช้` : ""); }
     drawChart(s); $("sheet").hidden = false; $("scrim").hidden = false; $("shClose").focus();
   }
   function closeSheet() { $("sheet").hidden = true; $("scrim").hidden = true; }
@@ -289,6 +320,19 @@
     $("status").addEventListener("click", () => $("river").scrollIntoView({ behavior: "smooth" }));
     $("status").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("river").scrollIntoView({ behavior: "smooth" }); } });
     document.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => $(b.dataset.go).scrollIntoView({ behavior: "smooth" })));
+    // Pins are small on a phone: a tap within 22 screen px of a pin centre opens it, and the nearest pin wins.
+    // A click that carries no usable position (for example from a screen reader) opens the pin it was sent to.
+    $("mapSvg").addEventListener("click", (e) => {
+      const has = (id) => !!(D && D.river && D.river.stations && D.river.stations[id]);
+      const m = $("mapSvg").getScreenCTM(); let best = null, bd = 22;
+      if (m) for (const id in mapDots) {
+        if (!has(id)) continue;
+        const p = mapDots[id], d = Math.hypot(m.a * p.x + m.c * p.y + m.e - e.clientX, m.b * p.x + m.d * p.y + m.f - e.clientY);
+        if (d <= bd) { bd = d; best = id; }
+      }
+      if (!best) for (const id in mapDots) if (has(id) && mapDots[id].g.contains(e.target)) best = id;
+      if (best) openSheet(best);
+    });
     const scrub = $("scrub");
     scrub.addEventListener("input", () => { paintRibbon(+scrub.value); paintMap(+scrub.value); });
     $("play").addEventListener("click", () => {
@@ -311,10 +355,18 @@
     tryLive();
   }
 
+  // Radar pictures on the TMD site are stamped in UTC, 7 hours behind Thai time. Show both clocks, updated on each new minute.
+  function radarClock() {
+    const r = $("radarNow"); if (!r) return;
+    const now = Date.now(), u = new Date(now);
+    r.textContent = `ตอนนี้ ${thHM(now)} เวลาไทย = ${pad2(u.getUTCHours())}:${pad2(u.getUTCMinutes())} บนภาพเรดาร์`;
+  }
+
   wire();
   BASE = window.KPP_DATA || null;
   render(BASE);
   tryLive();
+  (function tick() { radarClock(); setTimeout(tick, 60000 - (Date.now() % 60000) + 50); })();
   setInterval(() => { if (!D || !D.river) return; const f0 = fresh; freshness(); if (f0 !== fresh) { status(); hero(); paintRibbon(+$("scrub").value); paintMap(+$("scrub").value); } }, 60000);
   setInterval(refresh, 10 * 60000);
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });

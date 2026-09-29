@@ -18,8 +18,8 @@
 <body>
 <div class="wrap" id="app">
   <div class="status" id="status" role="button" tabindex="0" aria-label="สรุปสถานะจุดวัดน้ำ แตะเพื่อดูทุกจุด">
-    <h1 id="stWord">น้ำกำแพงเพชรตอนนี้</h1>
-    <span class="age" id="age">กำลังโหลดข้อมูล</span>
+    <div class="stx"><h1 id="stWord">น้ำกำแพงเพชรตอนนี้</h1> <span class="age" id="age">กำลังโหลดข้อมูล</span></div>
+    <span class="go" aria-hidden="true"><span class="golbl">ดูทุกจุด </span>›</span>
   </div>
   <noscript><p class="nodata">หน้านี้ต้องเปิด JavaScript เพื่อแสดงระดับน้ำ ถ้าติดน้ำหรือต้องการความช่วยเหลือ โทร 1784 (ปภ. 24 ชม.) เจ็บป่วยฉุกเฉิน โทร 1669</p></noscript>
   <div id="activeAlerts"></div>
@@ -34,19 +34,19 @@
   </section>
 
   <div class="tiles">
-    <button class="tile" type="button" data-go="river"><b id="tRiver">–</b><span>จุดวัดน้ำเฝ้าระวังขึ้นไป (จาก 6 จุดในจังหวัด)</span></button>
+    <button class="tile" type="button" data-go="river"><b id="tRiver">–</b><span>จุดวัดที่น่าห่วง (จาก 6 จุด)</span></button>
     <button class="tile" type="button" data-go="roads"><b>2</b><span>ถนนที่เคยรายงานว่าผ่านไม่ได้ (28 ก.ย.)</span></button>
     <button class="tile" type="button" data-go="map"><b>8/11</b><span>อำเภอที่ดาวเทียมเห็นน้ำท่วม (23–29 ก.ย.)</span></button>
   </div>
 
   <section class="panel" id="river" aria-labelledby="riverH">
     <h2 id="riverH">สายน้ำจากตากถึงขาณุฯ <small id="riverTime">กรมชลประทาน</small></h2>
-    <ul class="ribbon" id="ribbon"></ul>
     <div class="replay">
       <button id="play" type="button">▶ ย้อนดู 33 ชม.</button>
       <input id="scrub" type="range" min="0" max="32" value="32" aria-label="เลือกเวลาย้อนหลัง">
       <output id="clock" for="scrub"></output>
     </div>
+    <ul class="ribbon" id="ribbon"></ul>
     <p class="note">แตะจุดไหนก็ได้เพื่อดูกราฟ สีตามเกณฑ์ของกรมชลประทาน ค่าที่จุดวัด ไม่ใช่ระดับน้ำหน้าบ้าน</p>
   </section>
 
@@ -59,7 +59,7 @@
 
   <section class="panel" id="roads" aria-labelledby="roadH">
     <h2 id="roadH">ถนนไปได้ไหม <small>กรมทางหลวง · ทางหลวงชนบท</small></h2>
-    <p class="calm" id="roadOld">ข้อมูลถนนในหน้านี้ยังไม่อัปเดตอัตโนมัติ รายการด้านล่างเป็นรายงานของวันที่ 28 ก.ย. อาจเปลี่ยนแล้ว ก่อนออกเดินทางโทร 1586 (ทางหลวง) หรือ 1146 (ทางหลวงชนบท)</p>
+    <p class="calm" id="roadOld">ข้อมูลถนนในหน้านี้ยังไม่อัปเดตอัตโนมัติ รายการด้านล่างเป็นรายงานของวันที่ 28 ก.ย. อาจเปลี่ยนแล้ว ก่อนออกเดินทางโทร <a href="tel:1586">1586</a> (ทางหลวง) หรือ <a href="tel:1146">1146</a> (ทางหลวงชนบท)</p>
     <div class="roads">
       <div class="road old"><b>ทล.1117 คลองแม่ลาย–ช่องเย็น</b><span>อ.คลองลาน · รายงานว่าผ่านไม่ได้เมื่อ 28 ก.ย. 17:30 น.</span></div>
       <div class="road old"><b>ถนนชนบท กพ.4014</b><span>รายงานว่าผ่านไม่ได้ ตามรายงานของกรมทางหลวงชนบท 28 ก.ย.</span></div>
@@ -70,7 +70,7 @@
   <section class="panel" aria-labelledby="rainH">
     <h2 id="rainH">ฝนวันนี้–พรุ่งนี้ <small id="rainSrc">พยากรณ์ 7 วัน กรมอุตุนิยมวิทยา</small></h2>
     <div class="days" id="days"></div>
-    <p class="note">ดูเรดาร์ฝนสดได้ที่ <a href="https://weather.tmd.go.th/tak.php" target="_blank" rel="noopener">เว็บกรมอุตุนิยมวิทยา ↗</a> เวลาบนภาพเรดาร์เป็นเวลาสากล ให้บวก 7 ชม.</p>
+    <p class="note">ดูเรดาร์ฝนสดได้ที่ <a href="https://weather.tmd.go.th/tak.php" target="_blank" rel="noopener">เว็บกรมอุตุนิยมวิทยา ↗</a> เวลาบนภาพเรดาร์ช้ากว่าเวลาไทย 7 ชม. <span class="nowline" id="radarNow"></span></p>
   </section>
 
   <section class="panel" aria-labelledby="warnH">
@@ -99,6 +99,7 @@
   <div class="handle"></div>
   <div class="row"><div><h2 id="shName"></h2><div class="sub" id="shPlace"></div></div><button class="close" id="shClose" type="button">ปิด</button></div>
   <div class="strip"><div>ระดับน้ำ<b id="shGap"></b></div><div>แนวโน้ม<b id="shTrend"></b></div><div>สถานะ<b id="shCls"></b></div></div>
+  <p class="note" id="shFlat" hidden></p>
   <svg class="chart" id="shChart" viewBox="0 0 340 200" role="img" aria-label="กราฟระดับน้ำย้อนหลัง"></svg>
 </section>
 
