@@ -270,3 +270,26 @@ test("Codex 15:55: a time span across midnight gives both dates", () => {
   assert.equal(pg.age(), "วัดเมื่อ 28 ก.ย. 23:00 น. – 29 ก.ย. 01:00 น. (ล่าสุด 30 นาทีที่แล้ว)");
 });
 
+test("Codex 16:18: no gauge reading at all gives no measured time, even with a valid observed_at", () => {
+  const series = Object.fromEntries(Object.keys(META).map((id) => [id, blank(N)]));
+  const pg = openPage({ data: dataSet({ series }), now: at("09-29T14:30") });
+  assert.equal(pg.age(), "ยังไม่มีค่าจุดวัดในข้อมูลชุดนี้");
+  assert.equal(pg.status(), "ไม่มีข้อมูลล่าสุด ดูต้นทางหรือโทร 1784");
+  assert.deepEqual(pg.errors, []);
+});
+
+test("Codex 16:19: the rain box shows exactly today and tomorrow, and says which one is missing", () => {
+  const src = "https://www.tmd.go.th/weatherForecast7Days?province=กำแพงเพชร";
+  const day = (date) => ({ date, rain_pct: 40, desc: "ฝนฟ้าคะนอง", tmin: 25, tmax: 33 });
+  const noToday = openPage({ data: dataSet({ forecast: { source_url: src, fetched_at: "2026-09-29 14:22:10", days: [day("2026-09-30"), day("2026-10-01")] } }), now: at("09-29T15:00") });
+  const d1 = noToday.rain().days;
+  assert.equal(d1.length, 2);
+  assert.match(d1[0], /^วันนี้ 29 ก\.ย\.\s*ไม่มีในชุดพยากรณ์ที่บันทึกไว้ ดูที่เว็บกรมอุตุนิยมวิทยา ↗$/);
+  assert.match(d1[1], /^พรุ่งนี้ 30 ก\.ย\.\s*ฝนฟ้าคะนอง 40%/);
+  assert.ok(!d1.join(" ").includes("1 ต.ค."), "the day after tomorrow is never shown in their place");
+  const noTomorrow = openPage({ data: dataSet({ forecast: { source_url: src, fetched_at: "2026-09-29 14:22:10", days: [day("2026-09-29"), day("2026-10-01")] } }), now: at("09-29T15:00") });
+  const d2 = noTomorrow.rain().days;
+  assert.match(d2[0], /^วันนี้ 29 ก\.ย\.\s*ฝนฟ้าคะนอง/);
+  assert.match(d2[1], /^พรุ่งนี้ 30 ก\.ย\.\s*ไม่มีในชุดพยากรณ์ที่บันทึกไว้/);
+});
+

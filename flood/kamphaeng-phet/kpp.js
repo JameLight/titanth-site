@@ -66,13 +66,15 @@
     const age = (Date.now() - OBS) / 60000;
     fresh = age < 0 ? "fresh" : age <= 120 ? "fresh" : age <= 360 ? "slow" : "old";
     // The top bar counts each gauge by its own newest recent reading, so this time is the span of those readings.
+    // With no recent reading it is the newest reading of the counted gauges, and with no reading at all there is none.
     const sp = fresh === "old" ? null : K.usedSpan(stationsIn().map((id) => D.river.stations[id].s), LAST, ctx());
-    const hiMs = sp ? START + sp.hi * HOUR : OBS, loMs = sp ? START + sp.lo * HOUR : hiMs, span = loMs < hiMs;
+    const newest = Math.max(-1, ...stationsIn().map((id) => lastIdx(D.river.stations[id].s, LAST)));
+    const hiMs = sp ? START + sp.hi * HOUR : newest >= 0 ? START + newest * HOUR : NaN, loMs = sp ? START + sp.lo * HOUR : hiMs, span = loMs < hiMs;
     const ageHi = (Date.now() - hiMs) / 60000;
     const a = $("age"), mins = Math.round(Math.max(0, ageHi)), h = Math.floor(mins / 60), m = mins % 60;
     const ago = `${h ? h + " ชม." : ""}${h && m ? " " : ""}${m || !h ? m + " นาที" : ""}`;
     a.className = "age" + (fresh === "slow" ? " slow" : fresh === "old" ? " old" : "");
-    if (!Number.isFinite(hiMs)) { a.className = "age old"; a.textContent = "ยังไม่มีเวลาวัดในข้อมูลชุดนี้"; document.body.classList.toggle("paused", true); return; }
+    if (!Number.isFinite(hiMs)) { a.className = "age old"; a.textContent = "ยังไม่มีค่าจุดวัดในข้อมูลชุดนี้"; document.body.classList.toggle("paused", true); return; }
     a.textContent = `วัดเมื่อ ${span ? spanText(loMs, hiMs) : whenText(hiMs)}` + (ageHi < 0 ? "" : ` (${span ? "ล่าสุด " : ""}${ago}${ago.endsWith(".") ? " " : ""}ที่แล้ว)`)
       + (fresh === "slow" ? " · ข้อมูลช้า" : fresh === "old" ? " · เก่าแล้ว" : "");
     document.body.classList.toggle("paused", fresh !== "fresh");
@@ -331,11 +333,17 @@
     const src = /^https:\/\/(www\.)?tmd\.go\.th\//.test(F.source_url || "") ? F.source_url : "https://www.tmd.go.th/";
     const tmdLink = `<a href="${esc(src)}" target="_blank" rel="noopener">เว็บกรมอุตุนิยมวิทยา ↗</a>`;
     if (notice) { warn.hidden = false; warn.innerHTML = esc(notice).replace("เว็บกรมอุตุนิยมวิทยา", tmdLink); }
-    const days = F.days.filter((x) => x.date >= today).slice(0, 2);
-    // A saved forecast whose days have all passed says so, instead of leaving the box empty.
-    if (!days.length) { box.innerHTML = `<p class="note">ชุดพยากรณ์ที่บันทึกไว้ไม่มีวันนี้หรือพรุ่งนี้ ดูพยากรณ์ล่าสุดที่${tmdLink}</p>`; return; }
+    // Exactly today and tomorrow, as the heading says: a day missing from the saved forecast gets a card that says so,
+    // with no rain picture (an empty cloud could be read as no rain), never another day in its place.
+    const days = [today, K.thaiDate(now + 24 * HOUR)].map((dt) => F.days.find((x) => x.date === dt) || { date: dt, missing: true });
+    if (days.every((x) => x.missing)) { box.innerHTML = `<p class="note">ชุดพยากรณ์ที่บันทึกไว้ไม่มีวันนี้หรือพรุ่งนี้ ดูพยากรณ์ล่าสุดที่${tmdLink}</p>`; return; }
     days.forEach((x) => {
       const [, m, dd] = x.date.split("-").map(Number), label = K.dayLabel(x.date, now);
+      if (x.missing) {
+        const div = document.createElement("div"); div.className = "day";
+        div.innerHTML = `<svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="13" fill="none" stroke="var(--line)" stroke-width="2" stroke-dasharray="4 4"/></svg><div><b>${label ? label + " " : ""}${dd} ${MONTHS[m - 1]}</b><span>ไม่มีในชุดพยากรณ์ที่บันทึกไว้ ดูที่${tmdLink}</span></div>`;
+        box.appendChild(div); return;
+      }
       const drops = x.rain_pct >= 60 ? 3 : x.rain_pct >= 30 ? 2 : x.rain_pct > 0 ? 1 : 0;
       let dp = ""; for (let i = 0; i < drops; i++) { const dx = 14 + i * 8; dp += `<path d="M${dx} 30l-2 6" stroke="var(--water)" stroke-width="3" stroke-linecap="round"/>`; }
       const div = document.createElement("div"); div.className = "day";
