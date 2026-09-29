@@ -108,3 +108,14 @@ test("times that change on every run do not count as a change, but a heartbeat w
   assert.equal(shouldWrite(base, next, t0 + 60e3), true, "real change: write at once");
   assert.equal(shouldWrite(null, next, t0), true);
 });
+
+test("every gauge's district matches RID's own station list", () => {
+  // RID's column model gives each gauge's district (groupHeadersStationAmpur); saved in fixtures/rid_station_districts.json.
+  // P.26B คลองสวนหมาก is in อ.เมืองกำแพงเพชร, not อ.คลองลาน, which an earlier version of this page said.
+  const rid = Object.fromEntries(load("rid_station_districts.json").stations.map((s) => [s.code, s]));
+  for (const [code, meta] of Object.entries(STATIONS)) {
+    assert.ok(rid[code], `${code} is in RID's list`);
+    assert.ok(meta.place.includes("อ." + rid[code].ampur), `${code}: "${meta.place}" names อ.${rid[code].ampur}`);
+  }
+  assert.equal(rid["P.26B"].ampur, "เมืองกำแพงเพชร");
+});
