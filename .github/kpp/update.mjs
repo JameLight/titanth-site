@@ -29,8 +29,9 @@ export const STATIONS = {
   "P.15": { name: "คลองขลุง หน้าวัดศรีภิรมย์", place: "แม่น้ำปิง อ.คลองขลุง" },
   "P.16": { name: "ขาณุฯ บ้านแสนตอ", place: "แม่น้ำปิง อ.ขาณุวรลักษบุรี" },
   "P.47A": { name: "บ้านโป่งน้ำร้อน", place: "คลองสวนหมาก อ.คลองลาน" },
-  "P.26B": { name: "บ้านน้ำโท้ง", place: "คลองสวนหมาก (ตำแหน่งโดยประมาณ)" },
+  "P.26B": { name: "คลองสวนหมาก (P.26B)", place: "อ.คลองลาน" },
   "P.78": { name: "บ้านสามเรือน", place: "คลองขลุง ต.วังไทร อ.คลองขลุง" },
+  "P.50A": { name: "คลองวังเจ้า", place: "บ้านดงส้ม อ.โกสัมพีนคร" },
 };
 
 // ---------- time helpers (Thai time, no locale APIs) ----------
@@ -74,7 +75,7 @@ export function parseColModel(col) {
 // rows: RID jqGrid rows for one Thai calendar day; dayMs: any instant in that Thai day
 export function parseRidDay(colInfo, rows, dayMs) {
   const p = thaiParts(dayMs);
-  const out = { _columns: {} };
+  const out = { _columns: {}, _criteria: {} };
   for (const [code, idx] of Object.entries(colInfo.codes)) if (STATIONS[code]) out._columns[code] = idx;
   for (const row of rows || []) {
     const h = Math.round(Number(String(row.hourlytime).replace(",", ".")));
@@ -82,11 +83,12 @@ export function parseRidDay(colInfo, rows, dayMs) {
     const t = isoThai(p.y, p.m, p.d, h);
     for (const [code, idx] of Object.entries(colInfo.codes)) {
       if (!STATIONS[code]) continue;
+      const crit = /([\d.]+)\s*-\s*([\d.]+)/.exec(String(row[`WLCriteria${idx}`] || ""));
+      if (crit) out._criteria[code] = { watch: Number(crit[1]), bank: colInfo.banks[idx] ?? Number(crit[2]) };
       const raw = row[`wlvalues${idx}`];
       if (raw === "" || raw === null || raw === undefined) continue;
       const v = Number(raw);
       if (!Number.isFinite(v)) continue;
-      const crit = /([\d.]+)\s*-\s*([\d.]+)/.exec(String(row[`WLCriteria${idx}`] || ""));
       (out[code] ||= []).push({
         t,
         v: Math.round(v * 100) / 100,
@@ -102,26 +104,29 @@ export function buildRiver(dayParts) {
   // dayParts: array of parseRidDay results (any order); returns hourly series for the last KEEP_HOURS
   const byCode = {};
   const columns = {};
+  const criteria = {};
   for (const part of dayParts) for (const [code, pts] of Object.entries(part)) {
     if (code === "_columns") { Object.assign(columns, pts); continue; }
+    if (code === "_criteria") { Object.assign(criteria, pts); continue; }
     (byCode[code] ||= []).push(...pts);
   }
-  const main = (byCode["P.7A"] || []).map((x) => Date.parse(x.t));
-  if (!main.length) throw new Error("RID: no readings for P.7A");
-  const lastMs = Math.max(...main);
+  if (!(byCode["P.7A"] || []).length) throw new Error("RID: no readings for P.7A");
+  // The window ends at the newest reading of any gauge, so one quiet gauge cannot hold the whole page back.
+  const lastMs = Math.max(...Object.values(byCode).flat().map((x) => Date.parse(x.t)));
   const startMs = lastMs - (KEEP_HOURS - 1) * HOUR;
   const stations = {};
   for (const [code, meta] of Object.entries(STATIONS)) {
     const pts = byCode[code] || [];
     const s = Array(KEEP_HOURS).fill(null);
-    let watch = null, bank = null;
+    let watch = criteria[code]?.watch ?? null, bank = criteria[code]?.bank ?? null;
     for (const x of pts) {
       const i = Math.round((Date.parse(x.t) - startMs) / HOUR);
       if (i >= 0 && i < KEEP_HOURS) s[i] = x.v;
       if (x.watch != null) watch = x.watch;
       if (x.bank != null) bank = x.bank;
     }
-    if (watch == null || bank == null || !s.some((v) => v != null)) continue;
+    // A gauge RID lists but that is silent in the window is kept with empty readings, so the page can say so.
+    if (watch == null || bank == null || (!s.some((v) => v != null) && columns[code] == null)) continue;
     stations[code] = { ...meta, watch, bank, col: columns[code] ?? null, s };
   }
   if (!stations["P.7A"]) throw new Error("RID: P.7A missing after build");
@@ -213,7 +218,7 @@ export function parseTMD(data, provinceTh = "กำแพงเพชร") {
       tmax: Number(f.MaximumTemperature[i]),
     };
   }).sort((a, b) => a.date.localeCompare(b.date));
-  return { source: "กรมอุตุนิยมวิทยา พยากรณ์อากาศ 7 วัน (ข้อมูลเปิด)", source_url: "https://www.tmd.go.th/weatherForecast7Days?province=กำแพงเพชร", build_at: String(data?.header?.LastBuildDate || ""), days };
+  return { source: "กรมอุตุนิยมวิทยา พยากรณ์อากาศ 7 วัน (ข้อมูลเปิด)", source_url: "https://www.tmd.go.th/weatherForecast7Days?province=กำแพงเพชร", fetched_at: String(data?.header?.LastBuildDate || ""), days }; // TMD stamps each response with the request time
 }
 
 // ---------- main ----------
@@ -221,12 +226,22 @@ async function readPrevious() {
   try { return JSON.parse(await readFile(path.join(OUT_DIR, "data.json"), "utf8")); } catch { return null; }
 }
 
-function stable(obj) {
-  // content used to decide whether anything meaningful changed
+// Content used to decide whether anything meaningful changed. Times that change on every run are left out.
+export function stable(obj) {
   const c = structuredClone(obj);
   delete c.generated_at;
   if (c.alerts) delete c.alerts.checked_at;
+  if (c.forecast) { delete c.forecast.fetched_at; delete c.forecast.build_at; }
   return JSON.stringify(c);
+}
+
+// Write when something changed, and otherwise at least every HEARTBEAT_H hours, so the page can show
+// when the alerts were last saved without the bot committing on every 30-minute run.
+export const HEARTBEAT_H = 3;
+export function shouldWrite(prev, data, now) {
+  if (!prev || stable(prev) !== stable(data)) return true;
+  const last = Date.parse(prev.generated_at || "");
+  return !Number.isFinite(last) || now - last >= HEARTBEAT_H * HOUR;
 }
 
 export async function main(now = Date.now()) {
@@ -234,9 +249,11 @@ export async function main(now = Date.now()) {
   const log = [];
   let river = prev?.river || null, alerts = prev?.alerts || null, forecast = prev?.forecast || null;
   try {
-    const today = await fetchRidDay(now);
-    const yday = await fetchRidDay(now - 24 * HOUR);
-    river = buildRiver([yday, today]);
+    // Oldest day first, so the newest thresholds win. Before 10:00 Thai time the 33-hour window reaches back two days.
+    const days = (thaiParts(now).h < 10 ? [now - 48 * HOUR] : []).concat([now - 24 * HOUR, now]);
+    const parts = [];
+    for (const ms of days) parts.push(await fetchRidDay(ms));
+    river = buildRiver(parts);
     log.push(`RID ok, observed_at ${river.observed_at}`);
   } catch (e) {
     log.push(`RID failed: ${e.message}${e.cause ? " (" + (e.cause.code || e.cause.message) + ")" : ""}; keeping previous river data`);
@@ -244,11 +261,11 @@ export async function main(now = Date.now()) {
   }
   try { alerts = parseCB(await fetchJson(CB_URL), now); log.push(`CB ok, ${alerts.items.length} item(s) for province 62 in 7 days`); }
   catch (e) { log.push(`CB failed: ${e.message}`); }
-  try { forecast = parseTMD(await fetchJson(TMD_URL)); log.push(`TMD ok, build ${forecast.build_at}`); }
+  try { forecast = parseTMD(await fetchJson(TMD_URL)); log.push(`TMD ok, ${forecast.days.length} days`); }
   catch (e) { log.push(`TMD failed: ${e.message}`); }
   if (!river) { console.log(log.join("\n")); throw new Error("no river data at all; nothing written"); }
   const data = { version: 1, generated_at: new Date(now).toISOString(), river, alerts, forecast };
-  if (prev && stable(prev) === stable(data)) { log.push("no change; files not written"); console.log(log.join("\n")); return { changed: false, data }; }
+  if (!shouldWrite(prev, data, now)) { log.push("no change; files not written"); console.log(log.join("\n")); return { changed: false, data }; }
   const json = JSON.stringify(data);
   await writeFile(path.join(OUT_DIR, "data.json"), json + "\n");
   await writeFile(path.join(OUT_DIR, "data.js"), `window.KPP_DATA=${json};\n`);

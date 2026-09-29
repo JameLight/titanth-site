@@ -2,8 +2,9 @@ name: Kamphaeng Phet water data
 
 # Updates flood/kamphaeng-phet/data.json and data.js from official public sources:
 # RID hourly river levels, DDPM Cell Broadcast (open data), TMD 7-day forecast (open data).
-# On main (schedule or manual run) it commits only when the data changed.
-# On a pull request it runs as a dry run: tests plus one real fetch, no commit.
+# On main (schedule or manual run) it commits only when the data changed, or at least every 3 hours.
+# On a pull request it runs as a read-only dry run: tests plus one real fetch, no commit.
+# Actions are pinned to full commit SHAs.
 
 on:
   schedule:
@@ -16,31 +17,51 @@ on:
       - "flood/kamphaeng-phet/**"
 
 permissions:
-  contents: write
-  pages: write
+  contents: read
 
 concurrency:
   group: kpp-update-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  update:
+  check:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "22"
-      - name: Test the updater
-        run: node --test .github/kpp/tests/update.test.mjs
+      - name: Test the updater and the page rules
+        run: node --test .github/kpp/tests/update.test.mjs .github/kpp/tests/page.test.mjs
+      - name: Fetch official data (dry run, nothing is committed)
+        run: node .github/kpp/update.mjs
+      - name: Show result
+        run: |
+          node -e 'const d=require("./flood/kamphaeng-phet/data.json"); console.log("river observed_at", d.river && d.river.observed_at); console.log("alerts", d.alerts && d.alerts.items.length, "forecast days", d.forecast && d.forecast.days.length)'
+
+  update:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pages: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+      - name: Test the updater and the page rules
+        run: node --test .github/kpp/tests/update.test.mjs .github/kpp/tests/page.test.mjs
       - name: Fetch official data
         run: node .github/kpp/update.mjs
       - name: Show result
         run: |
-          node -e 'const d=require("./flood/kamphaeng-phet/data.json"); console.log("river observed_at", d.river && d.river.observed_at); console.log("alerts", d.alerts && d.alerts.items.length, "forecast", d.forecast && d.forecast.build_at)'
+          node -e 'const d=require("./flood/kamphaeng-phet/data.json"); console.log("river observed_at", d.river && d.river.observed_at); console.log("alerts", d.alerts && d.alerts.items.length, "forecast days", d.forecast && d.forecast.days.length)'
       - name: Commit if the data changed (main only)
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main'
         run: |
           if git diff --quiet -- flood/kamphaeng-phet/data.json flood/kamphaeng-phet/data.js; then
             echo "no change"
