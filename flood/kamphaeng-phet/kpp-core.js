@@ -119,9 +119,15 @@
     return hi < 0 ? null : { lo, hi };
   }
 
-  // Official alerts still inside the display time their sender set, at the clock time nowMs.
+  // Official alerts in effect at the clock time nowMs: sent no more than ALERT_SKEW before now (a phone clock can run
+  // a little behind the sender's) and still inside the display time their sender set. One dated later is not shown yet.
+  const ALERT_SKEW = 15 * 60e3;
   function activeAlerts(items, nowMs) {
-    return (items || []).filter((x) => nowMs < Date.parse(x.sent_at) + x.duration_h * 3600e3);
+    return (items || []).filter((x) => { const t = Date.parse(x.sent_at); return nowMs >= t - ALERT_SKEW && nowMs < t + x.duration_h * 3600e3; });
+  }
+  // Alerts whose display time has ended by nowMs.
+  function pastAlerts(items, nowMs) {
+    return (items || []).filter((x) => nowMs >= Date.parse(x.sent_at) + x.duration_h * 3600e3);
   }
 
   // Highest reading in the whole window up to i, and how far the newest reading is below it.
@@ -174,5 +180,5 @@
     return date === thaiDate(nowMs) ? "วันนี้" : date === thaiDate(nowMs + 24 * 3600e3) ? "พรุ่งนี้" : "";
   }
 
-  return { STALE_H, FLAT_MIN, FLAT_GAP, cmOf, lastIdx, cls, gapText, isOld, trend, change8, flatRun, flatNote, readingAt, rowLine, usedSpan, activeAlerts, forecastNotice, peakDrop, thaiStampMs, thaiDate, dayLabel };
+  return { STALE_H, FLAT_MIN, FLAT_GAP, cmOf, lastIdx, cls, gapText, isOld, trend, change8, flatRun, flatNote, readingAt, rowLine, usedSpan, activeAlerts, pastAlerts, forecastNotice, peakDrop, thaiStampMs, thaiDate, dayLabel };
 });

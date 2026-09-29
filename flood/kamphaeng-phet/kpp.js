@@ -35,7 +35,7 @@
   // Time of a reading: only the clock for today, with the date for an earlier day.
   const whenText = (ms) => (K.thaiDate(ms) === K.thaiDate(Date.now()) ? thHM(ms) : thDateTime(ms));
   // "11:00–14:00 น." for two readings on one day (with the date when that day is not today); both in full otherwise.
-  const spanText = (a, b) => K.thaiDate(a) !== K.thaiDate(b) ? `${whenText(a)} – ${whenText(b)}`
+  const spanText = (a, b) => K.thaiDate(a) !== K.thaiDate(b) ? `${thDateTime(a)} – ${thDateTime(b)}`
     : whenText(b).replace(/(\d{2}:\d{2} น\.)$/, `${thHM(a).replace(" น.", "")}–$1`);
   const cm = (x) => Math.abs(K.cmOf(x));
   const cls = K.cls, lastIdx = K.lastIdx, gapText = K.gapText;
@@ -72,6 +72,7 @@
     const a = $("age"), mins = Math.round(Math.max(0, ageHi)), h = Math.floor(mins / 60), m = mins % 60;
     const ago = `${h ? h + " ชม." : ""}${h && m ? " " : ""}${m || !h ? m + " นาที" : ""}`;
     a.className = "age" + (fresh === "slow" ? " slow" : fresh === "old" ? " old" : "");
+    if (!Number.isFinite(hiMs)) { a.className = "age old"; a.textContent = "ยังไม่มีเวลาวัดในข้อมูลชุดนี้"; document.body.classList.toggle("paused", true); return; }
     a.textContent = `วัดเมื่อ ${span ? spanText(loMs, hiMs) : whenText(hiMs)}` + (ageHi < 0 ? "" : ` (${span ? "ล่าสุด " : ""}${ago}${ago.endsWith(".") ? " " : ""}ที่แล้ว)`)
       + (fresh === "slow" ? " · ข้อมูลช้า" : fresh === "old" ? " · เก่าแล้ว" : "");
     document.body.classList.toggle("paused", fresh !== "fresh");
@@ -245,7 +246,8 @@
     }
   }
 
-  function drawChart(s) {
+  function drawChart(s, at) {
+    const iAt = at == null ? LAST : at; // the hour the rows show: the newest, or the one picked on the replay bar
     const c = $("shChart"); c.innerHTML = "";
     const vals = s.s.filter((v) => v != null);
     if (!vals.length) { const t = el("text", { x: 170, y: 100, "text-anchor": "middle" }, c); t.textContent = `ยังไม่มีค่าระดับน้ำของจุดนี้ในช่วง ${N} ชม. ที่แสดง`; return; }
@@ -264,24 +266,27 @@
     let d = "", pen = false;
     s.s.forEach((v, i) => { if (v == null) { pen = false; return; } d += `${pen ? " L" : " M"}${X(i).toFixed(1)},${Y(v).toFixed(1)}`; pen = true; });
     el("path", { d: d.trim(), fill: "none", stroke: "var(--water)", "stroke-width": 2.8, "stroke-linejoin": "round" }, c);
-    el("line", { x1: X(LAST), x2: X(LAST), y1: T, y2: B, stroke: "var(--muted)", "stroke-dasharray": "3 3" }, c);
-    const lj = lastIdx(s.s, LAST); if (lj >= 0) el("circle", { cx: X(lj), cy: Y(s.s[lj]), r: 5, fill: "var(--water)", stroke: "var(--surface)", "stroke-width": 2 }, c);
+    el("line", { x1: X(iAt), x2: X(iAt), y1: T, y2: B, stroke: "var(--muted)", "stroke-dasharray": "3 3" }, c);
+    const lj = lastIdx(s.s, iAt); if (lj >= 0) el("circle", { cx: X(lj), cy: Y(s.s[lj]), r: 5, fill: "var(--water)", stroke: "var(--surface)", "stroke-width": 2 }, c);
     [[0, "start"], [Math.round(LAST / 2), "middle"], [LAST, "end"]].forEach(([i, a]) => { const e = el("text", { x: X(i), y: B + 16, "text-anchor": a }, c); e.textContent = (i === LAST ? (fresh === "fresh" ? "ตอนนี้ " : "ล่าสุด ") : "") + thDateTime(START + i * HOUR); });
     const cap = el("text", { x: L, y: B + 34 }, c); cap.textContent = "เขียว ปกติ · เหลือง เฝ้าระวัง · แดง ถึงหรือเหนือตลิ่ง (เกณฑ์กรมชลประทาน)";
   }
   function openSheet(id, from) {
     const s = D.river.stations[id]; if (!s) return;
     opener = from || document.activeElement;
-    // The sheet is about its newest reading j, whose time is in the header; a flat run is the one that ends at j,
-    // and its note gives j's time when j is not the shown hour.
-    const v = valueAt(s, LAST), c = C(LAST)(id), tr = trend(s, LAST), r = K.readingAt(s.s, LAST, ctx()), j = r.j, fl = j >= 0 ? flatRun(s, j) : null, msg = [];
+    // The sheet shows the same hour as the rows and the map: the newest hour, or the hour picked on the replay bar.
+    // It is about the reading j at or before that hour, whose time is in the header; a flat run is the one that ends
+    // at j, and its note gives j's time when j is not the shown hour.
+    const sv = parseInt($("scrub").value, 10), i = Number.isFinite(sv) ? Math.min(LAST, Math.max(0, sv)) : LAST, replay = i < LAST;
+    const v = valueAt(s, i), c = C(i)(id), tr = trend(s, i), r = K.readingAt(s.s, i, ctx()), j = r.j, fl = j >= 0 ? flatRun(s, j) : null, msg = [];
     $("shName").textContent = s.name; $("shPlace").textContent = s.place + " · กรมชลประทาน " + (j >= 0 ? thDateTime(r.ms) : "ไม่มีค่าในช่วงที่แสดง");
+    if (replay) msg.push(`กำลังย้อนดู ${thDateTime(START + i * HOUR)} เลื่อนแถบเวลาไปขวาสุดเพื่อดูค่าล่าสุด`);
     $("shGap").innerHTML = nw(gapText(v, s)); $("shTrend").innerHTML = nw(r.old ? "ไม่ทราบ" : fl ? "ไม่แน่ใจ" : tr.t); $("shCls").innerHTML = shapeSVG(c, 14) + " " + CLS[c];
-    if (j < 0) msg.push(`ยังไม่มีค่าระดับน้ำของจุดนี้ในช่วง ${N} ชม. ที่แสดง`);
+    if (j < 0) msg.push(replay ? "ยังไม่มีค่าระดับน้ำของจุดนี้ถึงเวลาที่เลือก" : `ยังไม่มีค่าระดับน้ำของจุดนี้ในช่วง ${N} ชม. ที่แสดง`);
     else if (r.old) msg.push(`จุดนี้ยังไม่มีค่าใหม่ ค่าล่าสุดเมื่อ ${thDateTime(r.ms)}`);
     if (fl) msg.push(`ค่าที่จุดนี้${r.behind || r.old ? `จนถึง ${thDateTime(r.ms)} ` : ""}${flatText(fl)} ${MAYBE_STUCK} เว็บกรมชลประทานแสดงค่าเดียวกัน ถ้าอยู่ใกล้จุดนี้ ให้ดูสภาพน้ำจริง ถามผู้นำชุมชน หรือโทร 1784`);
     const sf = $("shFlat"); sf.hidden = !msg.length; sf.innerHTML = nw(msg.join(" · "));
-    drawChart(s);
+    drawChart(s, i);
     $("app").inert = true; $("sheet").hidden = false; $("scrim").hidden = false; $("shClose").focus();
   }
   function closeSheet() {
@@ -304,7 +309,7 @@
     if (!A) { calm.innerHTML = `<p class="calm">ยังตรวจประกาศของ ปภ. ไม่ได้ในรอบนี้</p>`; return; }
     active.forEach((x) => { const d = document.createElement("div"); d.className = "alertbox"; d.innerHTML = `<b>ประกาศทางการ ปภ. ${esc(thDateTime(Date.parse(x.sent_at)))}</b>${esc(x.text)}`; act.appendChild(d); });
     if (!active.length) calm.innerHTML = `<p class="calm">ยังไม่พบประกาศที่กำลังแสดงของ ปภ. สำหรับกำแพงเพชร ในข้อมูลประกาศที่บันทึกเมื่อ ${esc(thDateTime(Date.parse(A.checked_at)))} การไม่พบประกาศไม่ได้แปลว่าปลอดภัย</p>`;
-    const old = A.items.filter((x) => !active.includes(x));
+    const old = K.pastAlerts(A.items, now);
     if (old.length) past.innerHTML = `<details><summary>ประกาศที่ผ่านมาใน 7 วัน (${old.length})</summary>${old.map((x) => `<p class="note"><b>${esc(thDateTime(Date.parse(x.sent_at)))}</b> ${esc(x.text)} (ตั้งให้แสดงบนมือถือ ${x.duration_h} ชั่วโมง)</p>`).join("")}</details>`;
   }
 

@@ -3,6 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
+import fs from "node:fs";
 
 const require = createRequire(import.meta.url);
 const K = require("../../../flood/kamphaeng-phet/kpp-core.js");
@@ -153,6 +154,17 @@ test("an alert is active only inside the display time its sender set", () => {
   assert.equal(K.activeAlerts(items, at("15:59")).length, 1);
   assert.equal(K.activeAlerts(items, at("16:00")).length, 0, "at the end of the display time it is past");
   assert.deepEqual(K.activeAlerts(undefined, at("15:00")), []);
+  const later = [{ id: "b", sent_at: "2026-09-29T16:00:00+07:00", duration_h: 2 }];
+  assert.equal(K.activeAlerts(later, at("15:00")).length, 0, "dated an hour ahead: not shown yet");
+  assert.equal(K.pastAlerts(later, at("15:00")).length, 0, "and not listed as past");
+  assert.equal(K.activeAlerts(later, at("15:50")).length, 1, "10 minutes ahead: a phone clock may run behind, so shown");
+  assert.equal(K.pastAlerts(items, at("16:00")).length, 1);
+  assert.equal(K.pastAlerts(items, at("15:59")).length, 0);
+});
+
+test("the page title and share texts do not promise automatic or current data", () => {
+  const html = fs.readFileSync(new URL("../../../flood/kamphaeng-phet/index.html", import.meta.url), "utf8");
+  for (const phrase of ["อัปเดตอัตโนมัติจากกรมชลประทาน", "อัปเดตเองจากข้อมูลกรมชลประทาน", "น้ำกำแพงเพชรตอนนี้"]) assert.ok(!html.includes(phrase), phrase);
 });
 
 test("forecast notice says only what is known about its age", () => {

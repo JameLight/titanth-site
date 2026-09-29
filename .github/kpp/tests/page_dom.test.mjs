@@ -31,12 +31,12 @@ const META = {
 const moving = (id) => Array.from({ length: N }, (_, k) => +(META[id][2] - 1 + 0.02 * (k % 4)).toFixed(2));
 const blank = (n) => Array(n).fill(null);
 
-function dataSet({ series = {}, alerts = null, forecast = null, obs = START + LAST * H } = {}) {
+function dataSet({ series = {}, alerts = null, forecast = null, start = START, obs = start + LAST * H } = {}) {
   const stations = {};
   for (const [id, [name, place, watch, bank, col]] of Object.entries(META)) {
     stations[id] = { name, place, watch, bank, col, s: series[id] || moving(id) };
   }
-  return { version: 1, river: { start: new Date(START).toISOString(), observed_at: new Date(obs).toISOString(), stations }, alerts, forecast };
+  return { version: 1, river: { start: new Date(start).toISOString(), observed_at: new Date(obs).toISOString(), stations }, alerts, forecast };
 }
 
 const strip = (h) => String(h).replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/\s+/g, " ").trim();
@@ -93,7 +93,7 @@ function openPage({ data, geo = { W: 100, H: 100, districts: [], rivers: [], sta
     hero: () => ({ big: strip($("hVerdict").innerHTML), chip: $("hTrend").hidden ? null : strip($("hTrend").innerHTML), watch: strip($("hWatch").innerHTML), sentence: strip($("hSentence").innerHTML), up: strip($("hUp").innerHTML) }),
     row, clockText: () => $("clock").textContent,
     replay(i) { const sc = $("scrub"); sc.value = String(i); sc.listeners.input.forEach((f) => f()); },
-    sheet(id) { const b = stops().find((x) => nameOf(x).startsWith(META[id][0])); b.listeners.click.forEach((f) => f()); return { place: $("shPlace").textContent, trend: strip($("shTrend").innerHTML), note: $("shFlat").hidden ? "" : strip($("shFlat").innerHTML) }; },
+    sheet(id) { const b = stops().find((x) => nameOf(x).startsWith(META[id][0])); b.listeners.click.forEach((f) => f()); return { place: $("shPlace").textContent, gap: strip($("shGap").innerHTML), cls: strip($("shCls").innerHTML), trend: strip($("shTrend").innerHTML), note: $("shFlat").hidden ? "" : strip($("shFlat").innerHTML) }; },
     alerts: () => ({ active: $("activeAlerts").children.map((d) => strip(d.innerHTML)), calm: strip($("alertCalm").innerHTML), past: strip($("alertPast").innerHTML) }),
     rain: () => ({ old: $("rainOld").hidden ? null : $("rainOld").innerHTML, days: $("days").children.map((d) => strip(d.innerHTML)) }),
     // The page's minute timer, and the page coming back into view.
@@ -247,3 +247,26 @@ test("Codex 15:52: a saved forecast with only past days says so, with the TMD li
   assert.match(pg.$("days").innerHTML, /^<p class="note">ชุดพยากรณ์ที่บันทึกไว้ไม่มีวันนี้หรือพรุ่งนี้ ดูพยากรณ์ล่าสุดที่<a href="https:\/\/www\.tmd\.go\.th\//);
   assert.match(pg.rain().old, /^พยากรณ์ชุดนี้ดึงเมื่อ 27 ก\.ย\. 08:00 น\./, "and the old-forecast notice still shows");
 });
+
+test("Codex 15:55: while replaying, the details sheet shows the same hour as the row", () => {
+  const p7 = Array.from({ length: N }, (_, k) => (k >= 10 && k <= 15 ? 5.5 : 4.0)); // over the 5.34 m bank from hour 10 to 15
+  const pg = openPage({ data: dataSet({ series: { "P.7A": p7 } }), now: at("09-29T14:30") });
+  pg.replay(12); // 28 Sep 18:00
+  assert.match(pg.row("P.7A"), /^ล้นตลิ่ง 0\.16 ม\./);
+  const sh = pg.sheet("P.7A");
+  assert.equal(sh.gap, "ล้นตลิ่ง 0.16 ม.");
+  assert.match(sh.cls, /วิกฤติ/);
+  assert.match(sh.place, /กรมชลประทาน 28 ก\.ย\. 18:00 น\.$/);
+  assert.match(sh.note, /^กำลังย้อนดู 28 ก\.ย\. 18:00 น\. เลื่อนแถบเวลาไปขวาสุดเพื่อดูค่าล่าสุด/);
+  const now = openPage({ data: dataSet({ series: { "P.7A": p7 } }), now: at("09-29T14:30") }).sheet("P.7A");
+  assert.equal(now.gap, "ต่ำกว่าตลิ่ง 1.34 ม.", "at the newest hour the sheet shows the newest reading");
+  assert.ok(!now.note.includes("กำลังย้อนดู"));
+});
+
+test("Codex 15:55: a time span across midnight gives both dates", () => {
+  const start = Date.parse("2026-09-27T17:00:00+07:00"); // hour 32 is 29 Sep 01:00
+  const p7 = [...moving("P.7A").slice(0, 31), null, null]; // newest reading 28 Sep 23:00
+  const pg = openPage({ data: dataSet({ start, series: { "P.7A": p7 } }), now: Date.parse("2026-09-29T01:30:00+07:00") });
+  assert.equal(pg.age(), "วัดเมื่อ 28 ก.ย. 23:00 น. – 29 ก.ย. 01:00 น. (ล่าสุด 30 นาทีที่แล้ว)");
+});
+
