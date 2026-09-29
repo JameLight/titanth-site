@@ -1,5 +1,5 @@
-export const SNAPSHOT_START = Date.parse("2026-09-29T06:00:00+07:00");
-export const SNAPSHOT_END = Date.parse("2026-09-29T08:00:00+07:00");
+export const SNAPSHOT_START = Date.parse("2026-09-29T07:00:00+07:00");
+export const SNAPSHOT_END = Date.parse("2026-09-29T09:00:00+07:00");
 
 export function snapshotVisible(now = Date.now()) {
   return Number.isFinite(now) && now >= SNAPSHOT_START && now < SNAPSHOT_END;

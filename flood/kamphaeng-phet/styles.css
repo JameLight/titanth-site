@@ -54,7 +54,7 @@ details{border-top:1px solid var(--line);margin-top:.9rem;padding-top:.7rem}summ
 .station h2{font-size:.96rem;line-height:1.3;margin:.45rem 0 .55rem}
 .water-meter{height:1.1rem;position:relative;overflow:hidden;border:1px solid #8db0c0;border-radius:1rem;background:repeating-linear-gradient(90deg,#dcecf2 0,#dcecf2 24%,#c4dde6 24.5%,#dcecf2 25%)}
 .water-fill{display:block;height:100%;border-radius:1rem;background:#24779f}
-.level-p7a{width:64.42%}.level-p26b{width:96.6%;background:#c67b0a}.level-p78{width:100%;background:#a92f2a}
+.level-p7a{width:66.85%}.level-p26b{width:95.8%;background:#c67b0a}.level-p78{width:100%;background:#a92f2a}
 .bank-mark{position:absolute;right:0;top:0;bottom:0;width:3px;background:#213b47}
 .station-reading{display:flex;align-items:baseline;justify-content:space-between;gap:.2rem;flex-wrap:wrap;margin:.38rem 0 .1rem;font-size:.9rem}
 .station-reading strong{font-size:1.25rem;line-height:1.1}.station-reading span{color:var(--muted)}
