@@ -119,6 +119,7 @@ function askConfirm(message, title = "ยืนยันการทำราย
 
 function hasUnsavedDraft() {
   if (!casesLoaded || localWrites || draftTouched || quickLocationInProgress || lastQuickLocationText || pendingHandoff ||
+      pendingMediaText || $("#media-dialog").open || $("#intake-dialog").open ||
       $("#confirm-dialog").open || $("#handoff-dialog").open) return true;
   const manualCopy = $("#manual-copy");
   if (manualCopy && !manualCopy.hidden) return true;
