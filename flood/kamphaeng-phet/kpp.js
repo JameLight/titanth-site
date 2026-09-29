@@ -25,9 +25,9 @@
   const MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
   const GISTDA_UNTIL = Date.parse("2026-10-02T23:59:00+07:00");
   const PCT = { TH6201: 0.47, TH6202: 0, TH6203: 0.16, TH6204: 5.16, TH6205: 8.88, TH6206: 0, TH6207: 0, TH6208: 3.64, TH6209: 0.62, TH6210: 5.26, TH6211: 0.08 };
-  // P.50A is projected with the same linear fit as the other gauges (RID Ping station list, 16°32'59"N 99°15'00"E).
-  // P.26B has no confirmed position, so it is listed in the river panel but not pinned on the map.
-  const EXTRA_POS = { "P.50A": [87.9, 164.5] };
+  // P.50A is projected with the same straight-line fit as the other gauges, from RID's station map (16.63924N 99.24183E).
+  // P.26B is listed in the river panel but not pinned on the map.
+  const EXTRA_POS = { "P.50A": [86.6, 135.1] };
   const NO_PIN = new Set(["P.26B"]);
   const REDUCED = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
   const SCROLL = { behavior: REDUCED ? "auto" : "smooth" };

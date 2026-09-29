@@ -170,7 +170,11 @@ test("the first screen says the site takes no reports, and the dated tiles need 
   const html = fs.readFileSync(new URL("../../../flood/kamphaeng-phet/index.html", import.meta.url), "utf8");
   const role = html.indexOf('<p class="role">'), alerts = html.indexOf('id="activeAlerts"'), hero = html.indexOf('id="heroTitle"');
   assert.ok(role > 0 && role < alerts && alerts < hero, "the role line comes before the alerts, so a long alert cannot push it under the call bar");
-  assert.match(html.slice(role, html.indexOf("</p>", role)), /ไม่ใช่หน่วยงานรัฐ ไม่รับแจ้งเหตุ/);
+  const roleText = html.slice(role, html.indexOf("</p>", role));
+  assert.match(roleText, /ไม่ใช่หน่วยงานรัฐ ไม่รับแจ้งเหตุ/);
+  // The call bar comes first in the markup and sits at the bottom only by style, so the line names the number, not a place.
+  assert.match(roleText, /โทร 1784/);
+  assert.doesNotMatch(roleText, /ด้านล่าง|ด้านบน/);
   assert.match(html, /<div class="tiles" id="tiles" hidden>/, "hidden until the script shows them");
 });
 
@@ -217,4 +221,40 @@ test("forecast cards are labelled by date", () => {
   assert.equal(K.dayLabel("2026-09-30", noon29), "พรุ่งนี้");
   assert.equal(K.dayLabel("2026-10-01", noon29), "");
   assert.equal(K.dayLabel("2026-09-30", Date.parse("2026-09-29T23:30:00+07:00")), "พรุ่งนี้", "Thai date, not UTC date");
+});
+
+test("map pins sit where RID's station map puts the gauges, each inside the district RID gives", () => {
+  // Pins are projected from RID's station map coordinates (fixtures/rid_station_map.json) with one straight-line fit.
+  // P.50A was once placed from an older figure about 10 km south, outside every district on this map.
+  const read = (f) => fs.readFileSync(new URL(f, import.meta.url), "utf8");
+  const geoSrc = read("../../../flood/kamphaeng-phet/geo.js"), GEO = JSON.parse(geoSrc.slice(geoSrc.indexOf("{"), geoSrc.lastIndexOf("}") + 1));
+  const extra = JSON.parse(read("../../../flood/kamphaeng-phet/kpp.js").match(/const EXTRA_POS = (\{[^;]*\});/)[1]);
+  const rid = Object.fromEntries(JSON.parse(read("fixtures/rid_station_map.json")).stations.map((s) => [s.code, s]));
+  const amp = Object.fromEntries(JSON.parse(read("fixtures/rid_station_districts.json")).stations.map((s) => [s.code, s.ampur]));
+  const fit = (pairs) => {
+    const n = pairs.length, mx = pairs.reduce((s, p) => s + p[0], 0) / n, my = pairs.reduce((s, p) => s + p[1], 0) / n;
+    const a = pairs.reduce((s, p) => s + (p[0] - mx) * (p[1] - my), 0) / pairs.reduce((s, p) => s + (p[0] - mx) ** 2, 0);
+    return (v) => a * v + (my - a * mx);
+  };
+  const ids = Object.keys(GEO.stations);
+  const fx = fit(ids.map((id) => [+rid[id].long, GEO.stations[id][0]])), fy = fit(ids.map((id) => [+rid[id].lat, GEO.stations[id][1]]));
+  const pos = { ...GEO.stations, ...extra };
+  for (const [id, p] of Object.entries(pos)) {
+    assert.ok(Math.hypot(p[0] - fx(+rid[id].long), p[1] - fy(+rid[id].lat)) < 1, `${id} pin is at RID's coordinates`);
+  }
+  const inside = ([x, y], d) => {
+    let c = false;
+    for (const ring of d.split("M").filter(Boolean).map((r) => [...r.matchAll(/(-?[\d.]+),(-?[\d.]+)/g)].map((m) => [+m[1], +m[2]]))) {
+      for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const [x1, y1] = ring[i], [x2, y2] = ring[j];
+        if ((y1 > y) !== (y2 > y) && x < ((x2 - x1) * (y - y1)) / (y2 - y1) + x1) c = !c;
+      }
+    }
+    return c;
+  };
+  for (const [id, p] of Object.entries(pos)) {
+    if (id === "P.2A") continue; // upstream in Tak, outside this map's districts
+    const d = GEO.districts.find((x) => x.name === amp[id]);
+    assert.ok(d && inside(p, d.d), `${id} pin is inside อ.${amp[id]}`);
+  }
 });

@@ -119,3 +119,18 @@ test("every gauge's district matches RID's own station list", () => {
   }
   assert.equal(rid["P.26B"].ampur, "เมืองกำแพงเพชร");
 });
+
+test("every village or subdistrict named for a gauge is in RID's own records for it", () => {
+  // A village (บ้าน…) or subdistrict (ต.…) on the page must appear in RID's hourly-table header for the gauge or in RID's
+  // station map (fixtures/rid_station_map.json). An earlier version named P.50A's village from memory (บ้านดงส้ม).
+  const col = Object.fromEntries(load("rid_station_districts.json").stations.map((s) => [s.code, s]));
+  const map = Object.fromEntries(load("rid_station_map.json").stations.map((s) => [s.code, s]));
+  for (const [code, meta] of Object.entries(STATIONS)) {
+    assert.ok(map[code], `${code} is on RID's station map`);
+    const rid = `${col[code].header} ${map[code].detail}`;
+    for (const t of `${meta.name} ${meta.place}`.match(/(?:บ้าน|ต\.)[^\s()]+/g) || []) {
+      assert.ok(rid.includes(t), `${code}: "${t}" is not in RID's records (${rid})`);
+    }
+  }
+  assert.ok(!`${col["P.50A"].header} ${map["P.50A"].detail}`.includes("บ้านดงส้ม"));
+});
