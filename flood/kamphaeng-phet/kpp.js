@@ -86,7 +86,9 @@
     const critNames = ids.filter((id, k) => c[k] === "crit").map((id) => SHORT[id] || id);
     const txt = none ? "ไม่มีข้อมูลล่าสุด ดูต้นทางหรือโทร 1784"
       : [n.crit ? `วิกฤติ ${n.crit} จุด` + (n.crit <= 2 ? ` (${critNames.join(", ")})` : "") : "", n.watch ? `เฝ้าระวัง ${n.watch} จุด` : "",
-        !n.crit && !n.watch && !n.stale ? "ปกติทุกจุด" : "", !n.crit && !n.watch && n.stale ? `ปกติ ${ids.length - n.stale} จุด` : "",
+        // The gauges only, against RID's watch level: not a word that could be read as the whole province being fine.
+        !n.crit && !n.watch && !n.stale ? `จุดวัดน้ำทั้ง ${ids.length} จุด ต่ำกว่าเกณฑ์เฝ้าระวัง` : "",
+        !n.crit && !n.watch && n.stale ? `จุดวัดน้ำ ${ids.length - n.stale} จุด ต่ำกว่าเกณฑ์เฝ้าระวัง` : "",
         n.stale ? `ไม่มีค่าล่าสุด ${n.stale} จุด` : ""].filter(Boolean).join(" · "); // the town trend is right below, in the hero
     $("stWord").innerHTML = shapeSVG(worst) + "<span>" + esc(txt) + "</span>";
     const t = $("tRiver");
@@ -212,7 +214,10 @@
     if (!GEO) { $("mapNote").textContent = "แผนที่โหลดไม่ขึ้น ลองโหลดหน้าใหม่"; return; } // geo.js did not load
     map.setAttribute("viewBox", `0 0 ${GEO.W} ${GEO.H}`);
     const expired = Date.now() > GISTDA_UNTIL;
-    if (expired) { map.classList.add("oldfill"); $("mapNote").textContent = "ข้อมูลดาวเทียมชุดนี้ (23–29 ก.ย.) เก่าแล้ว จึงไม่ลงสีอำเภอ ดูภาพล่าสุดที่เว็บ GISTDA"; $("tMap").textContent = "–"; }
+    if (expired) {
+      map.classList.add("oldfill"); $("tMap").textContent = "–";
+      $("mapNote").innerHTML = `ข้อมูลดาวเทียมชุดนี้ (23–29 ก.ย.) เก่าแล้ว จึงไม่ลงสีอำเภอ ดูภาพล่าสุดที่<a href="https://disaster.gistda.or.th/flood" target="_blank" rel="noopener">เว็บ GISTDA ↗</a>`;
+    }
     GEO.districts.forEach((d) => { const p = PCT[d.pcode]; const b = p == null || p === 0 ? 0 : p < 1 ? 1 : p <= 5 ? 2 : 3; el("path", { d: d.d, class: "d f" + b }, map); });
     GEO.districts.filter((d) => d.pcode !== "TH6205" && d.pcode !== "TH6201").forEach((d) => { const t = el("text", { x: d.cx, y: d.cy, "text-anchor": "middle", class: "dl" }, map); t.textContent = d.name.replace("วรลักษบุรี", "ฯ").replace("ทรายทองวัฒนา", "ทรายทองฯ"); });
     GEO.rivers.forEach((r, i) => { const main = i === 0; el("path", { d: r.d, class: "rv", "stroke-width": main ? 4.5 : 2.4 }, map); el("path", { d: r.d, class: "rf", "stroke-width": main ? 2 : 1.2 }, map); });
@@ -318,12 +323,12 @@
     // with a link to the forecast page it came from.
     const known = Number.isFinite(fAt);
     $("rainSrc").textContent = "พยากรณ์ 7 วัน กรมอุตุนิยมวิทยา" + (known ? ` · ดึงเมื่อ ${whenText(fAt)}` : "");
-    if (notice) {
-      const src = /^https:\/\/(www\.)?tmd\.go\.th\//.test(F.source_url || "") ? F.source_url : "https://www.tmd.go.th/";
-      warn.hidden = false;
-      warn.innerHTML = esc(notice).replace("เว็บกรมอุตุนิยมวิทยา", `<a href="${esc(src)}" target="_blank" rel="noopener">เว็บกรมอุตุนิยมวิทยา ↗</a>`);
-    }
+    const src = /^https:\/\/(www\.)?tmd\.go\.th\//.test(F.source_url || "") ? F.source_url : "https://www.tmd.go.th/";
+    const tmdLink = `<a href="${esc(src)}" target="_blank" rel="noopener">เว็บกรมอุตุนิยมวิทยา ↗</a>`;
+    if (notice) { warn.hidden = false; warn.innerHTML = esc(notice).replace("เว็บกรมอุตุนิยมวิทยา", tmdLink); }
     const days = F.days.filter((x) => x.date >= today).slice(0, 2);
+    // A saved forecast whose days have all passed says so, instead of leaving the box empty.
+    if (!days.length) { box.innerHTML = `<p class="note">ชุดพยากรณ์ที่บันทึกไว้ไม่มีวันนี้หรือพรุ่งนี้ ดูพยากรณ์ล่าสุดที่${tmdLink}</p>`; return; }
     days.forEach((x) => {
       const [, m, dd] = x.date.split("-").map(Number), label = K.dayLabel(x.date, now);
       const drops = x.rain_pct >= 60 ? 3 : x.rain_pct >= 30 ? 2 : x.rain_pct > 0 ? 1 : 0;
@@ -414,14 +419,14 @@
   // 6 hours, the day its midnight. The top bar, hero, rows and map are redrawn only when a class, the set's age class
   // or the date changed; alerts and the forecast redraw themselves only when what they show changed.
   let clockKey = "";
-  const clockKeyNow = () => [fresh, K.thaiDate(Date.now()), ...Object.keys(D.river.stations).map(C(LAST))].join("|");
+  const clockKeyNow = () => [fresh, K.thaiDate(Date.now()), Date.now() > GISTDA_UNTIL, ...Object.keys(D.river.stations).map(C(LAST))].join("|");
   function retick() {
     if (!D || !D.river) return;
     const i = +$("scrub").value;
     try {
       freshness();
       const key = clockKeyNow();
-      if (key !== clockKey) { clockKey = key; status(); hero(); paintRibbon(i); paintMap(i); }
+      if (key !== clockKey) { clockKey = key; status(); hero(); paintRibbon(i); buildMap(); paintMap(i); }
     } catch (e) { if (window.console) console.error(e); }
     try { alerts(false); } catch (e) { if (window.console) console.error(e); }
     try { rain(false); } catch (e) { if (window.console) console.error(e); }

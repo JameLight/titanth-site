@@ -105,8 +105,7 @@ function openPage({ data, geo = { W: 100, H: 100, districts: [], rivers: [], sta
 test("Codex 15:19: a gauge with no reading for more than 3 hours by the clock is not counted as normal", () => {
   const p7 = [...moving("P.7A").slice(0, 30), null, null, null]; // newest reading 11:00
   const pg = openPage({ data: dataSet({ series: { "P.7A": p7 } }), now: at("09-29T15:30") });
-  assert.ok(!pg.status().includes("ปกติทุกจุด"), pg.status());
-  assert.match(pg.status(), /ไม่มีค่าล่าสุด 1 จุด/);
+  assert.equal(pg.status(), "จุดวัดน้ำ 6 จุด ต่ำกว่าเกณฑ์เฝ้าระวัง · ไม่มีค่าล่าสุด 1 จุด", "the old gauge is not counted with the others");
   assert.equal(pg.row("P.7A"), "ค่าเดิม ต่ำกว่าตลิ่ง 1.92 ม. | ไม่มีค่าใหม่ตั้งแต่ 29 ก.ย. 11:00 น.");
   assert.match(pg.hero().watch, /^ไม่มีข้อมูลล่าสุด · ค่าล่าสุด 11:00 น\./);
   assert.deepEqual(pg.errors, []);
@@ -115,7 +114,7 @@ test("Codex 15:19: a gauge with no reading for more than 3 hours by the clock is
 test("Codex 15:12: the top bar gives the span of the readings it counted, and each line its own time", () => {
   const p7 = [...moving("P.7A").slice(0, 31), null, null]; // newest reading 12:00
   const pg = openPage({ data: dataSet({ series: { "P.7A": p7 } }), now: at("09-29T14:30") });
-  assert.equal(pg.status(), "ปกติทุกจุด");
+  assert.equal(pg.status(), "จุดวัดน้ำทั้ง 7 จุด ต่ำกว่าเกณฑ์เฝ้าระวัง");
   assert.equal(pg.age(), "วัดเมื่อ 12:00–14:00 น. (ล่าสุด 30 นาทีที่แล้ว)");
   assert.match(pg.hero().big, /^ตอน 12:00 น\. อีก/);
   assert.equal(pg.hero().chip, null, "no trend chip for an earlier reading");
@@ -198,7 +197,7 @@ test("Codex 15:14: alerts and forecast labels follow the clock on an open page w
 test("the minute timer marks a gauge old when it passes 3 hours by the clock", () => {
   const p7 = [...moving("P.7A").slice(0, 31), null, null]; // newest reading 12:00
   const pg = openPage({ data: dataSet({ series: { "P.7A": p7 } }), now: at("09-29T14:30") });
-  assert.equal(pg.status(), "ปกติทุกจุด");
+  assert.equal(pg.status(), "จุดวัดน้ำทั้ง 7 จุด ต่ำกว่าเกณฑ์เฝ้าระวัง");
   pg.clock.now = at("09-29T15:01"); pg.minute();
   assert.match(pg.status(), /ไม่มีค่าล่าสุด 1 จุด/);
   assert.match(pg.row("P.7A"), /\| ไม่มีค่าใหม่ตั้งแต่ 29 ก\.ย\. 12:00 น\.$/);
@@ -208,7 +207,7 @@ test("Codex 15:21: without geo.js the map says so and the rest of the page still
   const pg = openPage({ data: dataSet(), geo: null, now: at("09-29T14:30") });
   assert.deepEqual(pg.errors, []);
   assert.equal(pg.$("mapNote").textContent, "แผนที่โหลดไม่ขึ้น ลองโหลดหน้าใหม่");
-  assert.equal(pg.status(), "ปกติทุกจุด");
+  assert.equal(pg.status(), "จุดวัดน้ำทั้ง 7 จุด ต่ำกว่าเกณฑ์เฝ้าระวัง");
   assert.ok(pg.row("P.7A"));
   assert.ok(pg.timers.some((t) => t.kind === "interval" && t.ms === 60000), "the minute timer is set");
   assert.ok(pg.timers.some((t) => t.kind === "interval" && t.ms === 600000), "the 10-minute reload is set");
@@ -219,8 +218,32 @@ test("Codex 15:21: without data.js the page reads data.json at once", async () =
   assert.equal(pg.status(), "ยังโหลดข้อมูลไม่ได้");
   await pg.settle();
   assert.ok(pg.fetched.some((u) => u.startsWith("data.json")), "data.json was read without waiting for a timer");
-  assert.equal(pg.status(), "ปกติทุกจุด");
+  assert.equal(pg.status(), "จุดวัดน้ำทั้ง 7 จุด ต่ำกว่าเกณฑ์เฝ้าระวัง");
   const off = openPage({ data: undefined, now: at("09-29T14:30") });
   await off.settle();
   assert.ok(off.timers.some((t) => t.kind === "timeout" && t.ms === 60000), "offline: tries again in a minute");
+});
+
+test("Codex 15:52: the top bar speaks of the gauges and RID's watch level, never a bare 'ปกติทุกจุด'", () => {
+  const pg = openPage({ data: dataSet(), now: at("09-29T14:30") });
+  assert.equal(pg.status(), "จุดวัดน้ำทั้ง 7 จุด ต่ำกว่าเกณฑ์เฝ้าระวัง");
+  assert.ok(!pg.status().includes("ปกติ"));
+});
+
+test("Codex 15:52: the satellite colours go when their display time ends on an open page", () => {
+  const pg = openPage({ data: dataSet(), now: at("10-02T23:58") });
+  assert.ok(!pg.$("mapNote").innerHTML.includes("เก่าแล้ว"), "before 2 Oct 23:59 the colours stay");
+  pg.clock.now = at("10-03T00:00"); pg.minute();
+  assert.match(pg.$("mapNote").innerHTML, /^ข้อมูลดาวเทียมชุดนี้ \(23–29 ก\.ย\.\) เก่าแล้ว จึงไม่ลงสีอำเภอ/);
+  assert.match(pg.$("mapNote").innerHTML, /<a href="https:\/\/disaster\.gistda\.or\.th\/flood" target="_blank" rel="noopener">เว็บ GISTDA ↗<\/a>$/);
+  assert.equal(pg.$("tMap").textContent, "–");
+  assert.deepEqual(pg.errors, []);
+});
+
+test("Codex 15:52: a saved forecast with only past days says so, with the TMD link", () => {
+  const forecast = { source_url: "https://www.tmd.go.th/weatherForecast7Days?province=กำแพงเพชร", fetched_at: "2026-09-27 08:00:00",
+    days: [{ date: "2026-09-27", rain_pct: 60, desc: "ฝนฟ้าคะนอง" }, { date: "2026-09-28", rain_pct: 40, desc: "ฝนฟ้าคะนอง" }] };
+  const pg = openPage({ data: dataSet({ forecast }), now: at("09-29T15:00") });
+  assert.match(pg.$("days").innerHTML, /^<p class="note">ชุดพยากรณ์ที่บันทึกไว้ไม่มีวันนี้หรือพรุ่งนี้ ดูพยากรณ์ล่าสุดที่<a href="https:\/\/www\.tmd\.go\.th\//);
+  assert.match(pg.rain().old, /^พยากรณ์ชุดนี้ดึงเมื่อ 27 ก\.ย\. 08:00 น\./, "and the old-forecast notice still shows");
 });
