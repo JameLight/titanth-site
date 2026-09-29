@@ -176,15 +176,28 @@ async function fetchRidDay(dayMs) {
 }
 
 // ---------- DDPM Cell Broadcast ----------
+// The file must hold the three tables read here, each with the fields read here. A changed or broken file throws,
+// so the caller keeps the previous alerts with their old time instead of showing "no alerts".
+const CB_FIELDS = {
+  fact_cb: ["alert_id", "date_id", "time", "message_id", "duration_hour"],
+  dim_message: ["message_id", "message_th"],
+  bridge_alert_location: ["alert_id", "province_code"],
+};
 export function parseCB(data, nowMs, province = "62", days = 7) {
-  const aids = new Set((data.bridge_alert_location || []).filter((x) => String(x.province_code) === province).map((x) => x.alert_id));
-  const msg = new Map((data.dim_message || []).map((m) => [m.message_id, m]));
+  for (const [table, fields] of Object.entries(CB_FIELDS)) {
+    const rows = data?.[table];
+    if (!Array.isArray(rows) || rows.length === 0) throw new Error(`CB file: ${table} is missing or empty`);
+    const missing = fields.filter((f) => !rows.every((x) => x && typeof x === "object" && f in x));
+    if (missing.length) throw new Error(`CB file: ${table} lacks ${missing.join(", ")}`);
+  }
+  const aids = new Set(data.bridge_alert_location.filter((x) => String(x.province_code) === province).map((x) => x.alert_id));
+  const msg = new Map(data.dim_message.map((m) => [m.message_id, m]));
   const items = [];
-  for (const x of data.fact_cb || []) {
+  for (const x of data.fact_cb) {
     if (!aids.has(x.alert_id)) continue;
     const dm = /D-(\d{4})(\d{2})(\d{2})/.exec(String(x.date_id || ""));
     const tm = /(\d{1,2}):(\d{2})/.exec(String(x.time || ""));
-    if (!dm || !tm) continue;
+    if (!dm || !tm) throw new Error(`CB file: unreadable date or time for ${x.alert_id}`); // never drop a province alert quietly
     const sentIso = isoThai(+dm[1], +dm[2], +dm[3], +tm[1], +tm[2]);
     const sent = Date.parse(sentIso);
     if (nowMs - sent > days * 24 * HOUR) continue;
@@ -259,10 +272,12 @@ export async function main(now = Date.now()) {
     log.push(`RID failed: ${e.message}${e.cause ? " (" + (e.cause.code || e.cause.message) + ")" : ""}; keeping previous river data`);
     if (process.env.GITHUB_ACTIONS) console.log("::warning::RID could not be reached from this runner; river data was not refreshed here. Browsers in Thailand read RID directly.");
   }
+  // A failed source keeps its previous values and time; on GitHub the failure is also shown as a warning on the run.
+  const warn = (what, e) => { if (process.env.GITHUB_ACTIONS) console.log(`::warning::${what} were not refreshed (${e.message}); the page keeps the previous ones with the time they were saved.`); };
   try { alerts = parseCB(await fetchJson(CB_URL), now); log.push(`CB ok, ${alerts.items.length} item(s) for province 62 in 7 days`); }
-  catch (e) { log.push(`CB failed: ${e.message}`); }
+  catch (e) { log.push(`CB failed: ${e.message}`); warn("Alerts", e); }
   try { forecast = parseTMD(await fetchJson(TMD_URL)); log.push(`TMD ok, ${forecast.days.length} days`); }
-  catch (e) { log.push(`TMD failed: ${e.message}`); }
+  catch (e) { log.push(`TMD failed: ${e.message}`); warn("Forecasts", e); }
   if (!river) { console.log(log.join("\n")); throw new Error("no river data at all; nothing written"); }
   const data = { version: 1, generated_at: new Date(now).toISOString(), river, alerts, forecast };
   if (!shouldWrite(prev, data, now)) { log.push("no change; files not written"); console.log(log.join("\n")); return { changed: false, data }; }

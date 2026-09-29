@@ -5,10 +5,11 @@ name: Kamphaeng Phet water data
 # On main (schedule or manual run) it commits only when the data changed, or at least every 3 hours.
 # On a pull request it runs as a read-only dry run: tests plus one real fetch, no commit.
 # Actions are pinned to full commit SHAs.
+# GitHub may start scheduled runs late or skip them; the page shows when alerts and forecasts were saved.
 
 on:
   schedule:
-    - cron: "7,37 * * * *"
+    - cron: "13,43 * * * *"
   workflow_dispatch:
   pull_request:
     paths:
