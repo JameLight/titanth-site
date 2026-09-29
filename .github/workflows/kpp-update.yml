@@ -73,7 +73,20 @@ jobs:
           git commit -m "Kamphaeng Phet water data $(date -u +%Y-%m-%dT%H:%MZ)"
           git pull --rebase --autostash origin main
           git push origin HEAD:main
-          # ask Pages to rebuild in case a token push does not start a build
-          gh api -X POST "repos/${{ github.repository }}/pages/builds" || echo "pages build request failed (the push may still trigger a build)"
+          # Ask Pages to rebuild in case a token push does not start a build, then wait for the build of this commit
+          # and fail the job if it errored or did not finish, so a green run means the site was rebuilt.
+          sha=$(git rev-parse HEAD)
+          gh api -X POST "repos/${{ github.repository }}/pages/builds" >/dev/null || echo "build request not accepted (a build may already be running)"
+          for i in $(seq 1 30); do
+            latest=$(gh api "repos/${{ github.repository }}/pages/builds/latest" --jq '.commit + " " + .status' || echo "unknown unknown")
+            echo "pages build: $latest"
+            case "$latest" in
+              "$sha built") exit 0 ;;
+              "$sha errored") echo "pages build errored"; exit 1 ;;
+            esac
+            sleep 10
+          done
+          echo "pages build for $sha did not finish in 5 minutes"
+          exit 1
         env:
           GH_TOKEN: ${{ github.token }}

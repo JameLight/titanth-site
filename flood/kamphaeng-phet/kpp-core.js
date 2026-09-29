@@ -54,7 +54,8 @@
     const ja = lastIdx(series, i), jb = ja < 0 ? -1 : lastIdx(series, ja - 8);
     if (ja < 0 || jb < 0 || ja === jb) return null;
     const d = cmOf(series[ja]) - cmOf(series[jb]), h = ja - jb;
-    return { d, h, t: d === 0 ? `ทรงตัวใน ${h} ชม.` : `${d > 0 ? "ขึ้น" : "ลด"} ${(Math.abs(d) / 100).toFixed(2)} ม. ใน ${h} ชม.` };
+    // In centimetres, like the 3-hour trend next to it, so readers do not have to convert units.
+    return { d, h, t: d === 0 ? `ทรงตัวใน ${h} ชม.` : `${d > 0 ? "ขึ้น" : "ลด"} ${Math.abs(d)} ซม. ใน ${h} ชม.` };
   }
 
   // A gauge whose last FLAT_MIN or more hourly readings, with no hour missing, stay within 1 cm may be stuck,

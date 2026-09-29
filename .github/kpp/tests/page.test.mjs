@@ -37,7 +37,7 @@ test("3-hour trend gives the real number of hours and a steady 5 cm threshold", 
 test("8-hour change says steady instead of 'up 0.00 m'", () => {
   const s = [3.9, 3.9, 3.9, 3.9, 3.9, 3.9, 3.9, 3.9, 3.9];
   assert.equal(K.change8(s, 8).t, "ทรงตัวใน 8 ชม.");
-  assert.equal(K.change8([3.12, 0, 0, 0, 0, 0, 0, 0, 3.94], 8).t, "ขึ้น 0.82 ม. ใน 8 ชม.");
+  assert.equal(K.change8([3.12, 0, 0, 0, 0, 0, 0, 0, 3.94], 8).t, "ขึ้น 82 ซม. ใน 8 ชม.");
 });
 
 test("flat run: hours are the span, and 'at least' only when no earlier reading exists", () => {
@@ -146,7 +146,7 @@ test("3-hour and 8-hour changes count back from the gauge's newest reading", () 
   const tak = Array.from({ length: 33 }, (_, k) => (k <= 30 ? +(1 + 0.04 * k).toFixed(2) : null));
   assert.equal(K.trend(tak, LAST).t, "↗ ขึ้น 12 ซม. ใน 3 ชม.", "not a 1-hour span called steady");
   assert.equal(K.trend(tak, 30).t, "↗ ขึ้น 12 ซม. ใน 3 ชม.", "the same as at its own newest hour");
-  assert.equal(K.change8(tak, LAST).t, "ขึ้น 0.32 ม. ใน 8 ชม.");
+  assert.equal(K.change8(tak, LAST).t, "ขึ้น 32 ซม. ใน 8 ชม.");
 });
 
 test("an alert is active only inside the display time its sender set", () => {

@@ -208,8 +208,8 @@
       b.setAttribute("aria-label", `${s.name} ${CLS[c]} ${gapText(v, s)}` + (sub ? " " + sub : "") + (flat ? " " + flat : ""));
     }
     const when = thDateTime(START + i * HOUR);
-    // "ตอนนี้" only when the set is fresh; a late set's newest hour is its latest reading, not now.
-    $("clock").textContent = i === LAST ? (fresh === "fresh" ? "ตอนนี้ (" : "ค่าล่าสุด (") + when + ")" : when;
+    // The newest hour is the latest reading, which can be up to two hours old even in a fresh set, so it is never called "now".
+    $("clock").textContent = i === LAST ? "ค่าวัดล่าสุด (" + when + ")" : when;
     $("scrub").setAttribute("aria-valuetext", when);
     $("riverTime").textContent = "กรมชลประทาน · " + when;
   }
@@ -225,9 +225,9 @@
       $("mapNote").innerHTML = `ข้อมูลดาวเทียมชุดนี้ (23–29 ก.ย.) เก่าแล้ว จึงไม่ลงสีอำเภอ ดูภาพล่าสุดที่<a href="https://disaster.gistda.or.th/flood" target="_blank" rel="noopener">เว็บ GISTDA ↗</a>`;
     }
     GEO.districts.forEach((d) => { const p = PCT[d.pcode]; const b = p == null || p === 0 ? 0 : p < 1 ? 1 : p <= 5 ? 2 : 3; el("path", { d: d.d, class: "d f" + b }, map); });
-    GEO.districts.filter((d) => d.pcode !== "TH6205" && d.pcode !== "TH6201").forEach((d) => { const t = el("text", { x: d.cx, y: d.cy, "text-anchor": "middle", class: "dl" }, map); t.textContent = d.name.replace("วรลักษบุรี", "ฯ").replace("ทรายทองวัฒนา", "ทรายทองฯ"); });
+    GEO.districts.filter((d) => d.pcode !== "TH6205" && d.pcode !== "TH6201").forEach((d) => { const t = el("text", { x: d.cx, y: d.cy + (d.pcode === "TH6211" ? 8 : 0), "text-anchor": "middle", class: "dl" }, map); /* โกสัมพีนคร sits a little lower, clear of the P.50A pin */ t.textContent = d.name.replace("วรลักษบุรี", "ฯ").replace("ทรายทองวัฒนา", "ทรายทองฯ"); });
     GEO.rivers.forEach((r, i) => { const main = i === 0; el("path", { d: r.d, class: "rv", "stroke-width": main ? 4.5 : 2.4 }, map); el("path", { d: r.d, class: "rf", "stroke-width": main ? 2 : 1.2 }, map); });
-    const LAB = { "P.2A": ["ตาก (ต้นน้ำ)", 10, 4], "P.7A": ["ตัวเมือง", 10, -8], "P.15": ["ปิง คลองขลุง", -10, -8, "end"], "P.16": ["ขาณุฯ", 10, 4], "P.47A": ["โป่งน้ำร้อน", -10, 14, "end"], "P.78": ["สามเรือน", -10, 14, "end"], "P.50A": ["คลองวังเจ้า", 10, -8], "P.26B": ["คลองสวนหมาก", -10, 14, "end"] };
+    const LAB = { "P.2A": ["ตาก (ต้นน้ำ)", 10, 4], "P.7A": ["ตัวเมือง", 10, -8], "P.15": ["ปิง คลองขลุง", -10, -8, "end"], "P.16": ["ขาณุฯ", 10, 4], "P.47A": ["โป่งน้ำร้อน", -10, 14, "end"], "P.78": ["สามเรือน", -10, 14, "end"], "P.50A": ["คลองวังเจ้า", -10, -6, "end"], "P.26B": ["คลองสวนหมาก", -10, 14, "end"] };
     const posOf = (id) => (NO_PIN.has(id) ? null : GEO.stations[id] || EXTRA_POS[id] || null);
     Object.keys(D.river.stations).forEach((id) => { const pos = posOf(id), lab = LAB[id]; if (!pos || !lab) return; const t = el("text", { x: pos[0] + lab[1], y: pos[1] + lab[2], class: "sl", "text-anchor": lab[3] || "start" }, map); t.textContent = lab[0]; });
     Object.keys(D.river.stations).forEach((id) => {
@@ -273,7 +273,7 @@
     el("path", { d: d.trim(), fill: "none", stroke: "var(--water)", "stroke-width": 2.8, "stroke-linejoin": "round" }, c);
     el("line", { x1: X(iAt), x2: X(iAt), y1: T, y2: B, stroke: "var(--muted)", "stroke-dasharray": "3 3" }, c);
     const lj = lastIdx(s.s, iAt); if (lj >= 0) el("circle", { cx: X(lj), cy: Y(s.s[lj]), r: 5, fill: "var(--water)", stroke: "var(--surface)", "stroke-width": 2 }, c);
-    [[0, "start"], [Math.round(LAST / 2), "middle"], [LAST, "end"]].forEach(([i, a]) => { const e = el("text", { x: X(i), y: B + 16, "text-anchor": a }, c); e.textContent = (i === LAST ? (fresh === "fresh" ? "ตอนนี้ " : "ล่าสุด ") : "") + thDateTime(START + i * HOUR); });
+    [[0, "start"], [Math.round(LAST / 2), "middle"], [LAST, "end"]].forEach(([i, a]) => { const e = el("text", { x: X(i), y: B + 16, "text-anchor": a }, c); e.textContent = (i === LAST ? "ล่าสุด " : "") + thDateTime(START + i * HOUR); });
     const cap = el("text", { x: L, y: B + 34 }, c); cap.textContent = "เขียว ปกติ · เหลือง เฝ้าระวัง · แดง ถึงหรือเหนือตลิ่ง (เกณฑ์กรมชลประทาน)";
   }
   function openSheet(id, from) {

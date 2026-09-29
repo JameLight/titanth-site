@@ -158,9 +158,9 @@ test("every gauge past 3 hours by the clock: the top bar says there is no recent
   assert.match(pg.sheet("P.78").note, /ค่าที่จุดนี้จนถึง 29 ก\.ย\. 14:00 น\. เปลี่ยนไม่เกิน 1 ซม\./);
 });
 
-test("reviewer 4: 'ตอนนี้' only for a fresh set", () => {
-  assert.equal(openPage({ data: dataSet(), now: at("09-29T14:30") }).clockText(), "ตอนนี้ (29 ก.ย. 14:00 น.)");
-  assert.equal(openPage({ data: dataSet(), now: at("09-29T17:00") }).clockText(), "ค่าล่าสุด (29 ก.ย. 14:00 น.)");
+test("reviewer 4: the newest hour is called the latest reading with its time, never 'now'", () => {
+  assert.equal(openPage({ data: dataSet(), now: at("09-29T14:30") }).clockText(), "ค่าวัดล่าสุด (29 ก.ย. 14:00 น.)");
+  assert.equal(openPage({ data: dataSet(), now: at("09-29T17:00") }).clockText(), "ค่าวัดล่าสุด (29 ก.ย. 14:00 น.)");
 });
 
 test("reviewer 5 and 6: replay before a gauge's first reading, and a gauge with no reading at all", () => {
