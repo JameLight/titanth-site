@@ -49,8 +49,8 @@ p{margin:0}
 .xsec .t-crit{fill:var(--crit)}
 .xsec .t-watch{fill:var(--watchInk);paint-order:stroke;stroke:var(--watchBg);stroke-width:3px}
 .xsec .t-water{fill:#fff;font-size:13px}
-.fill{animation:rise .9s ease-out both}
-@keyframes rise{from{transform:translateY(130px)}to{transform:translateY(0)}}
+.fill{animation:rise .9s ease-out}
+@keyframes rise{from{transform:translateY(18px)}to{transform:translateY(0)}}
 .ripple{animation:ripple 4s linear infinite}
 @keyframes ripple{to{transform:translateX(-60px)}}
 .chev{animation:chev 1.6s ease-in-out infinite}

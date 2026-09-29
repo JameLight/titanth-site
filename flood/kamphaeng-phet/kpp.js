@@ -46,7 +46,7 @@
     fresh = age < 0 ? "fresh" : age <= 120 ? "fresh" : age <= 360 ? "slow" : "old";
     const a = $("age"), h = Math.floor(Math.max(0, age) / 60), m = Math.round(Math.max(0, age) % 60);
     a.className = "age" + (fresh === "slow" ? " slow" : fresh === "old" ? " old" : "");
-    a.textContent = `ข้อมูล ${thDateTime(OBS)}` + (age < 0 ? "" : ` · ${h ? h + " ชม. " : ""}${m} นาทีที่แล้ว`) + (fresh === "slow" ? " · ข้อมูลช้า" : fresh === "old" ? " · เก่าแล้ว" : "");
+    a.textContent = `${D && D.river && D.river.live ? "ข้อมูลสด " : "ข้อมูล "}${thDateTime(OBS)}` + (age < 0 ? "" : ` · ${h ? h + " ชม. " : ""}${m} นาทีที่แล้ว`) + (fresh === "slow" ? " · ข้อมูลช้า" : fresh === "old" ? " · เก่าแล้ว" : "");
     document.body.classList.toggle("paused", fresh !== "fresh");
   }
 
@@ -77,7 +77,7 @@
       let d = `M40 ${wy + 3}`; for (let k = 0; k < 15; k++) d += " q10 -5 20 0"; d += " v10 h-300 z";
       el("path", { class: "ripple", d, fill: "var(--water)" }, f);
       if (rising) for (let k = 0; k < 3; k++) { const cx = 150 + k * 22; el("path", { class: "chev" + (k ? " chev" + (k + 1) : ""), d: `M${cx - 7} ${wy + 34} l7 -7 l7 7`, stroke: "#fff", "stroke-width": 3, fill: "none", "stroke-linecap": "round" }, f); }
-      const n = el("text", { x: 172, y: Math.min(bedY - 6, wy + 22), "text-anchor": "middle", class: "t-water" }, x); n.textContent = `น้ำ ${v.toFixed(2)} ม.`;
+      const n = el("text", { x: 172, y: bedY - 10, "text-anchor": "middle", class: "t-water" }, x); n.textContent = `น้ำ ${v.toFixed(2)} ม.`;
     }
     el("line", { x1: 40, x2: 304, y1: bankY, y2: bankY, stroke: "var(--crit)", "stroke-width": 2, "stroke-dasharray": "6 4" }, x);
     const b = el("text", { x: 336, y: bankY - 6, "text-anchor": "end", class: "t-crit" }, x); b.textContent = `ตลิ่ง ${s.bank.toFixed(2)} ม.`;
@@ -219,6 +219,63 @@
     $("rainSrc").textContent = "กรมอุตุนิยมวิทยา" + (F.build_at ? " · ออก " + F.build_at.slice(11, 16) + " น." : "");
   }
 
+
+  // ---- live river levels straight from RID's public table (works from phones in Thailand; RID sends Access-Control-Allow-Origin: *) ----
+  const RID_URL = "https://hyd-app-db.rid.go.th/webservice/getGroupHourlyWaterLevelReportAllHLWLCriteriaAD.ashx";
+  const pad2 = (n) => String(n).padStart(2, "0");
+  const ridDate = (ms) => { const d = th(ms); return `${pad2(d.getUTCDate())}/${pad2(d.getUTCMonth() + 1)}/${d.getUTCFullYear() + 543}`; };
+  async function ridDay(ms) {
+    const body = new URLSearchParams({ "DW[UtokID]": "2", "DW[BasinID]": "6", "DW[TimeCurrent]": ridDate(ms), _search: "false", rows: "100", page: "1", sidx: "indexhourly", sord: "asc" });
+    const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 15000);
+    try {
+      const r = await fetch(RID_URL, { method: "POST", body, cache: "no-store", signal: ctl.signal });
+      if (!r.ok) throw new Error("http " + r.status);
+      const j = await r.json();
+      if (!j || !Array.isArray(j.rows)) throw new Error("empty");
+      return { ms, rows: j.rows };
+    } finally { clearTimeout(to); }
+  }
+  async function liveRiver(base) {
+    if (!base || !base.stations || !base.stations["P.7A"] || base.stations["P.7A"].col == null) throw new Error("no column map");
+    const now = Date.now();
+    const days = await Promise.all([ridDay(now - 24 * HOUR), ridDay(now)]);
+    const pts = {}, watchNow = {}; let lastMs = -Infinity;
+    for (const day of days) {
+      const d = th(day.ms), y = d.getUTCFullYear(), m = d.getUTCMonth(), dd = d.getUTCDate();
+      for (const row of day.rows) {
+        const h = Math.round(Number(String(row.hourlytime).replace(",", ".")));
+        if (!(h >= 0 && h <= 24)) continue;
+        const tms = Date.UTC(y, m, dd, h) - 7 * HOUR;
+        for (const [code, s] of Object.entries(base.stations)) {
+          if (s.col == null) continue;
+          const raw = row["wlvalues" + s.col];
+          if (raw === "" || raw === null || raw === undefined) continue;
+          const v = Number(raw); if (!Number.isFinite(v)) continue;
+          const crit = /([\d.]+)\s*-\s*([\d.]+)/.exec(String(row["WLCriteria" + s.col] || ""));
+          if (!crit || Math.abs(Number(crit[2]) - s.bank) > 0.005) throw new Error("column check failed for " + code);
+          (pts[code] || (pts[code] = new Map())).set(tms, Math.round(v * 100) / 100);
+          watchNow[code] = Number(crit[1]);
+          if (code === "P.7A" && tms > lastMs) lastMs = tms;
+        }
+      }
+    }
+    if (!Number.isFinite(lastMs)) throw new Error("no P.7A readings");
+    const n = base.stations["P.7A"].s.length, startMs = lastMs - (n - 1) * HOUR, stations = {};
+    for (const [code, s] of Object.entries(base.stations)) {
+      const arr = Array(n).fill(null), mp = pts[code];
+      if (mp) for (const [tt, v] of mp) { const i = Math.round((tt - startMs) / HOUR); if (i >= 0 && i < n) arr[i] = v; }
+      stations[code] = Object.assign({}, s, { s: arr, watch: watchNow[code] != null ? watchNow[code] : s.watch });
+    }
+    return Object.assign({}, base, { stations, start: new Date(startMs).toISOString(), observed_at: new Date(lastMs).toISOString(), live: true });
+  }
+  let BASE = null;
+  async function tryLive() {
+    try {
+      const river = await liveRiver((BASE || D || {}).river);
+      if (!D || !D.river || Date.parse(river.observed_at) >= Date.parse(D.river.observed_at)) render(Object.assign({}, BASE || D, { river }));
+    } catch (e) { /* outside Thailand, offline or RID down: keep the saved numbers, shown with their age */ }
+  }
+
   function render(data) {
     D = data; const R = D && D.river;
     if (!R || !R.stations || !R.stations["P.7A"]) { $("stWord").textContent = "ยังโหลดข้อมูลไม่ได้"; $("age").textContent = "โทร 1784 ถ้าต้องการความช่วยเหลือ"; return; }
@@ -249,12 +306,15 @@
       const r = await fetch("data.json", { cache: "no-store" });
       if (!r.ok) return;
       const d = await r.json();
-      if (d && d.river && (!D || d.generated_at !== D.generated_at)) render(d);
+      if (d && d.river) { BASE = d; if (!D || !D.river || !D.river.live || Date.parse(d.river.observed_at) > Date.parse(D.river.observed_at)) render(d); else render(Object.assign({}, d, { river: D.river })); }
     } catch (e) { /* offline or blocked: keep what we have */ }
+    tryLive();
   }
 
   wire();
-  render(window.KPP_DATA);
+  BASE = window.KPP_DATA || null;
+  render(BASE);
+  tryLive();
   setInterval(() => { if (!D || !D.river) return; const f0 = fresh; freshness(); if (f0 !== fresh) { status(); hero(); paintRibbon(+$("scrub").value); paintMap(+$("scrub").value); } }, 60000);
   setInterval(refresh, 10 * 60000);
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });

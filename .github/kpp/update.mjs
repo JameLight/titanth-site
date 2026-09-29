@@ -74,7 +74,8 @@ export function parseColModel(col) {
 // rows: RID jqGrid rows for one Thai calendar day; dayMs: any instant in that Thai day
 export function parseRidDay(colInfo, rows, dayMs) {
   const p = thaiParts(dayMs);
-  const out = {};
+  const out = { _columns: {} };
+  for (const [code, idx] of Object.entries(colInfo.codes)) if (STATIONS[code]) out._columns[code] = idx;
   for (const row of rows || []) {
     const h = Math.round(Number(String(row.hourlytime).replace(",", ".")));
     if (!Number.isFinite(h) || h < 0 || h > 24) continue;
@@ -100,7 +101,11 @@ export function parseRidDay(colInfo, rows, dayMs) {
 export function buildRiver(dayParts) {
   // dayParts: array of parseRidDay results (any order); returns hourly series for the last KEEP_HOURS
   const byCode = {};
-  for (const part of dayParts) for (const [code, pts] of Object.entries(part)) (byCode[code] ||= []).push(...pts);
+  const columns = {};
+  for (const part of dayParts) for (const [code, pts] of Object.entries(part)) {
+    if (code === "_columns") { Object.assign(columns, pts); continue; }
+    (byCode[code] ||= []).push(...pts);
+  }
   const main = (byCode["P.7A"] || []).map((x) => Date.parse(x.t));
   if (!main.length) throw new Error("RID: no readings for P.7A");
   const lastMs = Math.max(...main);
@@ -117,7 +122,7 @@ export function buildRiver(dayParts) {
       if (x.bank != null) bank = x.bank;
     }
     if (watch == null || bank == null || !s.some((v) => v != null)) continue;
-    stations[code] = { ...meta, watch, bank, s };
+    stations[code] = { ...meta, watch, bank, col: columns[code] ?? null, s };
   }
   if (!stations["P.7A"]) throw new Error("RID: P.7A missing after build");
   return {
@@ -233,7 +238,10 @@ export async function main(now = Date.now()) {
     const yday = await fetchRidDay(now - 24 * HOUR);
     river = buildRiver([yday, today]);
     log.push(`RID ok, observed_at ${river.observed_at}`);
-  } catch (e) { log.push(`RID failed: ${e.message}`); }
+  } catch (e) {
+    log.push(`RID failed: ${e.message}${e.cause ? " (" + (e.cause.code || e.cause.message) + ")" : ""}; keeping previous river data`);
+    if (process.env.GITHUB_ACTIONS) console.log("::warning::RID could not be reached from this runner; river data was not refreshed here. Browsers in Thailand read RID directly.");
+  }
   try { alerts = parseCB(await fetchJson(CB_URL), now); log.push(`CB ok, ${alerts.items.length} item(s) for province 62 in 7 days`); }
   catch (e) { log.push(`CB failed: ${e.message}`); }
   try { forecast = parseTMD(await fetchJson(TMD_URL)); log.push(`TMD ok, build ${forecast.build_at}`); }
