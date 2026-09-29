@@ -34,7 +34,7 @@ jobs:
         with:
           node-version: "22"
       - name: Test the updater and the page rules
-        run: node --test .github/kpp/tests/update.test.mjs .github/kpp/tests/page.test.mjs
+        run: node --test .github/kpp/tests/update.test.mjs .github/kpp/tests/page.test.mjs .github/kpp/tests/page_dom.test.mjs
       - name: Fetch official data (dry run, nothing is committed)
         run: node .github/kpp/update.mjs
       - name: Show result
@@ -54,7 +54,7 @@ jobs:
         with:
           node-version: "22"
       - name: Test the updater and the page rules
-        run: node --test .github/kpp/tests/update.test.mjs .github/kpp/tests/page.test.mjs
+        run: node --test .github/kpp/tests/update.test.mjs .github/kpp/tests/page.test.mjs .github/kpp/tests/page_dom.test.mjs
       - name: Fetch official data
         run: node .github/kpp/update.mjs
       - name: Show result

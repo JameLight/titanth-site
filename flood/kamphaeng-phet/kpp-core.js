@@ -37,10 +37,11 @@
     return j < 0 || i - j > STALE_H;
   }
 
-  // Change over about 3 hours: newest reading at or before i against the newest at or before i-3.
+  // Change over about 3 hours up to the gauge's newest reading at or before i: that reading against the newest one
+  // at least 3 hours before it. Counting back from the reading, not from i, keeps a late gauge's span at 3 hours.
   // The label gives the real number of hours between the two readings.
   function trend(series, i) {
-    const ja = lastIdx(series, i), jb = lastIdx(series, i - 3);
+    const ja = lastIdx(series, i), jb = ja < 0 ? -1 : lastIdx(series, ja - 3);
     if (ja < 0 || jb < 0 || ja === jb) return { k: "flat", t: "ไม่มีข้อมูลพอ", w: "ไม่ทราบแนวโน้ม", h: 0 };
     const d = cmOf(series[ja]) - cmOf(series[jb]), h = ja - jb;
     if (d >= 5) return { k: "up", t: `↗ ขึ้น ${d} ซม. ใน ${h} ชม.`, w: "กำลังขึ้น", h };
@@ -48,9 +49,9 @@
     return { k: "flat", t: "→ ทรงตัว", w: "ทรงตัว", h };
   }
 
-  // Change over about 8 hours, for the sentence under the big number.
+  // Change over about 8 hours up to the gauge's newest reading at or before i, for the sentence under the big number.
   function change8(series, i) {
-    const ja = lastIdx(series, i), jb = lastIdx(series, i - 8);
+    const ja = lastIdx(series, i), jb = ja < 0 ? -1 : lastIdx(series, ja - 8);
     if (ja < 0 || jb < 0 || ja === jb) return null;
     const d = cmOf(series[ja]) - cmOf(series[jb]), h = ja - jb;
     return { d, h, t: d === 0 ? `ทรงตัวใน ${h} ชม.` : `${d > 0 ? "ขึ้น" : "ลด"} ${(Math.abs(d) / 100).toFixed(2)} ม. ใน ${h} ชม.` };
@@ -58,14 +59,14 @@
 
   // A gauge whose last FLAT_MIN or more hourly readings, with no hour missing, stay within 1 cm may be stuck,
   // or the water may really be steady. A missing hour ends the run, because nothing is known about it.
-  // The run must reach the shown hour: with no reading at i, nothing is known about the water at i, so no run.
+  // The run ends at hour i and needs a reading there: with no reading at i, nothing is known about the water at i.
+  // A line about a gauge whose newest reading is earlier asks for the run ending at that reading, and gives its time.
   // Returns null, or { h: hours between the first and last reading of the run,
   //   fromStart: the run was ended by missing data or the start of the window, so it may be longer ("อย่างน้อย") }.
   function flatRun(series, i) {
-    const i0 = Math.min(i, series.length - 1);
-    if (i0 < 0 || series[i0] == null) return null;
+    if (!(i >= 0 && i < series.length) || series[i] == null) return null;
     let hi = -Infinity, lo = Infinity, n = 0, first = -1, last = -1, gap = 0, open = true;
-    for (let k = i0; k >= 0; k--) {
+    for (let k = i; k >= 0; k--) {
       const v = series[k];
       if (v == null) { if (last >= 0 && ++gap >= FLAT_GAP) break; continue; }
       gap = 0;
@@ -81,23 +82,46 @@
   // The reading a line shows at hour i. The newest reading at or before i can be an hour or more before i (a late or
   // stopped gauge), or the whole data set can be late (fresh "slow" or "old"); a line must then say when its reading was,
   // using that gauge's own reading time, never the shown hour or another gauge's time.
-  // Returns { j: index of the reading (-1: none), ms: its time (NaN: none), behind: j is before i,
-  //   old: more than STALE_H hours before i, notNow: a line about it must give its time }.
-  function readingAt(series, i, startMs, fresh) {
-    const j = lastIdx(series, i), behind = j >= 0 && j < i;
-    return { j, ms: j >= 0 ? startMs + j * 3600e3 : NaN, behind, old: j >= 0 && i - j > STALE_H, notNow: fresh !== "fresh" || behind };
+  // ctx: { start: time of hour 0 (ms), fresh: "fresh" | "slow" | "old", last: the newest hour, now: the clock (ms) }.
+  // A reading is old when it is more than STALE_H hours before i; at the newest hour, which the page shows as the
+  // current state, it is also old when it is more than STALE_H hours before the clock, as the footer says.
+  // Returns { j: index of the reading (-1: none), ms: its time (NaN: none), behind: j is before i, old,
+  //   notNow: a line about it must give its time }.
+  function readingAt(series, i, ctx) {
+    const j = lastIdx(series, i), behind = j >= 0 && j < i, ms = j >= 0 ? ctx.start + j * 3600e3 : NaN;
+    const old = j >= 0 && (i - j > STALE_H || (i === ctx.last && ctx.now - ms > STALE_H * 3600e3));
+    return { j, ms, behind, old, notNow: ctx.fresh !== "fresh" || behind };
   }
 
-  // What the small line under a river row's value says at hour i: "none" (no reading in the window), "stopped" (no new
+  // What the small line under a river row's value says at hour i: "none" (no reading up to i), "stopped" (no new
   // reading for more than STALE_H hours), "at" (the reading's time, because it is before i or the whole set is old),
   // "flat" (the flat note says it, so no trend), "trend", or "" (too early in the window for a 3-hour change).
-  function rowLine(series, i, fresh) {
-    const r = readingAt(series, i, 0, fresh);
+  function rowLine(series, i, ctx) {
+    const r = readingAt(series, i, ctx);
     if (r.j < 0) return "none";
     if (r.old) return "stopped";
-    if (fresh === "old" || r.behind) return "at";
+    if (ctx.fresh === "old" || r.behind) return "at";
     if (flatRun(series, i)) return "flat";
     return trend(series, i).h === 0 ? "" : "trend";
+  }
+
+  // The top bar counts each gauge by its newest reading that is not old. Returns the first and last index of the
+  // readings it counted ({ lo, hi }), or null when it counted none, so the bar can give the real time span of those
+  // readings instead of implying that every gauge was read at the newest hour.
+  function usedSpan(seriesList, i, ctx) {
+    let lo = Infinity, hi = -Infinity;
+    for (const s of seriesList) {
+      const r = readingAt(s, i, ctx);
+      if (r.j < 0 || r.old) continue;
+      if (r.j < lo) lo = r.j;
+      if (r.j > hi) hi = r.j;
+    }
+    return hi < 0 ? null : { lo, hi };
+  }
+
+  // Official alerts still inside the display time their sender set, at the clock time nowMs.
+  function activeAlerts(items, nowMs) {
+    return (items || []).filter((x) => nowMs < Date.parse(x.sent_at) + x.duration_h * 3600e3);
   }
 
   // Highest reading in the whole window up to i, and how far the newest reading is below it.
@@ -150,5 +174,5 @@
     return date === thaiDate(nowMs) ? "วันนี้" : date === thaiDate(nowMs + 24 * 3600e3) ? "พรุ่งนี้" : "";
   }
 
-  return { STALE_H, FLAT_MIN, FLAT_GAP, cmOf, lastIdx, cls, gapText, isOld, trend, change8, flatRun, flatNote, readingAt, rowLine, forecastNotice, peakDrop, thaiStampMs, thaiDate, dayLabel };
+  return { STALE_H, FLAT_MIN, FLAT_GAP, cmOf, lastIdx, cls, gapText, isOld, trend, change8, flatRun, flatNote, readingAt, rowLine, usedSpan, activeAlerts, forecastNotice, peakDrop, thaiStampMs, thaiDate, dayLabel };
 });

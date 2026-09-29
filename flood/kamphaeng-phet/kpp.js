@@ -34,8 +34,11 @@
   const thHM = (ms) => { const d = th(ms); return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")} น.`; };
   // Time of a reading: only the clock for today, with the date for an earlier day.
   const whenText = (ms) => (K.thaiDate(ms) === K.thaiDate(Date.now()) ? thHM(ms) : thDateTime(ms));
+  // "11:00–14:00 น." for two readings on one day (with the date when that day is not today); both in full otherwise.
+  const spanText = (a, b) => K.thaiDate(a) !== K.thaiDate(b) ? `${whenText(a)} – ${whenText(b)}`
+    : whenText(b).replace(/(\d{2}:\d{2} น\.)$/, `${thHM(a).replace(" น.", "")}–$1`);
   const cm = (x) => Math.abs(K.cmOf(x));
-  const cls = K.cls, lastIdx = K.lastIdx, gapText = K.gapText, STALE_H = K.STALE_H;
+  const cls = K.cls, lastIdx = K.lastIdx, gapText = K.gapText;
 
   function shapeSVG(c, size) {
     const s = size || 16, col = COL[c];
@@ -52,33 +55,43 @@
   const trend = (s, i) => K.trend(s.s, i);
   const flatRun = (s, i) => K.flatRun(s.s, i);
   const flatText = K.flatNote;
-  // A station whose newest reading is more than STALE_H hours before the shown hour has no recent data:
-  // it is marked "ไม่มีข้อมูลล่าสุด" with the time of its last reading and is never counted as normal.
-  const C = (i) => (id) => { const s = D.river.stations[id]; if (!s) return "stale"; const j = lastIdx(s.s, i); return fresh === "old" || j < 0 || i - j > STALE_H ? "stale" : cls(s.s[j], s); };
+  const MAYBE_STUCK = "อาจเป็นเครื่องวัดค้าง หรือน้ำนิ่งจริง";
+  // What the rules need to judge a reading: the window start, the set's age class, the newest hour and the clock.
+  const ctx = () => ({ start: START, fresh, last: LAST, now: Date.now() });
+  // A station whose newest reading is more than STALE_H hours before the shown hour (at the newest hour: before the
+  // clock) has no recent data: it is marked "ไม่มีข้อมูลล่าสุด" with the time of its last reading and is never counted as normal.
+  const C = (i) => (id) => { const s = D.river.stations[id]; if (!s) return "stale"; const r = K.readingAt(s.s, i, ctx()); return fresh === "old" || r.j < 0 || r.old ? "stale" : cls(s.s[r.j], s); };
 
   function freshness() {
     const age = (Date.now() - OBS) / 60000;
     fresh = age < 0 ? "fresh" : age <= 120 ? "fresh" : age <= 360 ? "slow" : "old";
-    const a = $("age"), mins = Math.round(Math.max(0, age)), h = Math.floor(mins / 60), m = mins % 60;
+    // The top bar counts each gauge by its own newest recent reading, so this time is the span of those readings.
+    const sp = fresh === "old" ? null : K.usedSpan(stationsIn().map((id) => D.river.stations[id].s), LAST, ctx());
+    const hiMs = sp ? START + sp.hi * HOUR : OBS, loMs = sp ? START + sp.lo * HOUR : hiMs, span = loMs < hiMs;
+    const ageHi = (Date.now() - hiMs) / 60000;
+    const a = $("age"), mins = Math.round(Math.max(0, ageHi)), h = Math.floor(mins / 60), m = mins % 60;
     const ago = `${h ? h + " ชม." : ""}${h && m ? " " : ""}${m || !h ? m + " นาที" : ""}`;
     a.className = "age" + (fresh === "slow" ? " slow" : fresh === "old" ? " old" : "");
-    a.textContent = `วัดเมื่อ ${whenText(OBS)}` + (age < 0 ? "" : ` (${ago}${ago.endsWith(".") ? " " : ""}ที่แล้ว)`) + (fresh === "slow" ? " · ข้อมูลช้า" : fresh === "old" ? " · เก่าแล้ว" : "");
+    a.textContent = `วัดเมื่อ ${span ? spanText(loMs, hiMs) : whenText(hiMs)}` + (ageHi < 0 ? "" : ` (${span ? "ล่าสุด " : ""}${ago}${ago.endsWith(".") ? " " : ""}ที่แล้ว)`)
+      + (fresh === "slow" ? " · ข้อมูลช้า" : fresh === "old" ? " · เก่าแล้ว" : "");
     document.body.classList.toggle("paused", fresh !== "fresh");
   }
 
   function status() {
     const ids = stationsIn(), c = ids.map(C(LAST)), n = { crit: 0, watch: 0, stale: 0 };
     c.forEach((k) => { if (n[k] !== undefined) n[k]++; });
-    const worst = fresh === "old" ? "stale" : n.crit ? "crit" : n.watch ? "watch" : n.stale ? "stale" : "ok";
+    // No gauge with a recent reading (an old set, or every gauge past 3 hours by the clock): say that, never "ปกติ 0 จุด".
+    const none = fresh === "old" || n.stale === ids.length;
+    const worst = none ? "stale" : n.crit ? "crit" : n.watch ? "watch" : n.stale ? "stale" : "ok";
     const critNames = ids.filter((id, k) => c[k] === "crit").map((id) => SHORT[id] || id);
-    const txt = fresh === "old" ? "ไม่มีข้อมูลล่าสุด ดูต้นทางหรือโทร 1784"
+    const txt = none ? "ไม่มีข้อมูลล่าสุด ดูต้นทางหรือโทร 1784"
       : [n.crit ? `วิกฤติ ${n.crit} จุด` + (n.crit <= 2 ? ` (${critNames.join(", ")})` : "") : "", n.watch ? `เฝ้าระวัง ${n.watch} จุด` : "",
         !n.crit && !n.watch && !n.stale ? "ปกติทุกจุด" : "", !n.crit && !n.watch && n.stale ? `ปกติ ${ids.length - n.stale} จุด` : "",
         n.stale ? `ไม่มีค่าล่าสุด ${n.stale} จุด` : ""].filter(Boolean).join(" · "); // the town trend is right below, in the hero
     $("stWord").innerHTML = shapeSVG(worst) + "<span>" + esc(txt) + "</span>";
     const t = $("tRiver");
-    t.textContent = fresh === "old" ? "–" : `${n.crit + n.watch}/${ids.length}`;
-    t.className = fresh === "old" ? "" : n.crit ? "c-crit" : n.watch ? "c-watch" : "";
+    t.textContent = none ? "–" : `${n.crit + n.watch}/${ids.length}`;
+    t.className = none ? "" : n.crit ? "c-crit" : n.watch ? "c-watch" : "";
     $("tRiverOf").textContent = `ถึงเกณฑ์เฝ้าระวัง/วิกฤติ (จาก ${ids.length} จุด)`;
   }
 
@@ -118,28 +131,32 @@
   function hero() {
     const s = D.river.stations["P.7A"], v = valueAt(s, LAST), c = C(LAST)("P.7A"), tr = trend(s, LAST);
     // When the town gauge's newest reading is before the shown hour (late or stopped), or the whole set is late,
-    // every line gives that reading's own time.
-    const r0 = K.readingAt(s.s, LAST, START, fresh), notNow = r0.notNow;
-    const at = whenText(r0.j >= 0 ? r0.ms : OBS), pre = notNow ? `เมื่อ ${at} ` : "";
+    // every line gives that reading's own time. With no reading at all there is no time to give.
+    const r0 = K.readingAt(s.s, LAST, ctx()), notNow = r0.notNow, has = r0.j >= 0;
+    const at = has ? whenText(r0.ms) : "", pre = notNow && has ? `เมื่อ ${at} ` : "";
+    // Readings within 1 cm for FLAT_MIN hours up to the newest one may come from a stuck gauge: no trend then.
+    const fl0 = has ? flatRun(s, r0.j) : null;
     // Big text: how far the river is from the next RID level. RID's own class stays visible in the small line below.
     // The phrase after the distance never breaks inside a word ("ถึงเกณฑ์เฝ้าระวัง" stays on one line).
     const [big, tail] = v == null ? ["ไม่มีข้อมูลล่าสุด", ""] : c === "ok" || (c === "stale" && cls(v, s) === "ok") ? [`อีก ${cm(s.watch - v)} ซม.`, "ถึงเกณฑ์เฝ้าระวัง"]
       : cls(v, s) === "watch" ? [`อีก ${cm(s.bank - v)} ซม.`, "ถึงตลิ่ง"] : [gapText(v, s), ""];
     $("hVerdict").innerHTML = shapeSVG(c, 26) + `<span class="${c === "crit" ? "c-crit" : ""}">${nw((notNow && v != null ? `ตอน ${at} ` : "") + big)}${tail ? ` <span class="nw">${esc(tail)}</span>` : ""}</span>`;
-    const t = $("hTrend"); t.className = "chip " + tr.k; t.innerHTML = nw(tr.t); t.hidden = notNow || tr.h === 0;
+    const t = $("hTrend"); t.className = "chip " + tr.k; t.innerHTML = nw(tr.t); t.hidden = notNow || tr.h === 0 || !!fl0;
     const ch = K.change8(s.s, LAST);
-    $("hSentence").innerHTML = nw(pre + gapText(v, s) + (ch ? ` · ${ch.t}` : ""));
+    $("hSentence").innerHTML = nw(pre + gapText(v, s) + (fl0 ? ` · ${flatText(fl0)} ${MAYBE_STUCK}` : ch ? ` · ${ch.t}` : ""));
     $("hWatch").innerHTML = `<span class="c-${c}">${esc(CLS[c])}</span>` + (c === "stale" ? nw(v == null ? "" : ` · ค่าล่าสุด ${at}`) : nw(` ตามเกณฑ์กรมชลประทาน (เฝ้าระวัง ${s.watch.toFixed(2)} ม. · ตลิ่ง ${s.bank.toFixed(2)} ม.)`));
     const u = D.river.stations["P.2A"];
     if (u) {
       const p = K.peakDrop(u.s, LAST), when = p ? thDateTime(START + p.peakIdx * HOUR) : "";
       // The Tak gauge gives its own reading time; it can differ from the town gauge's.
-      const ru = K.readingAt(u.s, LAST, START, fresh), uPre = ru.j >= 0 && ru.notNow ? `เมื่อ ${whenText(ru.ms)} ` : "";
-      // Lead with the place, so a quick reader does not take the upstream fall for the town.
-      $("hUp").innerHTML = nw(uPre + (!p || p.drop < 5 ? `ต้นน้ำ จ.ตาก (ไม่ใช่ตัวเมือง): ${trend(u, LAST).w}`
-        : p.atStart ? `ต้นน้ำ จ.ตาก (ไม่ใช่ตัวเมือง): ลดลงอย่างน้อย ${p.drop} ซม. ตั้งแต่ ${when} (ช่วงเวลาที่หน้านี้มีข้อมูล)` : `ต้นน้ำ จ.ตาก (ไม่ใช่ตัวเมือง): ลดลง ${p.drop} ซม. จากจุดสูงสุดเมื่อ ${when}`));
+      const ru = K.readingAt(u.s, LAST, ctx()), uPre = ru.j >= 0 && ru.notNow ? `เมื่อ ${whenText(ru.ms)} ` : "";
+      const flu = ru.j >= 0 ? flatRun(u, ru.j) : null;
+      // Lead with the place, so a quick reader does not take the upstream fall for the town. Give a measured change
+      // (or the flat note), never a word for "now" about a reading that may be older.
+      $("hUp").innerHTML = nw(uPre + "ต้นน้ำ จ.ตาก (ไม่ใช่ตัวเมือง): " + (flu ? `${flatText(flu)} ${MAYBE_STUCK}` : !p || p.drop < 5 ? trend(u, LAST).t
+        : p.atStart ? `ลดลงอย่างน้อย ${p.drop} ซม. ตั้งแต่ ${when} (ช่วงเวลาที่หน้านี้มีข้อมูล)` : `ลดลง ${p.drop} ซม. จากจุดสูงสุดเมื่อ ${when}`));
     }
-    drawXsec(s, v, tr.k === "up" && !notNow);
+    drawXsec(s, v, tr.k === "up" && !notNow && !fl0);
   }
 
   const ORDER = [["P.2A", { lbl: "คลองวังเจ้า อ.โกสัมพีนคร", ids: ["P.50A"] }], ["P.7A", { lbl: "คลองสวนหมาก ไหลมาบรรจบใกล้ตัวเมือง", ids: ["P.47A", "P.26B"] }], ["P.15", { lbl: "คลองขลุง ไหลมาบรรจบ", ids: ["P.78"] }], ["P.16"]];
@@ -162,32 +179,38 @@
     $("rKey").innerHTML = ["ok", "watch", "crit", "stale"].map((k) => `<span class="k">${shapeSVG(k, 14)}${esc(CLS[k])}</span>`).join("") + "<span>(เกณฑ์กรมชลประทาน)</span>";
   }
   function paintRibbon(i) {
+    const cx = ctx();
     for (const id in stopEls) {
       const s = D.river.stations[id], b = stopEls[id];
       if (!s || !b) continue;
-      const v = valueAt(s, i), c = C(i)(id), tr = trend(s, i), fl = flatRun(s, i);
-      const r = K.readingAt(s.s, i, START, fresh), line = K.rowLine(s.s, i, fresh);
-      const flat = flatText(fl);
+      const v = valueAt(s, i), c = C(i)(id), tr = trend(s, i), r = K.readingAt(s.s, i, cx), line = K.rowLine(s.s, i, cx);
+      // The flat note is about the run that ends at the row's own reading; when the row gives that reading's time (it is
+      // before the shown hour, or old), the note gives it too, so a gauge that may be stuck keeps its warning while silent.
+      const tj = line === "stopped" ? thDateTime(r.ms) : whenText(r.ms);
+      const fl = r.j >= 0 ? flatRun(s, r.j) : null, flat = fl ? (line === "at" || line === "stopped" ? `จนถึง ${tj} ` : "") + flatText(fl) : "";
       // A stopped gauge shows when its last reading was; a reading from before the shown hour shows its own time, not a
       // trend; a flat gauge shows no trend; early replay hours show none either.
-      const sub = line === "none" ? `ไม่มีค่าในช่วง ${N} ชม. ที่แสดง` : line === "stopped" ? `ไม่มีค่าใหม่ตั้งแต่ ${thDateTime(r.ms)}`
-        : line === "at" ? `ค่าเมื่อ ${whenText(r.ms)}` : line === "trend" ? tr.t : "";
+      const sub = line === "none" ? (s.s.some((x) => x != null) ? "ยังไม่มีค่าถึงเวลานี้" : `ไม่มีค่าในช่วง ${N} ชม. ที่แสดง`)
+        : line === "stopped" ? `ไม่มีค่าใหม่ตั้งแต่ ${tj}` : line === "at" ? `ค่าเมื่อ ${tj}` : line === "trend" ? tr.t : "";
       const subK = line === "trend" ? tr.k : "flat";
       b.querySelector(".dot").innerHTML = shapeSVG(c, 24);
       b.querySelector(".nm").innerHTML = `${esc(s.name)}<small>${esc(s.place)}</small>`;
-      const main = r.old || fresh === "old" ? `<span class="oldv">${nw("ค่าเดิม " + gapText(v, s))}</span>` : nw(gapText(v, s));
+      const main = v != null && (r.old || fresh === "old") ? `<span class="oldv">${nw("ค่าเดิม " + gapText(v, s))}</span>` : nw(gapText(v, s));
       b.querySelector(".val").innerHTML = main + (sub ? `<small class="${subK}">${nw(sub)}</small>` : "") + (flat ? `<small class="stuck">${nw(flat)}</small>` : "");
       b.setAttribute("aria-label", `${s.name} ${CLS[c]} ${gapText(v, s)}` + (sub ? " " + sub : "") + (flat ? " " + flat : ""));
     }
     const when = thDateTime(START + i * HOUR);
-    $("clock").textContent = i === LAST ? "ตอนนี้ (" + when + ")" : when;
+    // "ตอนนี้" only when the set is fresh; a late set's newest hour is its latest reading, not now.
+    $("clock").textContent = i === LAST ? (fresh === "fresh" ? "ตอนนี้ (" : "ค่าล่าสุด (") + when + ")" : when;
     $("scrub").setAttribute("aria-valuetext", when);
     $("riverTime").textContent = "กรมชลประทาน · " + when;
   }
 
   let mapDots = {};
   function buildMap() {
-    const map = $("mapSvg"); map.innerHTML = ""; mapDots = {}; map.setAttribute("viewBox", `0 0 ${GEO.W} ${GEO.H}`);
+    const map = $("mapSvg"); map.innerHTML = ""; mapDots = {};
+    if (!GEO) { $("mapNote").textContent = "แผนที่โหลดไม่ขึ้น ลองโหลดหน้าใหม่"; return; } // geo.js did not load
+    map.setAttribute("viewBox", `0 0 ${GEO.W} ${GEO.H}`);
     const expired = Date.now() > GISTDA_UNTIL;
     if (expired) { map.classList.add("oldfill"); $("mapNote").textContent = "ข้อมูลดาวเทียมชุดนี้ (23–29 ก.ย.) เก่าแล้ว จึงไม่ลงสีอำเภอ ดูภาพล่าสุดที่เว็บ GISTDA"; $("tMap").textContent = "–"; }
     GEO.districts.forEach((d) => { const p = PCT[d.pcode]; const b = p == null || p === 0 ? 0 : p < 1 ? 1 : p <= 5 ? 2 : 3; el("path", { d: d.d, class: "d f" + b }, map); });
@@ -238,7 +261,7 @@
     el("path", { d: d.trim(), fill: "none", stroke: "var(--water)", "stroke-width": 2.8, "stroke-linejoin": "round" }, c);
     el("line", { x1: X(LAST), x2: X(LAST), y1: T, y2: B, stroke: "var(--muted)", "stroke-dasharray": "3 3" }, c);
     const lj = lastIdx(s.s, LAST); if (lj >= 0) el("circle", { cx: X(lj), cy: Y(s.s[lj]), r: 5, fill: "var(--water)", stroke: "var(--surface)", "stroke-width": 2 }, c);
-    [[0, "start"], [Math.round(LAST / 2), "middle"], [LAST, "end"]].forEach(([i, a]) => { const e = el("text", { x: X(i), y: B + 16, "text-anchor": a }, c); e.textContent = (i === LAST ? "ตอนนี้ " : "") + thDateTime(START + i * HOUR); });
+    [[0, "start"], [Math.round(LAST / 2), "middle"], [LAST, "end"]].forEach(([i, a]) => { const e = el("text", { x: X(i), y: B + 16, "text-anchor": a }, c); e.textContent = (i === LAST ? (fresh === "fresh" ? "ตอนนี้ " : "ล่าสุด ") : "") + thDateTime(START + i * HOUR); });
     const cap = el("text", { x: L, y: B + 34 }, c); cap.textContent = "เขียว ปกติ · เหลือง เฝ้าระวัง · แดง ถึงหรือเหนือตลิ่ง (เกณฑ์กรมชลประทาน)";
   }
   function openSheet(id, from) {
@@ -246,12 +269,12 @@
     opener = from || document.activeElement;
     // The sheet is about its newest reading j, whose time is in the header; a flat run is the one that ends at j,
     // and its note gives j's time when j is not the shown hour.
-    const v = valueAt(s, LAST), c = C(LAST)(id), tr = trend(s, LAST), j = lastIdx(s.s, LAST), fl = j >= 0 ? flatRun(s, j) : null, msg = [];
-    $("shName").textContent = s.name; $("shPlace").textContent = s.place + " · กรมชลประทาน " + (j >= 0 ? thDateTime(START + j * HOUR) : "ไม่มีค่าในช่วงที่แสดง");
-    $("shGap").innerHTML = nw(gapText(v, s)); $("shTrend").innerHTML = nw(j >= 0 && LAST - j > STALE_H ? "ไม่ทราบ" : fl ? "ไม่แน่ใจ" : tr.t); $("shCls").innerHTML = shapeSVG(c, 14) + " " + CLS[c];
+    const v = valueAt(s, LAST), c = C(LAST)(id), tr = trend(s, LAST), r = K.readingAt(s.s, LAST, ctx()), j = r.j, fl = j >= 0 ? flatRun(s, j) : null, msg = [];
+    $("shName").textContent = s.name; $("shPlace").textContent = s.place + " · กรมชลประทาน " + (j >= 0 ? thDateTime(r.ms) : "ไม่มีค่าในช่วงที่แสดง");
+    $("shGap").innerHTML = nw(gapText(v, s)); $("shTrend").innerHTML = nw(r.old ? "ไม่ทราบ" : fl ? "ไม่แน่ใจ" : tr.t); $("shCls").innerHTML = shapeSVG(c, 14) + " " + CLS[c];
     if (j < 0) msg.push(`ยังไม่มีค่าระดับน้ำของจุดนี้ในช่วง ${N} ชม. ที่แสดง`);
-    else if (LAST - j > STALE_H) msg.push(`จุดนี้ยังไม่มีค่าใหม่ ค่าล่าสุดเมื่อ ${thDateTime(START + j * HOUR)}`);
-    if (fl) msg.push(`ค่าที่จุดนี้${j < LAST ? `จนถึง ${thDateTime(START + j * HOUR)} ` : ""}${flatText(fl)} อาจเป็นเครื่องวัดค้าง หรือน้ำนิ่งจริง เว็บกรมชลประทานแสดงค่าเดียวกัน ถ้าอยู่ใกล้จุดนี้ ให้ดูสภาพน้ำจริง ถามผู้นำชุมชน หรือโทร 1784`);
+    else if (r.old) msg.push(`จุดนี้ยังไม่มีค่าใหม่ ค่าล่าสุดเมื่อ ${thDateTime(r.ms)}`);
+    if (fl) msg.push(`ค่าที่จุดนี้${r.behind || r.old ? `จนถึง ${thDateTime(r.ms)} ` : ""}${flatText(fl)} ${MAYBE_STUCK} เว็บกรมชลประทานแสดงค่าเดียวกัน ถ้าอยู่ใกล้จุดนี้ ให้ดูสภาพน้ำจริง ถามผู้นำชุมชน หรือโทร 1784`);
     const sf = $("shFlat"); sf.hidden = !msg.length; sf.innerHTML = nw(msg.join(" · "));
     drawChart(s);
     $("app").inert = true; $("sheet").hidden = false; $("scrim").hidden = false; $("shClose").focus();
@@ -263,27 +286,43 @@
     opener = null;
   }
 
-  function alerts() {
+  // Called on every render and every minute: an alert whose display time has passed moves to the past list even when
+  // no new data arrives. The section is redrawn only when that changes, so a focused link is not lost each minute.
+  let alertsKey = null;
+  function alerts(force) {
     const A = D.alerts, act = $("activeAlerts"), calm = $("alertCalm"), past = $("alertPast");
+    const now = Date.now(), active = A ? K.activeAlerts(A.items, now) : [];
+    const key = A ? `${A.checked_at}|${(A.items || []).length}|${active.map((x) => x.id).join(",")}` : "none";
+    if (!force && key === alertsKey) return;
+    alertsKey = key;
     act.innerHTML = ""; calm.innerHTML = ""; past.innerHTML = "";
     if (!A) { calm.innerHTML = `<p class="calm">ยังตรวจประกาศของ ปภ. ไม่ได้ในรอบนี้</p>`; return; }
-    const now = Date.now();
-    const active = A.items.filter((x) => now < Date.parse(x.sent_at) + x.duration_h * HOUR);
     active.forEach((x) => { const d = document.createElement("div"); d.className = "alertbox"; d.innerHTML = `<b>ประกาศทางการ ปภ. ${esc(thDateTime(Date.parse(x.sent_at)))}</b>${esc(x.text)}`; act.appendChild(d); });
     if (!active.length) calm.innerHTML = `<p class="calm">ยังไม่พบประกาศที่กำลังแสดงของ ปภ. สำหรับกำแพงเพชร ในข้อมูลประกาศที่บันทึกเมื่อ ${esc(thDateTime(Date.parse(A.checked_at)))} การไม่พบประกาศไม่ได้แปลว่าปลอดภัย</p>`;
     const old = A.items.filter((x) => !active.includes(x));
     if (old.length) past.innerHTML = `<details><summary>ประกาศที่ผ่านมาใน 7 วัน (${old.length})</summary>${old.map((x) => `<p class="note"><b>${esc(thDateTime(Date.parse(x.sent_at)))}</b> ${esc(x.text)} (ตั้งให้แสดงบนมือถือ ${x.duration_h} ชั่วโมง)</p>`).join("")}</details>`;
   }
 
-  function rain() {
-    const F = D.forecast, box = $("days"), warn = $("rainOld"); box.innerHTML = ""; warn.hidden = true;
+  // Called on every render and every minute, so the old-forecast notice and the today/tomorrow labels follow the clock
+  // even when no new data arrives. Redrawn only when what is shown changes.
+  let rainKey = null;
+  function rain(force) {
+    const F = D.forecast, box = $("days"), warn = $("rainOld"), now = Date.now(), today = K.thaiDate(now);
+    const fAt = F ? K.thaiStampMs(F.fetched_at || F.build_at) : NaN, notice = F ? K.forecastNotice(fAt, now) : "";
+    const key = F && F.days ? `${today}|${K.thaiDate(Date.now() + 24 * HOUR)}|${F.fetched_at || F.build_at}|${notice}|${F.days.length}|${whenText(fAt)}` : "none";
+    if (!force && key === rainKey) return;
+    rainKey = key;
+    box.innerHTML = ""; warn.hidden = true;
     if (!F || !F.days || !F.days.length) { box.innerHTML = `<p class="note">ยังดึงพยากรณ์ไม่ได้ในรอบนี้</p>`; return; }
-    const now = Date.now(), today = K.thaiDate(now);
-    // Show when this forecast was fetched; if that is unknown or more than 6 hours ago, say it may not be the latest.
-    const fAt = K.thaiStampMs(F.fetched_at || F.build_at), known = Number.isFinite(fAt);
+    // Show when this forecast was fetched; if that is unknown or more than 6 hours ago, say it may not be the latest,
+    // with a link to the forecast page it came from.
+    const known = Number.isFinite(fAt);
     $("rainSrc").textContent = "พยากรณ์ 7 วัน กรมอุตุนิยมวิทยา" + (known ? ` · ดึงเมื่อ ${whenText(fAt)}` : "");
-    const notice = K.forecastNotice(fAt, now);
-    if (notice) { warn.hidden = false; warn.textContent = notice; }
+    if (notice) {
+      const src = /^https:\/\/(www\.)?tmd\.go\.th\//.test(F.source_url || "") ? F.source_url : "https://www.tmd.go.th/";
+      warn.hidden = false;
+      warn.innerHTML = esc(notice).replace("เว็บกรมอุตุนิยมวิทยา", `<a href="${esc(src)}" target="_blank" rel="noopener">เว็บกรมอุตุนิยมวิทยา ↗</a>`);
+    }
     const days = F.days.filter((x) => x.date >= today).slice(0, 2);
     days.forEach((x) => {
       const [, m, dd] = x.date.split("-").map(Number), label = K.dayLabel(x.date, now);
@@ -363,7 +402,29 @@
     START = Date.parse(R.start); OBS = Date.parse(R.observed_at); N = R.stations["P.7A"].s.length; LAST = N - 1;
     const sc = $("scrub"); sc.max = String(LAST); sc.value = String(LAST);
     $("play").textContent = REDUCED ? "เลื่อนแถบเพื่อดูเวลา" : `▶ ย้อนดู ${N} ชม.`;
-    freshness(); status(); hero(); buildRibbon(); paintRibbon(LAST); buildMap(); paintMap(LAST); alerts(); rain();
+    // Each part is drawn on its own, so one that fails (for example the map when geo.js did not load) leaves the rest.
+    for (const f of [freshness, status, hero, buildRibbon, () => paintRibbon(LAST), buildMap, () => paintMap(LAST), () => alerts(true), () => rain(true)]) {
+      try { f(); } catch (e) { if (window.console) console.error(e); }
+    }
+    try { clockKey = clockKeyNow(); } catch (e) { clockKey = ""; }
+  }
+
+  // Every minute, and when the page comes back into view, the data already held is judged against the clock again,
+  // even when no new data can be read: a gauge can pass the 3-hour limit, an alert its display time, a forecast its
+  // 6 hours, the day its midnight. The top bar, hero, rows and map are redrawn only when a class, the set's age class
+  // or the date changed; alerts and the forecast redraw themselves only when what they show changed.
+  let clockKey = "";
+  const clockKeyNow = () => [fresh, K.thaiDate(Date.now()), ...Object.keys(D.river.stations).map(C(LAST))].join("|");
+  function retick() {
+    if (!D || !D.river) return;
+    const i = +$("scrub").value;
+    try {
+      freshness();
+      const key = clockKeyNow();
+      if (key !== clockKey) { clockKey = key; status(); hero(); paintRibbon(i); paintMap(i); }
+    } catch (e) { if (window.console) console.error(e); }
+    try { alerts(false); } catch (e) { if (window.console) console.error(e); }
+    try { rain(false); } catch (e) { if (window.console) console.error(e); }
   }
 
   function wire() {
@@ -415,9 +476,11 @@
   wire();
   BASE = window.KPP_DATA || null;
   render(BASE);
-  tryLive(true);
+  if (BASE) tryLive(true);
+  // data.js did not load: read data.json now, and again every minute until something shows (it then tries RID too).
+  else (function retry() { refresh().then(() => { if (!D || !D.river) setTimeout(retry, 60000); }); })();
   (function tick() { radarClock(); setTimeout(tick, 60000 - (Date.now() % 60000) + 50); })();
-  setInterval(() => { if (!D || !D.river) return; const f0 = fresh; freshness(); if (f0 !== fresh) { status(); hero(); paintRibbon(+$("scrub").value); paintMap(+$("scrub").value); } }, 60000);
+  setInterval(retick, 60000);
   setInterval(refresh, 10 * 60000);
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") { retick(); refresh(); } });
 })();

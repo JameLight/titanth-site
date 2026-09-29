@@ -1,5 +1,5 @@
 // Tests for the page's own rules (flood/kamphaeng-phet/kpp-core.js).
-// Run: node --test .github/kpp/tests/update.test.mjs .github/kpp/tests/page.test.mjs
+// Run: node --test .github/kpp/tests/update.test.mjs .github/kpp/tests/page.test.mjs .github/kpp/tests/page_dom.test.mjs
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
@@ -72,43 +72,87 @@ test("flat run: no claim for an hour that has no reading, now or while replaying
   assert.deepEqual(K.flatRun(replay, 11), { h: 11, fromStart: true }, "the hour before it has a reading and a run");
   assert.deepEqual(K.flatRun(replay, 24), { h: 11, fromStart: true }, "the run after the gap reaches the shown hour");
   assert.equal(K.flatRun([], 0), null);
+  assert.equal(K.flatRun(twelve, 20), null, "an hour past the end of the series has no reading");
+  assert.equal(K.flatRun(twelve, -1), null);
   const late = [...twelve, null];
-  assert.deepEqual(K.flatRun(late, K.lastIdx(late, 12)), { h: 11, fromStart: true },
-    "the details sheet asks for the run that ends at its newest reading, and states that reading's time");
+  assert.deepEqual(K.flatRun(late, K.lastIdx(late, 12)), { h: 11, fromStart: true }, "the run that ends at the newest reading");
 });
 
+// Hour 0 is 28 Sep 06:00 Thai time; hour 32, the newest, is 29 Sep 14:00.
+const START = Date.parse("2026-09-28T06:00:00+07:00"), H = 3600e3, LAST = 32;
+const at = (hhmm) => Date.parse(`2026-09-29T${hhmm}:00+07:00`);
+const ctx = (fresh, now = at("14:30")) => ({ start: START, fresh, last: LAST, now });
+
 test("a line about a reading gives that gauge's own reading time when it is not the shown hour", () => {
-  const start = Date.parse("2026-09-28T06:00:00+07:00"), H = 3600e3, last = 32;
   const cur = Array(33).fill(4.2);
-  const behind2 = [...Array(31).fill(4.2), null, null]; // the town gauge's newest reading is 2 hours before the shown hour
+  const behind2 = [...Array(31).fill(4.2), null, null]; // newest reading at hour 30 (12:00), 2 hours before the newest hour
   for (const fresh of ["fresh", "slow"]) {
-    const r = K.readingAt(behind2, last, start, fresh);
+    const r = K.readingAt(behind2, LAST, ctx(fresh));
     assert.equal(r.j, 30, fresh);
-    assert.equal(r.ms, start + 30 * H, `${fresh}: the gauge's own time, not the newest time of another gauge`);
+    assert.equal(r.ms, at("12:00"), `${fresh}: the time of hour 30`);
     assert.equal(r.behind, true);
-    assert.equal(r.old, false);
+    assert.equal(r.old, false, `${fresh}: 2.5 hours before the clock`);
     assert.equal(r.notNow, true, `${fresh}: the line must give the time`);
-    assert.equal(K.rowLine(behind2, last, fresh), "at", `${fresh}: the row gives the time, not a trend`);
+    assert.equal(K.rowLine(behind2, LAST, ctx(fresh)), "at", `${fresh}: the row gives the time, not a trend`);
   }
-  for (const k of [1, 3]) {
+  for (const k of [1, 2]) {
     const s = [...Array(33 - k).fill(4.2), ...Array(k).fill(null)];
-    assert.equal(K.rowLine(s, last, "fresh"), "at", `${k} hour(s) behind`);
-    assert.equal(K.readingAt(s, last, start, "fresh").ms, start + (32 - k) * H);
+    assert.equal(K.rowLine(s, LAST, ctx("fresh")), "at", `${k} hour(s) behind`);
+    assert.equal(K.readingAt(s, LAST, ctx("fresh")).ms, START + (32 - k) * H);
   }
-  assert.equal(K.readingAt(cur, last, start, "fresh").notNow, false, "a reading at the shown hour in a fresh set needs no time");
-  assert.equal(K.readingAt(cur, last, start, "slow").notNow, true, "a late set always gives the time");
-  assert.equal(K.readingAt(cur, last, start, "slow").ms, start + last * H);
-  assert.equal(K.rowLine(cur, last, "fresh"), "flat", "33 equal readings: the flat note, no trend");
+  assert.equal(K.readingAt(cur, LAST, ctx("fresh")).notNow, false, "a reading at the newest hour in a fresh set needs no time");
+  assert.equal(K.readingAt(cur, LAST, ctx("slow")).notNow, true, "a late set always gives the time");
+  assert.equal(K.rowLine(cur, LAST, ctx("fresh")), "flat", "33 equal readings: the flat note, no trend");
   const rising = cur.map((v, i) => v + i * 0.03);
-  assert.equal(K.rowLine(rising, last, "fresh"), "trend");
-  assert.equal(K.rowLine(rising, last, "slow"), "trend", "a slow set keeps the trend; the top bar says the set is late");
-  assert.equal(K.rowLine(rising, last, "old"), "at");
-  assert.equal(K.rowLine([...Array(28).fill(4.2), ...Array(5).fill(null)], last, "fresh"), "stopped", "more than 3 hours");
-  assert.equal(K.rowLine(Array(33).fill(null), last, "fresh"), "none");
-  assert.equal(K.rowLine(rising, 0, "fresh"), "", "the first hour of the window has no 3-hour change");
-  const none = K.readingAt(Array(3).fill(null), 2, start, "fresh");
+  assert.equal(K.rowLine(rising, LAST, ctx("fresh")), "trend");
+  assert.equal(K.rowLine(rising, LAST, ctx("slow", at("16:30"))), "trend", "a slow set keeps the trend; the top bar says the set is late");
+  assert.equal(K.rowLine(rising, LAST, ctx("old", at("23:00"))), "stopped", "an old set at 23:00: no new reading for 9 hours");
+  assert.equal(K.rowLine(rising, 31, ctx("old", at("23:00"))), "at", "replaying an old set gives each reading's time");
+  assert.equal(K.rowLine(Array(33).fill(null), LAST, ctx("fresh")), "none");
+  assert.equal(K.rowLine(rising, 0, ctx("fresh")), "", "the first hour of the window has no 3-hour change");
+  const none = K.readingAt(Array(3).fill(null), 2, ctx("fresh"));
   assert.equal(none.j, -1);
   assert.ok(Number.isNaN(none.ms));
+});
+
+test("more than 3 hours without a reading is old: against the shown hour, and at the newest hour against the clock", () => {
+  // Codex's case: the set's newest reading is 14:00, the page is open at 15:30, the town gauge's newest is 11:00.
+  const p7 = [...Array(30).fill(4.2), null, null, null]; // newest reading at hour 29 = 11:00
+  assert.equal(K.readingAt(p7, LAST, ctx("fresh", at("15:30"))).old, true, "4.5 hours before the clock");
+  assert.equal(K.rowLine(p7, LAST, ctx("fresh", at("15:30"))), "stopped");
+  assert.equal(K.readingAt(p7, LAST, ctx("fresh", at("14:00"))).old, false, "exactly 3 hours before the clock is not old");
+  assert.equal(K.readingAt(p7, LAST, ctx("fresh", at("14:01"))).old, true, "just over 3 hours before the clock is old");
+  const s4 = [...Array(29).fill(4.2), null, null, null, null]; // newest reading at hour 28, 4 hours before hour 32
+  assert.equal(K.readingAt(s4, LAST, ctx("fresh", at("14:00"))).old, true, "4 hours before the newest hour");
+  // Replay compares with the replayed hour only: the clock does not make an earlier hour's reading old.
+  assert.equal(K.readingAt(p7, 31, ctx("fresh", at("23:00"))).old, false, "replayed 13:00, reading 11:00");
+  assert.equal(K.readingAt(s4, 31, ctx("fresh", at("14:00"))).old, false, "replayed 13:00, reading 10:00");
+  assert.equal(K.readingAt(s4, 32, ctx("fresh", at("14:00"))).old, true);
+});
+
+test("the top bar's time span covers only the readings it counted", () => {
+  const cur = Array(33).fill(4.2), behind2 = [...Array(31).fill(4.2), null, null];
+  const stopped = [...Array(28).fill(4.2), ...Array(5).fill(null)];
+  assert.deepEqual(K.usedSpan([cur, cur], LAST, ctx("fresh")), { lo: 32, hi: 32 });
+  assert.deepEqual(K.usedSpan([cur, behind2], LAST, ctx("fresh")), { lo: 30, hi: 32 }, "12:00 to 14:00");
+  assert.deepEqual(K.usedSpan([cur, stopped], LAST, ctx("fresh")), { lo: 32, hi: 32 }, "a stopped gauge is not counted");
+  assert.deepEqual(K.usedSpan([behind2, behind2], LAST, ctx("fresh")), { lo: 30, hi: 30 });
+  assert.equal(K.usedSpan([stopped, Array(33).fill(null)], LAST, ctx("fresh")), null);
+});
+
+test("3-hour and 8-hour changes count back from the gauge's newest reading", () => {
+  // The reviewer's case: Tak rises 4 cm an hour, and its last two hours are missing.
+  const tak = Array.from({ length: 33 }, (_, k) => (k <= 30 ? +(1 + 0.04 * k).toFixed(2) : null));
+  assert.equal(K.trend(tak, LAST).t, "↗ ขึ้น 12 ซม. ใน 3 ชม.", "not a 1-hour span called steady");
+  assert.equal(K.trend(tak, 30).t, "↗ ขึ้น 12 ซม. ใน 3 ชม.", "the same as at its own newest hour");
+  assert.equal(K.change8(tak, LAST).t, "ขึ้น 0.32 ม. ใน 8 ชม.");
+});
+
+test("an alert is active only inside the display time its sender set", () => {
+  const items = [{ id: "a", sent_at: "2026-09-29T14:00:00+07:00", duration_h: 2 }];
+  assert.equal(K.activeAlerts(items, at("15:59")).length, 1);
+  assert.equal(K.activeAlerts(items, at("16:00")).length, 0, "at the end of the display time it is past");
+  assert.deepEqual(K.activeAlerts(undefined, at("15:00")), []);
 });
 
 test("forecast notice says only what is known about its age", () => {
@@ -118,6 +162,9 @@ test("forecast notice says only what is known about its age", () => {
   assert.equal(old, "พยากรณ์ชุดนี้ดึงเมื่อ 28 ก.ย. 13:14 น. เว็บนี้ยังไม่มีชุดที่ดึงใหม่ใน 6 ชั่วโมงที่ผ่านมา อาจไม่ใช่ฉบับล่าสุด ดูฉบับล่าสุดที่เว็บกรมอุตุนิยมวิทยา");
   assert.ok(!old.includes("ดึงฉบับใหม่ไม่ได้"), "no claim about why");
   assert.equal(K.forecastNotice(NaN, now), "ไม่ทราบเวลาที่ดึงพยากรณ์ชุดนี้ อาจไม่ใช่ฉบับล่าสุด ดูฉบับล่าสุดที่เว็บกรมอุตุนิยมวิทยา");
+  const f = Date.parse("2026-09-29T14:22:00+07:00");
+  assert.equal(K.forecastNotice(f, f + 6 * 3600e3), "", "exactly 6 hours: no notice yet");
+  assert.ok(K.forecastNotice(f, f + 6 * 3600e3 + 60e3).startsWith("พยากรณ์ชุดนี้ดึงเมื่อ 29 ก.ย. 14:22 น."), "just over 6 hours: the notice");
 });
 
 test("TMD's Thai-time stamp is read as Thai time", () => {
