@@ -50,6 +50,20 @@ test("flat run: hours are the span, and 'at least' only when no earlier reading 
   assert.equal(K.flatRun([...Array(12).fill(6.6), 6.62], 12), null, "a 2 cm step breaks the run");
 });
 
+test("flat run: a gap of two or more missing hours ends the run; one missing hour is bridged", () => {
+  const codexCase = [6.6, ...Array(18).fill(null), ...Array(11).fill(6.6)];
+  assert.equal(K.flatRun(codexCase, codexCase.length - 1), null, "18 unknown hours must not count as flat");
+  const oneMissing = [...Array(6).fill(6.6), null, ...Array(6).fill(6.6)];
+  assert.deepEqual(K.flatRun(oneMissing, 12), { h: 12, fromStart: true });
+  const gapThenRun = [...Array(5).fill(6.6), null, null, ...Array(12).fill(6.6)];
+  assert.deepEqual(K.flatRun(gapThenRun, 18), { h: 11, fromStart: true }, "ended by missing data, so 'at least'");
+});
+
+test("TMD's Thai-time stamp is read as Thai time", () => {
+  assert.equal(K.thaiStampMs("2026-09-29 13:14:00"), Date.parse("2026-09-29T13:14:00+07:00"));
+  assert.ok(Number.isNaN(K.thaiStampMs("")));
+});
+
 test("upstream peak is searched in the whole window, not only the last 8 hours", () => {
   const tak = [2.2, 2.4, 2.6, 2.6, 2.55, 2.5, 2.45, 2.35, 2.24, 2.12, 2.0, 1.9, 1.8];
   const p = K.peakDrop(tak, 12);

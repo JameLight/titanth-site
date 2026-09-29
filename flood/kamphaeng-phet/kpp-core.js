@@ -8,6 +8,7 @@
   "use strict";
   const STALE_H = 3; // a station whose newest reading is more than 3 hours before the shown hour has no recent data
   const FLAT_MIN = 12; // readings needed before a run within 1 cm is reported
+  const FLAT_GAP = 2; // two or more missing hours in a row end a flat run: what the water did then is unknown
 
   // Metres to whole centimetres, so comparisons are free of floating-point noise.
   const cmOf = (x) => Math.round(x * 100);
@@ -55,19 +56,22 @@
   }
 
   // A gauge whose last FLAT_MIN or more readings stay within 1 cm may be stuck, or the water may really be steady.
-  // Returns null, or { h: hours between the first and last reading of the run, fromStart: no earlier reading exists }.
+  // A single missing hour is bridged; FLAT_GAP missing hours in a row end the run, because nothing is known about them.
+  // Returns null, or { h: hours between the first and last reading of the run,
+  //   fromStart: the run was ended by missing data or the start of the window, so it may be longer ("อย่างน้อย") }.
   function flatRun(series, i) {
-    let hi = -Infinity, lo = Infinity, n = 0, first = -1, last = -1;
+    let hi = -Infinity, lo = Infinity, n = 0, first = -1, last = -1, gap = 0, open = true;
     for (let k = Math.min(i, series.length - 1); k >= 0; k--) {
       const v = series[k];
-      if (v == null) continue;
+      if (v == null) { if (last >= 0 && ++gap >= FLAT_GAP) break; continue; }
+      gap = 0;
       const c = cmOf(v), h2 = Math.max(hi, c), l2 = Math.min(lo, c);
-      if (h2 - l2 > 1) break;
+      if (h2 - l2 > 1) { open = false; break; }
       hi = h2; lo = l2; n++; first = k;
       if (last < 0) last = k;
     }
     if (n < FLAT_MIN) return null;
-    return { h: last - first, fromStart: lastIdx(series, first - 1) < 0 };
+    return { h: last - first, fromStart: open };
   }
 
   // Highest reading in the whole window up to i, and how far the newest reading is below it.
@@ -85,6 +89,12 @@
     return { drop: cmOf(mx) - cmOf(series[ja]), peakIdx: mi, atStart: mi === firstIdx };
   }
 
+  // "YYYY-MM-DD HH:MM[:SS]" written in Thai time (as TMD stamps its responses) to milliseconds; NaN when unreadable.
+  function thaiStampMs(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/.exec(String(s || ""));
+    return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0)) - 7 * 3600e3 : NaN;
+  }
+
   // "YYYY-MM-DD" of an instant in Thai time.
   function thaiDate(ms) {
     const d = new Date(ms + 7 * 3600e3);
@@ -96,5 +106,5 @@
     return date === thaiDate(nowMs) ? "วันนี้" : date === thaiDate(nowMs + 24 * 3600e3) ? "พรุ่งนี้" : "";
   }
 
-  return { STALE_H, FLAT_MIN, cmOf, lastIdx, cls, gapText, isOld, trend, change8, flatRun, peakDrop, thaiDate, dayLabel };
+  return { STALE_H, FLAT_MIN, FLAT_GAP, cmOf, lastIdx, cls, gapText, isOld, trend, change8, flatRun, peakDrop, thaiStampMs, thaiDate, dayLabel };
 });
