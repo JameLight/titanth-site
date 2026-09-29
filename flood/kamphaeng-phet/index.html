@@ -30,6 +30,7 @@
   <div id="activeAlerts"></div>
 
   <section class="hero" aria-labelledby="heroTitle">
+    <p class="role">เว็บประชาชน ไม่ใช่หน่วยงานรัฐ ไม่รับแจ้งเหตุ · ติดน้ำกดโทรจากปุ่มด้านล่าง</p>
     <div class="where" id="heroTitle">แม่น้ำปิง · ตัวเมืองกำแพงเพชร (จุดวัดของกรมชลประทาน · ไม่ใช่ระดับน้ำหน้าบ้าน)</div>
     <div class="chips"><span class="verdict" id="hVerdict"></span><span class="chip" id="hTrend"></span></div>
     <p class="sub" id="hWatch"></p>
@@ -38,7 +39,7 @@
     <p class="sub" id="hUp"></p>
   </section>
 
-  <div class="tiles">
+  <div class="tiles" id="tiles" hidden>
     <button class="tile" type="button" data-go="river"><b id="tRiver">–</b><span id="tRiverOf">ถึงเกณฑ์เฝ้าระวัง/วิกฤติ</span></button>
     <button class="tile" type="button" data-go="roads"><b>2</b><span>ถนนที่เคยรายงานว่าผ่านไม่ได้ (28 ก.ย.)</span></button>
     <button class="tile" type="button" data-go="map"><b id="tMap">8/11</b><span>อำเภอที่ดาวเทียมเห็นน้ำท่วม (23–29 ก.ย.)</span></button>

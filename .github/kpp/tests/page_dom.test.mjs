@@ -63,7 +63,7 @@ function openPage({ data, geo = { W: 100, H: 100, districts: [], rivers: [], sta
   }
   const els = {};
   const document = {
-    getElementById(id) { if (!els[id]) { els[id] = makeEl("#" + id); if (id === "sheet" || id === "scrim") els[id].hidden = true; } return els[id]; },
+    getElementById(id) { if (!els[id]) { els[id] = makeEl("#" + id); if (id === "sheet" || id === "scrim" || id === "tiles") els[id].hidden = true; } return els[id]; },
     createElement: makeEl, createElementNS: (ns, t) => makeEl(t), querySelectorAll: () => [],
     addEventListener(t, f) { (docListeners[t] ||= []).push(f); },
     dispatchEvent() {}, body: makeEl("body"), contains: () => true, activeElement: null, visibilityState: "visible",
@@ -291,5 +291,10 @@ test("Codex 16:19: the rain box shows exactly today and tomorrow, and says which
   const d2 = noTomorrow.rain().days;
   assert.match(d2[0], /^วันนี้ 29 ก\.ย\.\s*ฝนฟ้าคะนอง/);
   assert.match(d2[1], /^พรุ่งนี้ 30 ก\.ย\.\s*ไม่มีในชุดพยากรณ์ที่บันทึกไว้/);
+});
+
+test("Codex 16:22: the tiles, which hold dated figures, appear only when the script runs", () => {
+  const pg = openPage({ data: dataSet(), now: at("09-29T14:30") });
+  assert.equal(pg.$("tiles").hidden, false);
 });
 

@@ -7,6 +7,9 @@
   if (!K) return; // kpp-core.js did not load: the notice in index.html then appears by itself after 10 seconds
   // The notice appears by itself (CSS) only if this script never runs, e.g. it failed to load; it runs, so remove it.
   const jsFail = document.getElementById("jsFail"); if (jsFail) jsFail.remove();
+  // The tiles hold dated figures that only this script keeps honest (the satellite end date), so the page ships
+  // them hidden and shows them here; without the script they never appear.
+  const tilesEl = document.getElementById("tiles"); if (tilesEl) tilesEl.hidden = false;
   const NS = "http://www.w3.org/2000/svg";
   const HOUR = 3600e3;
   const $ = (id) => document.getElementById(id);

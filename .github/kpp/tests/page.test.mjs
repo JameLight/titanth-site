@@ -162,6 +162,14 @@ test("an alert is active only inside the display time its sender set", () => {
   assert.equal(K.pastAlerts(items, at("15:59")).length, 0);
 });
 
+test("the first screen says the site takes no reports, and the dated tiles need the script", () => {
+  const html = fs.readFileSync(new URL("../../../flood/kamphaeng-phet/index.html", import.meta.url), "utf8");
+  const role = html.indexOf('<p class="role">'), hero = html.indexOf('id="heroTitle"');
+  assert.ok(role > 0 && role < hero, "the role line comes before the hero title");
+  assert.match(html.slice(role, html.indexOf("</p>", role)), /ไม่ใช่หน่วยงานรัฐ ไม่รับแจ้งเหตุ/);
+  assert.match(html, /<div class="tiles" id="tiles" hidden>/, "hidden until the script shows them");
+});
+
 test("the page title and share texts do not promise automatic or current data", () => {
   const html = fs.readFileSync(new URL("../../../flood/kamphaeng-phet/index.html", import.meta.url), "utf8");
   for (const phrase of ["อัปเดตอัตโนมัติจากกรมชลประทาน", "อัปเดตเองจากข้อมูลกรมชลประทาน", "น้ำกำแพงเพชรตอนนี้"]) assert.ok(!html.includes(phrase), phrase);
