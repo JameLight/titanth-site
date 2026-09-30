@@ -56,7 +56,7 @@ function setup() {
     const call = el("a", `steps-call${number === "1669" ? " alt" : ""}`);
     call.href = `tel:${number}`;
     call.setAttribute("aria-label", `โทร ${number} ${label}`);
-    call.append(el("b", "", `โทร ${number}`), el("span", "", label));
+    call.append(el("b", "", number), el("span", "", `โทร · ${label}`));
     calls.append(call);
   }
   const bar = el("div", "steps-progress");
@@ -122,7 +122,7 @@ function setup() {
       .map((part) => String(part || "").trim()).filter(Boolean).join(" · ");
     const gps = values.get("lat") && values.get("lon") ? `พิกัดจากโทรศัพท์${values.get("accuracyMeters") ? ` (อาจคลาดราว ${Math.round(Number(values.get("accuracyMeters")))} เมตร)` : ""}` : "ไม่ได้ใช้ตำแหน่งโทรศัพท์";
     const rows = [
-      ["ตอนนี้", values.get("urgentNow") === "yes" ? "ด่วน" : "ยังปลอดภัย", 0],
+      ["ตอนนี้", values.get("urgentNow") === "yes" ? "ด่วน" : "ยังไม่ต้องอพยพด่วน", 0],
       ["ต้องการ", text(chosen.filter((key) => !care.includes(key))), 1],
       ["อยู่ที่ไหน", `${place || "-"} · ${gps}`, 2],
       ["จำนวนคน", `${values.get("peopleCount")} คน`, 3],
@@ -145,7 +145,7 @@ function setup() {
         lat: values.get("lat"), lon: values.get("lon"), accuracyMeters: values.get("accuracyMeters") || null,
         peopleCount: values.get("peopleCount"), contactPhone: values.get("contactPhone"), needs: chosen, details: values.get("details"),
       }, { id: "(ใส่ตอนสร้างข้อความ)" });
-      sample.textContent = shareText(draft);
+      sample.textContent = shareText(draft).replace(/^ข้อมูล ณ \(เวลาไทย\): .*$/m, "ข้อมูล ณ (เวลาไทย): (ใส่ตอนสร้างข้อความ)");
     } catch (error) {
       sample.textContent = "";
       errorBox.textContent = error.message;
@@ -241,6 +241,8 @@ function setup() {
     head.classList.toggle("steps-head-static", head.offsetHeight > window.innerHeight * 0.3);
   };
   window.addEventListener("resize", fitHead);
+  const shortcut = document.querySelector(".quick-action-form");
+  if (shortcut) shortcut.href = "#case-form";
   show(0, { focus: false });
   fitHead();
 }

@@ -14,8 +14,8 @@
 .steps-head.steps-head-static{position:static}
 .steps-head.steps-head-compact{padding:.35rem .6rem;margin:-1rem -.6rem .55rem}
 .steps-head-compact .steps-calls{grid-template-columns:repeat(2,minmax(0,1fr))}
-.steps-head-compact .steps-call{min-width:0;min-height:52px;padding:.25rem .2rem;overflow-wrap:anywhere}
-.steps-head-compact .steps-call b{font-size:1rem}
+.steps-head-compact .steps-call{min-width:0;min-height:52px;padding:.25rem .2rem}
+.steps-head-compact .steps-call b{font-size:1rem;white-space:nowrap}
 .steps-head-compact .steps-call span{display:none}
 .steps-head-compact .steps-progress{margin-top:.3rem}
 .steps-head-compact .steps-count{margin:.15rem 0 0;font-size:.75rem}
