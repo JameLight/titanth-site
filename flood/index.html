@@ -11,7 +11,7 @@
   <meta property="og:locale" content="th_TH">
   <meta property="og:url" content="https://titanth.com/flood/">
   <meta property="og:title" content="ติดน้ำท่วม? โทร 1784 • เจ็บป่วยหรือบาดเจ็บฉุกเฉิน โทร 1669">
-  <meta property="og:description" content="โทรได้โดยไม่ต้องใช้เน็ต • เว็บนี้ช่วยเรียงข้อความให้ครบ คุณต้องโทรหรือกดส่งเอง • ไม่ใช่เว็บหน่วยงานรัฐ • ไม่มีทีมเฝ้ารับเรื่อง">
+  <meta property="og:description" content="โทรได้เมื่อมีสัญญาณโทรศัพท์ แม้ไม่มีเน็ต • เว็บนี้ช่วยเรียงข้อความให้ครบ คุณต้องโทรหรือกดส่งเอง • ไม่ใช่เว็บหน่วยงานรัฐ • ไม่มีทีมเฝ้ารับเรื่อง">
   <meta property="og:image" content="https://titanth.com/flood/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -20,6 +20,7 @@
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./styles.css">
+<link rel="stylesheet" href="./steps.css">
   <title>ติดน้ำท่วม? โทร 1784 | พร้อมแจ้งน้ำท่วม</title>
 </head>
 <body>
@@ -103,14 +104,14 @@
       <noscript><p class="error">แบบฟอร์มนี้ใช้ไม่ได้เมื่อปิด JavaScript ให้โทร 1784 หรือแจ้ง LINE @1784DDPM โดยตรง</p></noscript>
       <div class="intro">
         <h2>เตรียมข้อความขอความช่วยเหลือน้ำท่วม</h2>
-        <p id="intro-copy">กรอกเท่าที่รู้ หน้านี้จะจัดเป็นข้อความให้ แล้วคุณส่งเองทาง LINE @1784DDPM หรืออ่านให้เจ้าหน้าที่ 1784 ฟัง เคสที่บันทึกจะอยู่ในเบราว์เซอร์เครื่องนี้</p>
+        <p id="intro-copy">ตอบคำถามสั้น ๆ ข้อที่มีดอกจัน * ต้องตอบ หน้านี้จะจัดเป็นข้อความให้ แล้วคุณส่งเองทาง LINE @1784DDPM หรืออ่านให้เจ้าหน้าที่ 1784 ฟัง เคสที่บันทึกจะอยู่ในเบราว์เซอร์เครื่องนี้</p>
       </div>
       <section class="composer" aria-labelledby="form-title">
         <div class="section-heading"><h2 id="form-title">บันทึกข้อมูลเคส</h2><span id="storage-scope">เคสเก็บในเครื่อง</span></div>
         <form id="case-form" novalidate hidden>
           <fieldset class="triage" aria-describedby="triage-help"><legend>ตอนนี้ต้องอพยพด่วนหรือมีผู้ป่วยไหม <span class="required">*</span></legend>
             <p id="triage-help">เลือกตามสถานการณ์จริง หากอันตรายให้โทร 1784 หรือ 1669 ตามเหตุก่อนกรอกแบบฟอร์ม</p>
-            <div class="triage-choices"><label><input type="radio" name="urgentNow" value="yes"> ใช่ ด่วน</label><label><input type="radio" name="urgentNow" value="no"> ยังปลอดภัย ต้องการของหรือข้อมูล</label></div>
+            <div class="triage-choices"><label><input type="radio" name="urgentNow" value="yes"> ใช่ ด่วน</label><label><input type="radio" name="urgentNow" value="no"> ยังปลอดภัย แต่อยากเตรียมข้อความขอของหรือข้อมูล</label></div>
             <div id="urgent-needs" class="triage-urgent" hidden><p>เลือกเหตุที่ตรงกับสถานการณ์อย่างน้อยหนึ่งข้อ</p><div class="needs-list"><label class="need"><input type="checkbox" name="needs" value="trapped"><span>มีคนติดอยู่</span></label><label class="need"><input type="checkbox" name="needs" value="immobile"><span>มีผู้ป่วยติดเตียงหรือคนเคลื่อนย้ายเองไม่ได้</span></label><label class="need"><input type="checkbox" name="needs" value="medical"><span>ต้องการความช่วยเหลือทางการแพทย์</span></label><label class="need"><input type="checkbox" name="needs" value="fast_water"><span>ระดับน้ำเพิ่มเร็ว</span></label><label class="need"><input type="checkbox" name="needs" value="dialysis_oxygen"><span>ต้องฟอกไตหรือใช้ออกซิเจน</span></label></div><p class="triage-warning">โทร 1784 เพื่อแจ้งน้ำท่วม หรือ 1669 เมื่อเจ็บป่วยหรือบาดเจ็บฉุกเฉิน การบันทึกในเว็บไม่ใช่การแจ้งเหตุ</p></div>
           </fieldset>
           <fieldset><legend>สถานที่เกิดเหตุ</legend>
@@ -120,7 +121,7 @@
             <input type="hidden" name="lat"><input type="hidden" name="lon"><input type="hidden" name="accuracyMeters">
           </fieldset>
           <fieldset><legend>ผู้ที่ต้องการความช่วยเหลือ</legend>
-            <div class="field-grid"><label>จำนวนคน <span class="required">*</span><input name="peopleCount" type="number" inputmode="numeric" min="1" max="999" value="1" required></label><label>เบอร์โทรกลับ <span class="optional">ถ้ามี</span><input name="contactPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="เก็บในเครื่องและอยู่ในข้อความที่แชร์"></label></div>
+            <div class="field-grid"><label>จำนวนคน <span class="required">*</span><input name="peopleCount" type="number" inputmode="numeric" min="1" max="999" required></label><label>เบอร์โทรกลับ <span class="optional">ถ้ามี</span><input name="contactPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="เก็บในเครื่องและอยู่ในข้อความที่แชร์"></label></div>
             <div class="choice-label">ต้องการความช่วยเหลือเพิ่มเติมเรื่องใด (เลือกได้หลายข้อ)</div>
             <div id="needs-list" class="needs-list"></div>
             <div class="choice-label">มีกลุ่มที่ต้องดูแลเป็นพิเศษหรือไม่</div>
@@ -151,5 +152,6 @@
   <dialog id="media-dialog" aria-labelledby="media-title"><h2 id="media-title">แนบรูปหรือเสียงเพื่อส่งเอง</h2><p>เลือกถ่ายรูปหรืออัดเสียงจากอุปกรณ์ ถ้าเบราว์เซอร์ไม่เปิดกล้อง/ไมค์ ให้เลือกไฟล์ที่ถ่ายไว้ รูปหรือเสียงอาจมีใบหน้า เสียง และข้อมูลตำแหน่งอยู่ในไฟล์ ตรวจให้ดีก่อนแชร์</p><div class="media-inputs"><label>ถ่ายหรือเลือกรูป<input id="media-photo" type="file" accept="image/*" capture="environment"></label><label>อัดหรือเลือกเสียง<input id="media-audio" type="file" accept="audio/*" capture="microphone"></label></div><p id="media-status" role="status" aria-live="polite">ไฟล์ยังอยู่ในอุปกรณ์นี้ เว็บไม่อัปโหลดหรือเก็บไฟล์ไว้ในเคส</p><textarea id="media-manual-text" readonly rows="5" hidden aria-label="ข้อความสำหรับคัดลอกเอง"></textarea><a id="media-open-external" class="media-open-external" href="./?openExternalBrowser=1" target="_blank" rel="noopener noreferrer" hidden>ถ้าเปิดจาก LINE ให้เปิดหน้านี้ใน Safari/Chrome หลังคัดลอกข้อความ (เคสในเครื่องอาจไม่ตามไป) ↗</a><p>ปุ่มแชร์จะเปิดเมนูของเครื่อง คุณต้องเลือกปลายทางและกดส่งเอง หน้านี้ไม่รู้ว่าปลายทางได้รับหรือยัง หากอันตรายให้โทร 1784 หรือ 1669</p><div class="dialog-actions"><button type="button" id="media-cancel" class="text-button">ปิดและล้างไฟล์</button><button type="button" id="media-share" class="primary-button">เปิดเมนูแชร์พร้อมข้อความ</button></div></dialog>
   <div id="toast" role="status" aria-live="polite" class="toast" hidden></div>
   <script type="module" src="./app.js"></script>
+  <script type="module" src="./steps.js"></script>
 </body>
 </html>
