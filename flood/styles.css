@@ -50,6 +50,8 @@ dialog{max-height:90vh;overflow:auto}
 .quick-location-result p{white-space:pre-line}
 .quick-location-result.gps-uncertain{border-color:#a82b21;background:#fff0ed}
 .quick-location-result.gps-uncertain #quick-location-status,.gps-row #gps-status.gps-uncertain{color:#782118;font-weight:800}
+.quick-location-result .quick-location-privacy{margin:.55rem 0;padding:.55rem .7rem;border-left:4px solid #a82b21;background:#fff;color:#782118;font-weight:750}
+.quick-location-privacy[hidden]{display:none}
 .gps-row #gps-status.gps-uncertain{padding:.35rem .5rem;background:#fff0ed;border-left:4px solid #a82b21}
 .sos-say{margin:0;padding:.6rem .8rem;background:#fff;border:1.5px solid #d7aaa3;border-radius:10px;font-size:1rem;line-height:1.5;color:#513b36}.sos-say strong{color:#782118}
 

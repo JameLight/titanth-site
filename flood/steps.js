@@ -39,7 +39,7 @@ function setup() {
   review.append(el("legend", "", "ตรวจก่อนสร้างข้อความ"), el("p", "step-hint", "แตะ \"แก้\" เพื่อกลับไปเปลี่ยนคำตอบ ยังไม่มีอะไรถูกบันทึกหรือส่ง"));
   const answers = el("dl", "review-list");
   const sample = el("pre", "review-message");
-  review.append(answers, el("p", "review-sample", "ตัวอย่างข้อความ รหัสเคสและเวลาจะใส่ให้ตอนกดสร้างข้อความ"), sample);
+  review.append(answers, el("p", "review-sample", "ตัวอย่างข้อความ รหัสบันทึกในเครื่องและเวลาจะใส่ให้ตอนกดสร้างข้อความ ยังไม่ใช่เลขรับเรื่องของหน่วยงาน"), sample);
 
   const steps = [triage, needs, place, people, review].map((group, index) => {
     const section = el("section", "step");
@@ -272,6 +272,8 @@ function addCountButtons(people) {
     group.append(button);
   }
   input.closest("label").after(group);
+  const unknown = el("p", "step-hint", "ไม่ทราบจำนวน? โทร 1784 แล้วบอกว่าไม่ทราบ อย่าเดาจำนวนคน");
+  group.after(unknown);
   input.addEventListener("input", () => {
     const n = Number(input.value);
     if (Number.isInteger(n) && n >= 1 && n <= 6 && !input.classList.contains("count-typed")) {
