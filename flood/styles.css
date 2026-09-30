@@ -52,3 +52,57 @@ dialog{max-height:90vh;overflow:auto}
 .quick-location-result.gps-uncertain #quick-location-status,.gps-row #gps-status.gps-uncertain{color:#782118;font-weight:800}
 .gps-row #gps-status.gps-uncertain{padding:.35rem .5rem;background:#fff0ed;border-left:4px solid #a82b21}
 .sos-say{margin:0;padding:.6rem .8rem;background:#fff;border:1.5px solid #d7aaa3;border-radius:10px;font-size:1rem;line-height:1.5;color:#513b36}.sos-say strong{color:#782118}
+
+/* First decisions stay short; the form below retains its own structure and logic. */
+.mobile-call-bar{display:none}
+.emergency.sos{display:block;min-width:0}
+.emergency .sos-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+.emergency .sos-actions .sos-button{min-width:0;min-height:60px;overflow-wrap:anywhere}
+.quick-actions-title{margin:1rem 0 .55rem;color:#782118;font-size:1.12rem;line-height:1.3}
+.quick-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}
+.quick-action,.quick-action.sos-button{display:flex;min-width:0;min-height:72px;flex-direction:column;align-items:center;justify-content:center;gap:.1rem;padding:.6rem .55rem;border:2px solid #aec7cf;border-radius:12px;background:#fff;color:#103b50;text-decoration:none;text-align:center;line-height:1.3;overflow-wrap:anywhere}
+.quick-action strong{font-size:1.02rem;line-height:1.3}
+.quick-action small,.quick-action.sos-button small{display:block;margin:0;font-size:.88rem;line-height:1.3;font-weight:500}
+.quick-action span[aria-hidden]{font-size:1.2rem;line-height:1.2}
+@supports selector(body:has(#case-form:not([hidden]))){
+  .quick-action-form{display:none}
+  body:has(#case-form:not([hidden])) .quick-action-form{display:flex}
+}
+.quick-action.sos-location{border-color:#0f5f3a;color:#0f5f3a}
+.quick-action[hidden],.quick-action.sos-button[hidden]{display:none}
+.nojs-warning{padding:.65rem .75rem;border-radius:9px;background:#fff;color:#782118;font-weight:700;line-height:1.45}
+.nojs-warning a{font-weight:800}
+.sos-line-direct{display:block;min-height:52px;margin-top:.7rem;padding:.55rem .75rem;border:2px solid #0f5f3a;border-radius:10px;background:#fff;color:#0f5f3a;font-weight:800;text-align:center;text-decoration:none;line-height:1.3}
+.sos-line-direct small{display:block;font-size:.88rem;font-weight:500;line-height:1.35}
+.sos-other{margin-top:.65rem;border:1px solid #d7aaa3;border-radius:10px;background:#fff}
+.sos-other summary{min-height:48px;padding:.6rem .75rem;color:#782118;font-weight:800;cursor:pointer}
+.sos-other .sos-more,.sos-other .sos-say,.sos-other .delivery-explainer{margin:.55rem .7rem .7rem}
+.sos-other .sos-more{grid-template-columns:repeat(2,minmax(0,1fr))}
+.sos-other .sos-small{min-height:48px;overflow-wrap:anywhere}
+.emergency .sos-note{font-size:.88rem;line-height:1.4}
+.kpp-entry{margin:.75rem 0 1rem;padding:.85rem 1rem;border:1px solid #9bb8c6;border-radius:10px;background:#edf3f5}
+.kpp-entry h2{margin:0 0 .5rem;color:#103b50;font-size:1.05rem;line-height:1.35}
+.kpp-entry a{display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:.55rem .7rem;border:1px solid #9cb6bd;border-radius:9px;background:#fff;color:#103b50;font-weight:800;text-decoration:none}
+.kpp-entry p{margin:.55rem 0 0;color:#536a75;font-size:.88rem;line-height:1.45}
+.toast{max-height:28vh;overflow-y:auto;overflow-wrap:anywhere}
+@media(max-width:650px){
+  .site-header{display:flex;flex-direction:column;align-items:stretch;gap:.45rem;padding:.4rem .7rem}
+  .mobile-call-bar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
+  .mobile-call{display:flex;min-width:0;min-height:56px;flex-direction:column;align-items:center;justify-content:center;padding:.35rem .4rem;border-radius:10px;background:#a82b21;color:#fff;font-size:1.04rem;font-weight:800;line-height:1.25;text-align:center;text-decoration:none;overflow-wrap:anywhere}
+  .mobile-call small{font-size:.84rem;font-weight:500;line-height:1.25}
+  .mobile-call-medical{background:#103b50}
+  .site-header .brand img{width:30px;height:30px;flex:none}
+  .site-header .brand strong{font-size:1rem}
+  .site-header .brand span{display:none}
+  .layout{padding:.65rem .7rem 3rem}
+  .emergency.sos{padding:.75rem;margin-bottom:.65rem}
+  .sos-title{font-size:1.45rem;line-height:1.2;margin-bottom:.35rem}
+  .sos-coverage{margin:0 0 .55rem!important;font-size:.92rem;line-height:1.35}
+  .emergency .sos-actions{display:none}
+  .emergency .sos-actions .sos-button{min-height:56px;padding:.5rem .65rem;font-size:1.08rem}
+  .emergency .sos-actions .sos-button small{font-size:.91rem;line-height:1.25}
+  .quick-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sos-other .sos-more{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:355px){.quick-actions{grid-template-columns:minmax(0,1fr)}}
+@media(scripting:none){.quick-action-form{display:none!important}}
