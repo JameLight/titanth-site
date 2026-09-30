@@ -1,9 +1,9 @@
-// Step-by-step layer for the help-message form (#case-form), added over the page as progressive enhancement.
-// Without this file the form is one long page, exactly as before. With it, the same fields are shown one group at a
-// time with one main button at the bottom of the screen, as in a bank transfer. Nothing here saves or sends anything:
-// the case is still checked and saved by app.js and model.js (the form's own Save button is pressed through
-// requestSubmit), so the field names, the saved case and the prepared message stay the same.
-import { validateTriage } from "./model.js";
+// Step-by-step layer for the help-message form (#case-form). The form only works with scripts on (app.js shows it),
+// and without this file it is one long page, as before. With it, the same fields are shown one group at a time with one
+// main button at the bottom of the screen, as in a bank transfer, then a review of the answers before the message is
+// made. Nothing here saves or sends anything: app.js and model.js still check and save the case (the form's own Save
+// button is pressed through requestSubmit), so the field names, the saved case and the message stay the same.
+import { NEEDS, validateTriage, makeCase, shareText } from "./model.js";
 
 const form = document.getElementById("case-form");
 if (form && typeof form.requestSubmit === "function" && form.querySelectorAll(":scope > fieldset").length === 3) setup();
@@ -34,13 +34,20 @@ function setup() {
   // Who needs special care is about the people, so it sits with the head count in step 4.
   vulnerableLabel.textContent = "มีใครต้องดูแลเป็นพิเศษไหม (ไม่บังคับ)";
 
-  const steps = [triage, needs, place, people].map((group, index) => {
+  // Step 5 shows every answer with a way back to change it, and the message as it will look, before it is made.
+  const review = el("fieldset", "step-review");
+  review.append(el("legend", "", "ตรวจก่อนสร้างข้อความ"), el("p", "step-hint", "แตะ \"แก้\" เพื่อกลับไปเปลี่ยนคำตอบ ยังไม่มีอะไรถูกบันทึกหรือส่ง"));
+  const answers = el("dl", "review-list");
+  const sample = el("pre", "review-message");
+  review.append(answers, el("p", "review-sample", "ตัวอย่างข้อความ รหัสเคสและเวลาจะใส่ให้ตอนกดสร้างข้อความ"), sample);
+
+  const steps = [triage, needs, place, people, review].map((group, index) => {
     const section = el("section", "step");
     section.dataset.step = String(index + 1);
     section.append(group);
     return section;
   });
-  if (privacy) steps[3].append(privacy);
+  if (privacy) steps[4].append(privacy);
 
   // Top of every step: where you are, and both emergency numbers one tap away.
   const head = el("div", "steps-head");
@@ -68,7 +75,7 @@ function setup() {
 
   form.prepend(head);
   head.after(...steps);
-  steps[3].after(errorBox);
+  steps[4].after(errorBox);
   errorBox.after(nav);
   save.hidden = true;
   form.classList.add("steps-on");
@@ -85,13 +92,57 @@ function setup() {
     [...bar.children].forEach((part, i) => part.classList.toggle("on", i <= index));
     count.textContent = `ขั้น ${index + 1} จาก ${steps.length}`;
     back.hidden = index === 0;
-    next.textContent = index === steps.length - 1 ? "สร้างข้อความ" : "ถัดไป";
+    next.textContent = index === steps.length - 1 ? "สร้างข้อความ" : index === steps.length - 2 ? "ตรวจก่อนสร้าง" : "ถัดไป";
     errorBox.hidden = true;
+    // Built after the old message is cleared, so a problem found while building it stays in view.
+    if (index === steps.length - 1) fillReview();
     if (focus) {
       const title = steps[index].querySelector("legend");
       if (title) { title.tabIndex = -1; title.focus({ preventScroll: true }); }
       // The head is sticky, so scroll to the top of the form itself: the new question then starts just under the head.
       form.scrollIntoView({ block: "start" });
+    }
+  }
+
+  // The review: each answer in words, with "แก้" going back to its step, and the message built by the same code
+  // that app.js uses. The case id and time are placeholders here; the saved message gets real ones.
+  function fillReview() {
+    const values = new FormData(form);
+    const chosen = values.getAll("needs");
+    const care = ["pregnant", "infant", "elderly", "disabled"];
+    const text = (list) => list.map((key) => NEEDS[key]).join(", ") || "-";
+    const place = [values.get("province"), values.get("district") && `อ.${values.get("district")}`, values.get("subdistrict") && `ต.${values.get("subdistrict")}`, values.get("landmark")]
+      .map((part) => String(part || "").trim()).filter(Boolean).join(" · ");
+    const gps = values.get("lat") && values.get("lon") ? `พิกัดจากโทรศัพท์${values.get("accuracyMeters") ? ` (อาจคลาดราว ${Math.round(Number(values.get("accuracyMeters")))} เมตร)` : ""}` : "ไม่ได้ใช้ตำแหน่งโทรศัพท์";
+    const rows = [
+      ["ตอนนี้", values.get("urgentNow") === "yes" ? "ด่วน" : "ยังปลอดภัย", 0],
+      ["ต้องการ", text(chosen.filter((key) => !care.includes(key))), 1],
+      ["อยู่ที่ไหน", `${place || "-"} · ${gps}`, 2],
+      ["จำนวนคน", `${values.get("peopleCount")} คน`, 3],
+      ["ดูแลพิเศษ", text(chosen.filter((key) => care.includes(key))), 3],
+      ["เบอร์โทรกลับ", String(values.get("contactPhone") || "").trim() || "-", 3],
+    ];
+    answers.replaceChildren();
+    for (const [label, value, step] of rows) {
+      const change = el("button", "review-change", "แก้");
+      change.type = "button";
+      change.setAttribute("aria-label", `แก้ ${label}`);
+      change.addEventListener("click", () => show(step));
+      const row = el("div", "review-row");
+      row.append(el("dt", "", label), el("dd", "", value), change);
+      answers.append(row);
+    }
+    try {
+      const draft = makeCase({
+        province: values.get("province"), district: values.get("district"), subdistrict: values.get("subdistrict"), landmark: values.get("landmark"),
+        lat: values.get("lat"), lon: values.get("lon"), accuracyMeters: values.get("accuracyMeters") || null,
+        peopleCount: values.get("peopleCount"), contactPhone: values.get("contactPhone"), needs: chosen, details: values.get("details"),
+      }, { id: "(ใส่ตอนสร้างข้อความ)" });
+      sample.textContent = shareText(draft);
+    } catch (error) {
+      sample.textContent = "";
+      errorBox.textContent = error.message;
+      errorBox.hidden = false;
     }
   }
 
@@ -130,7 +181,7 @@ function setup() {
   });
   back.addEventListener("click", () => show(Math.max(0, current - 1)));
   // When saving fails because of an answer in an earlier step, go back to that step and keep the message in view.
-  const stepFor = [[/อพยพด่วน|เหตุเร่งด่วน/, 0], [/ความช่วยเหลือ/, 1], [/จังหวัด|จุดสังเกต|พิกัด|ละติจูด|ลองจิจูด|GPS/, 2]];
+  const stepFor = [[/อพยพด่วน|เหตุเร่งด่วน/, 0], [/ความช่วยเหลือ/, 1], [/จังหวัด|จุดสังเกต|พิกัด|ละติจูด|ลองจิจูด|GPS/, 2], [/จำนวนคน/, 3]];
   new MutationObserver(() => {
     if (errorBox.hidden) return;
     const hit = stepFor.find(([pattern]) => pattern.test(errorBox.textContent));
@@ -228,17 +279,29 @@ function foldOptional(group, names, text, after = null) {
   setFolded(!labels.some(label => label.querySelector("input, textarea")?.value));
 }
 
-// The case just saved: open its message, and say plainly that nothing has been sent and what copying does.
+// The case just saved, at the top of the list where app.js scrolls: its real message comes first, open, followed by the
+// ways to send it. The copy, LINE and share controls are app.js's own, moved up with their handlers, not copies.
 function markSaved(card) {
   for (const old of document.querySelectorAll(".case-card.just-saved")) old.classList.remove("just-saved");
   card.classList.add("just-saved");
-  const preview = card.querySelector("details.message-preview");
-  if (preview) preview.open = true;
+  card.querySelector(".saved-top")?.remove();
+  const top = el("div", "saved-top");
   const note = el("p", "saved-note");
   note.append(
     el("b", "", "ข้อความพร้อมแล้ว แต่ยังไม่ถึงใคร เว็บนี้ไม่ส่งให้ใคร"),
-    el("span", "", "กดคัดลอกข้อความ แล้วเปิด LINE ปภ. @1784DDPM วางและกดส่งเอง หรือโทร 1784 แล้วอ่านข้อความนี้ ถ้ากดคัดลอก ข้อความจะค้างอยู่ในเครื่องให้วางต่อได้ ถ้ากดแชร์ ข้อความจะไปอยู่ในแอปที่คุณเลือก")
+    el("span", "", "กดคัดลอกข้อความ แล้วเปิด LINE ปภ. @1784DDPM วางและกดส่งเอง (อาจต้องกดเพิ่มเพื่อนก่อน) หรือโทร 1784 แล้วอ่านข้อความนี้ ถ้ากดคัดลอก ข้อความจะค้างอยู่ในเครื่องให้วางต่อได้ ถ้ากดแชร์ ข้อความจะไปอยู่ในแอปที่คุณเลือก")
   );
-  card.querySelector(".saved-note")?.remove();
-  card.prepend(note);
+  top.append(note);
+  const preview = card.querySelector("details.message-preview");
+  if (preview) { preview.open = true; top.append(preview); }
+  const ways = el("div", "saved-actions");
+  const find = (selector, words) => [...card.querySelectorAll(selector)].find((node) => node.textContent.includes(words));
+  const line = find("a", "LINE");
+  if (line) line.classList.add("saved-line");
+  for (const control of [find("button", "คัดลอกข้อความ"), line, find("button", "แชร์ข้อความ")]) if (control) ways.append(control);
+  const call = el("a", "saved-call", "โทร 1784 แล้วอ่านข้อความนี้");
+  call.href = "tel:1784";
+  ways.append(call);
+  top.append(ways);
+  card.prepend(top);
 }
