@@ -138,7 +138,8 @@ function setup() {
         lat: values.get("lat"), lon: values.get("lon"), accuracyMeters: values.get("accuracyMeters") || null,
         peopleCount: values.get("peopleCount"), contactPhone: values.get("contactPhone"), needs: chosen, details: values.get("details"),
       }, { id: "(ใส่ตอนสร้างข้อความ)" });
-      sample.textContent = shareText(draft);
+      // The time line would show when this review opened, which could be read as when the message was made or sent.
+      sample.textContent = shareText(draft).replace(/^(ข้อมูล ณ \(เวลาไทย\): ).*$/m, "$1(ใส่ตอนสร้างข้อความ)");
     } catch (error) {
       sample.textContent = "";
       errorBox.textContent = error.message;
