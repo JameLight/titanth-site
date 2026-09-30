@@ -195,19 +195,28 @@ export function parseCB(data, nowMs, province = "62", days = 7) {
   const items = [];
   for (const x of data.fact_cb) {
     if (!aids.has(x.alert_id)) continue;
-    const dm = /D-(\d{4})(\d{2})(\d{2})/.exec(String(x.date_id || ""));
-    const tm = /(\d{1,2}):(\d{2})/.exec(String(x.time || ""));
-    if (!dm || !tm) throw new Error(`CB file: unreadable date or time for ${x.alert_id}`); // never drop a province alert quietly
-    const sentIso = isoThai(+dm[1], +dm[2], +dm[3], +tm[1], +tm[2]);
+    // A province alert with an unreadable value throws rather than being shown wrong or dropped quietly.
+    const dm = /^D-(\d{4})(\d{2})(\d{2})$/.exec(String(x.date_id || ""));
+    const tm = /^(\d{1,2}):(\d{2})(?::\d{2})?$/.exec(String(x.time || "").trim());
+    const [y, mo, d, h, mi] = dm && tm ? [+dm[1], +dm[2], +dm[3], +tm[1], +tm[2]] : [];
+    const day = dm ? new Date(Date.UTC(y, mo - 1, d)) : null;
+    const realDay = !!day && day.getUTCFullYear() === y && day.getUTCMonth() === mo - 1 && day.getUTCDate() === d;
+    if (!dm || !tm || !realDay || h > 23 || mi > 59) throw new Error(`CB file: unreadable date or time for ${x.alert_id}`);
+    const sentIso = isoThai(y, mo, d, h, mi);
     const sent = Date.parse(sentIso);
     if (nowMs - sent > days * 24 * HOUR) continue;
-    const dur = Number(x.duration_hour) || 0;
+    // Older rows in the file leave the display time blank; from August 2026 it is a number. Only alerts inside the
+    // window are shown, so only they must have a readable display time and text.
+    const dur = Number(x.duration_hour);
+    if (String(x.duration_hour ?? "").trim() === "" || !Number.isFinite(dur) || dur < 0) throw new Error(`CB file: unreadable display time for ${x.alert_id}`);
+    const text = String(msg.get(x.message_id)?.message_th || "").trim();
+    if (!text) throw new Error(`CB file: no message text for ${x.alert_id}`);
     items.push({
       id: x.alert_id,
       sent_at: toThaiIso(sentIso),
       duration_h: dur,
       title: String(x.title || ""),
-      text: String(msg.get(x.message_id)?.message_th || "").trim(),
+      text,
       active: dur > 0 && nowMs < sent + dur * HOUR,
     });
   }

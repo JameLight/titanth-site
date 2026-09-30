@@ -305,18 +305,23 @@
   // no new data arrives. The section is redrawn only when that changes, so a focused link is not lost each minute.
   let alertsKey = null;
   function alerts(force) {
-    const A = D.alerts, act = $("activeAlerts"), calm = $("alertCalm"), past = $("alertPast");
+    const A = D.alerts, act = $("activeAlerts"), stale = $("alertStale"), calm = $("alertCalm"), past = $("alertPast");
     const now = Date.now(), active = A ? K.activeAlerts(A.items, now) : [], upcoming = A ? K.upcomingAlerts(A.items, now) : [];
-    const notice = A ? K.alertsNotice(Date.parse(A.checked_at), now) : "";
+    const savedMs = A ? Date.parse(A.checked_at) : NaN, notice = A ? K.alertsNotice(savedMs, now) : "";
     const key = A ? `${A.checked_at}|${(A.items || []).length}|${active.map((x) => x.id).join(",")}|${upcoming.map((x) => x.id).join(",")}|${notice ? 1 : 0}` : "none";
     if (!force && key === alertsKey) return;
     alertsKey = key;
-    act.innerHTML = ""; calm.innerHTML = ""; past.innerHTML = "";
+    act.innerHTML = ""; stale.innerHTML = ""; stale.hidden = true; calm.innerHTML = ""; past.innerHTML = "";
     if (!A) { calm.innerHTML = `<p class="calm">ยังตรวจประกาศของ ปภ. ไม่ได้ในรอบนี้</p>`; return; }
     active.forEach((x) => { const d = document.createElement("div"); d.className = "alertbox"; d.innerHTML = `<b>ประกาศทางการ ปภ. ${esc(thDateTime(Date.parse(x.sent_at)))}</b>${esc(x.text)}`; act.appendChild(d); });
-    // Old alert data is said first, so a reader does not take the lines below for the current state.
-    if (notice) calm.innerHTML = `<p class="calm">${esc(notice).replace("เว็บ ปภ.", `<a href="https://www.disaster.go.th/" target="_blank" rel="noopener">เว็บ ปภ. ↗</a>`)}</p>`;
-    if (!active.length) calm.innerHTML += `<p class="calm">ยังไม่พบประกาศที่กำลังแสดงของ ปภ. สำหรับกำแพงเพชร ในข้อมูลประกาศที่บันทึกเมื่อ ${esc(thDateTime(Date.parse(A.checked_at)))} การไม่พบประกาศไม่ได้แปลว่าปลอดภัย</p>`;
+    // Old alert data is said first and next to what it concerns: above the red boxes when an alert is shown in effect,
+    // otherwise at the top of the alert section, so a reader does not take either for the current state.
+    const noticeHtml = notice ? `<p class="calm">${esc(notice).replace("เว็บ ปภ.", `<a href="https://www.disaster.go.th/" target="_blank" rel="noopener">เว็บ ปภ. ↗</a>`)}</p>` : "";
+    if (noticeHtml && active.length) { stale.innerHTML = noticeHtml; stale.hidden = false; }
+    else if (noticeHtml) calm.innerHTML = noticeHtml;
+    // The save time is written only when it can be read; an unreadable one is said as unknown, never shown as NaN.
+    const savedText = Number.isFinite(savedMs) ? `ในข้อมูลประกาศที่บันทึกเมื่อ ${esc(thDateTime(savedMs))}` : "ในข้อมูลประกาศชุดนี้ (ไม่ทราบเวลาที่บันทึก)";
+    if (!active.length) calm.innerHTML += `<p class="calm">ยังไม่พบประกาศที่กำลังแสดงของ ปภ. สำหรับกำแพงเพชร ${savedText} การไม่พบประกาศไม่ได้แปลว่าปลอดภัย</p>`;
     // An alert dated later than this device's clock: a neutral note apart from the red box, without its text.
     if (upcoming.length) calm.innerHTML += `<p class="calm">มีประกาศของ ปภ. ที่ระบุเวลาเริ่ม ${upcoming.map((x) => esc(thDateTime(Date.parse(x.sent_at)))).join(", ")} ซึ่งยังไม่ถึงตามนาฬิกาของเครื่องนี้ นาฬิกาเครื่องอาจคลาดเคลื่อน ตรวจประกาศที่ต้นทาง <a href="https://www.disaster.go.th/" target="_blank" rel="noopener">เว็บ ปภ. ↗</a></p>`;
     const old = K.pastAlerts(A.items, now);

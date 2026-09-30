@@ -101,6 +101,21 @@ test("Cell Broadcast: a changed or broken file throws, so the previous alerts ar
   assert.throws(() => parseCB({ ...cb, dim_message: noText }, now), /dim_message lacks message_th/);
   const badTime = cb.fact_cb.map((x) => (x.alert_id === "CB-690414" ? { ...x, time: "" } : x));
   assert.throws(() => parseCB({ ...cb, fact_cb: badTime }, now), /unreadable date or time for CB-690414/);
+  // A readable-looking value that is not real throws too.
+  const edit = (f) => ({ ...cb, fact_cb: cb.fact_cb.map((x) => (x.alert_id === "CB-690414" ? { ...x, ...f } : x)) });
+  assert.throws(() => parseCB(edit({ time: "25:99" }), now), /unreadable date or time for CB-690414/);
+  assert.throws(() => parseCB(edit({ time: "11:14 น." }), now), /unreadable date or time for CB-690414/);
+  assert.throws(() => parseCB(edit({ date_id: "D-20260931" }), now), /unreadable date or time for CB-690414/);
+  assert.throws(() => parseCB(edit({ duration_hour: "bad" }), now), /unreadable display time for CB-690414/);
+  assert.throws(() => parseCB(edit({ duration_hour: "" }), now), /unreadable display time for CB-690414/);
+  assert.throws(() => parseCB(edit({ duration_hour: -1 }), now), /unreadable display time for CB-690414/);
+  const mid = cb.fact_cb.find((x) => x.alert_id === "CB-690414").message_id;
+  const blankText = { ...cb, dim_message: cb.dim_message.map((m) => (m.message_id === mid ? { ...m, message_th: "  " } : m)) };
+  assert.throws(() => parseCB(blankText, now), /no message text for CB-690414/);
+  // Rows older than the 7-day window keep the blank display time the file used before August 2026; they are skipped.
+  assert.ok(cb.fact_cb.some((x) => x.alert_id === "CB-680114" && x.duration_hour === ""), "fixture has an old blank row");
+  assert.deepEqual(parseCB(cb, now).items.map((x) => x.id), ["CB-690414"]);
+  assert.equal(parseCB(edit({ time: "11:14:00" }), now).items[0].sent_at, "2026-09-28T11:14:00+07:00", "seconds are allowed");
   // An unreadable row of another province is not ours to judge and does not stop the reader.
   const otherBad = cb.fact_cb.map((x) => (x.alert_id === "CB-690438" ? { ...x, time: "" } : x));
   assert.ok(parseCB({ ...cb, fact_cb: otherBad }, now).items.some((x) => x.id === "CB-690414"));
