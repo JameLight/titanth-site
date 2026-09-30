@@ -12,6 +12,13 @@
 /* Top: both numbers one tap away, then where you are. */
 .steps-head{position:sticky;top:0;z-index:3;background:#fff;margin:-1rem -1rem 1rem;padding:.7rem 1rem .6rem;border-bottom:1px solid var(--line);border-radius:12px 12px 0 0}
 .steps-head.steps-head-static{position:static}
+.steps-head.steps-head-compact{padding:.35rem .6rem;margin:-1rem -.6rem .55rem}
+.steps-head-compact .steps-calls{grid-template-columns:repeat(2,minmax(0,1fr))}
+.steps-head-compact .steps-call{min-width:0;min-height:52px;padding:.25rem .2rem;overflow-wrap:anywhere}
+.steps-head-compact .steps-call b{font-size:1rem}
+.steps-head-compact .steps-call span{display:none}
+.steps-head-compact .steps-progress{margin-top:.3rem}
+.steps-head-compact .steps-count{margin:.15rem 0 0;font-size:.75rem}
 .steps-calls{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,8.5em),1fr));gap:.5rem}
 .steps-call{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:52px;border-radius:12px;background:var(--red);color:#fff;text-decoration:none;line-height:1.2;padding:.35rem .5rem}
 .steps-call.alt{background:var(--navy)}

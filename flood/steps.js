@@ -55,6 +55,7 @@ function setup() {
   for (const [number, label] of [["1784", "ติดน้ำ ขอกู้ภัย"], ["1669", "เจ็บป่วยฉุกเฉิน"]]) {
     const call = el("a", `steps-call${number === "1669" ? " alt" : ""}`);
     call.href = `tel:${number}`;
+    call.setAttribute("aria-label", `โทร ${number} ${label}`);
     call.append(el("b", "", `โทร ${number}`), el("span", "", label));
     calls.append(call);
   }
@@ -232,8 +233,13 @@ function setup() {
     }).observe(list, { childList: true });
   }
 
-  // With very large text the sticky head could cover most of the screen; then it scrolls with the page instead.
-  const fitHead = () => head.classList.toggle("steps-head-static", head.offsetHeight > window.innerHeight * 0.3);
+  // With large text keep both call numbers in view, but shorten their labels so the first question is not buried
+  // below a tall heading and the bottom Next button. The full call purpose remains in each link's accessible name.
+  const fitHead = () => {
+    head.classList.remove("steps-head-compact", "steps-head-static");
+    if (head.offsetHeight > window.innerHeight * 0.3) head.classList.add("steps-head-compact");
+    head.classList.toggle("steps-head-static", head.offsetHeight > window.innerHeight * 0.3);
+  };
   window.addEventListener("resize", fitHead);
   show(0, { focus: false });
   fitHead();
