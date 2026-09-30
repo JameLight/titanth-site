@@ -81,7 +81,12 @@ function setup() {
   form.classList.add("steps-on");
 
   addCountButtons(people);
+  const countGroup = people.querySelector(".count-choices");
+  const countError = el("p", "count-error");
+  countError.setAttribute("role", "alert");
+  countError.hidden = true;
   people.querySelector(".count-choices")?.after(vulnerableLabel, vulnerableList);
+  countGroup?.after(countError);
   foldOptional(place, ["district", "subdistrict"], "+ เพิ่มอำเภอ ตำบล (ถ้ารู้)", place.querySelector('[name="landmark"]')?.closest("label"));
   foldOptional(people, ["details"], "+ เพิ่มรายละเอียด (ไม่บังคับ)");
 
@@ -94,6 +99,7 @@ function setup() {
     back.hidden = index === 0;
     next.textContent = index === steps.length - 1 ? "สร้างข้อความ" : index === steps.length - 2 ? "ตรวจก่อนสร้าง" : "ถัดไป";
     errorBox.hidden = true;
+    countError.hidden = true;
     // Built after the old message is cleared, so a problem found while building it stays in view.
     if (index === steps.length - 1) fillReview();
     if (focus) {
@@ -168,6 +174,15 @@ function setup() {
     if (message) {
       errorBox.textContent = message;
       errorBox.hidden = false;
+      if (current === 3 && /จำนวนคน/.test(message)) {
+        countError.textContent = message;
+        countError.hidden = false;
+        const input = people.querySelector('input[name="peopleCount"]');
+        const target = input?.classList.contains("count-typed") ? input : countGroup?.querySelector(".count-choice");
+        target?.focus();
+        target?.scrollIntoView({ block: "center" });
+        return;
+      }
       errorBox.scrollIntoView({ block: "nearest" });
       return;
     }
@@ -193,7 +208,7 @@ function setup() {
     errorBox.hidden = false;
   }).observe(errorBox, { attributes: true, attributeFilter: ["hidden"], childList: true, characterData: true, subtree: true });
   // A message about a missing answer goes away as soon as the person answers.
-  for (const type of ["input", "change"]) form.addEventListener(type, () => { errorBox.hidden = true; });
+  for (const type of ["input", "change"]) form.addEventListener(type, () => { errorBox.hidden = true; countError.hidden = true; });
 
   // After a save app.js empties the form: start again at step 1 and point to the case it just saved.
   let justSaved = false;
@@ -228,12 +243,14 @@ function setup() {
 function addCountButtons(people) {
   const input = people.querySelector('input[name="peopleCount"]');
   if (!input) return;
+  input.tabIndex = -1; // The 1px hidden input must never be a keyboard stop.
   const group = el("div", "count-choices");
   group.setAttribute("role", "group");
   group.setAttribute("aria-label", "จำนวนคน");
   const choose = (value, button) => {
     for (const other of group.children) other.setAttribute("aria-pressed", String(other === button));
     input.classList.toggle("count-typed", value === "more");
+    input.tabIndex = value === "more" ? 0 : -1;
     if (value === "more") { if (Number(input.value) <= 6) input.value = ""; input.focus(); }
     else input.value = value;
     input.dispatchEvent(new Event("input", { bubbles: true }));
@@ -241,6 +258,7 @@ function addCountButtons(people) {
   for (const value of ["1", "2", "3", "4", "5", "6", "more"]) {
     const button = el("button", "count-choice", value === "more" ? "มากกว่า 6" : value);
     button.type = "button";
+    button.setAttribute("aria-label", value === "more" ? "มากกว่า 6 คน กรอกจำนวน" : `${value} คน`);
     button.setAttribute("aria-pressed", "false");
     button.addEventListener("click", () => choose(value, button));
     group.append(button);
@@ -256,7 +274,7 @@ function addCountButtons(people) {
 
 function resetCountButtons(people) {
   const input = people.querySelector('input[name="peopleCount"]');
-  if (input) input.classList.remove("count-typed");
+  if (input) { input.classList.remove("count-typed"); input.tabIndex = -1; }
   for (const button of people.querySelectorAll(".count-choice")) button.setAttribute("aria-pressed", "false");
 }
 

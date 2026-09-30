@@ -48,6 +48,8 @@
 .count-choice:last-child{grid-column:span 2;font-size:1rem}
 .count-choice[aria-pressed="true"]{border-color:var(--teal);background:#e6f3f4;color:#0a4f58}
 .steps-on input[name="peopleCount"]:not(.count-typed){position:absolute;width:1px;height:1px;min-height:0;padding:0;margin:0;border:0;opacity:0;pointer-events:none}
+.count-error{margin:.35rem 0 .8rem;padding:.6rem .75rem;border-left:4px solid var(--red);background:#fff0ed;color:#782118;font-weight:800}
+.count-error[hidden]{display:none}
 
 /* Bottom: one main button within thumb reach; back keeps every answer. */
 .steps-nav{position:sticky;bottom:0;z-index:3;display:flex;gap:.6rem;background:#fff;margin:1rem -1rem -1rem;padding:.8rem 1rem calc(.8rem + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);box-shadow:0 -6px 18px #103b5012;border-radius:0 0 12px 12px}
