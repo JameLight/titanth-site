@@ -29,9 +29,10 @@ function setup() {
   const needs = el("fieldset", "step-needs");
   const legend = el("legend", "", "ต้องการอะไร ");
   legend.append(el("span", "required", "*"));
-  needs.append(legend, el("p", "step-hint", "เลือกอย่างน้อย 1 อย่าง แตะได้หลายอัน"), needsList, vulnerableLabel, vulnerableList);
-  vulnerableLabel.textContent = "ใครต้องดูแลเป็นพิเศษ (ไม่บังคับ)";
+  needs.append(legend, el("p", "step-hint", "เลือกอย่างน้อย 1 อย่าง แตะได้หลายอัน"), needsList);
   needsLabel.hidden = true;
+  // Who needs special care is about the people, so it sits with the head count in step 4.
+  vulnerableLabel.textContent = "มีใครต้องดูแลเป็นพิเศษไหม (ไม่บังคับ)";
 
   const steps = [triage, needs, place, people].map((group, index) => {
     const section = el("section", "step");
@@ -73,6 +74,7 @@ function setup() {
   form.classList.add("steps-on");
 
   addCountButtons(people);
+  people.querySelector(".count-choices")?.after(vulnerableLabel, vulnerableList);
   foldOptional(place, ["district", "subdistrict"], "+ เพิ่มอำเภอ ตำบล (ถ้ารู้)", place.querySelector('[name="landmark"]')?.closest("label"));
   foldOptional(people, ["details"], "+ เพิ่มรายละเอียด (ไม่บังคับ)");
 
@@ -83,7 +85,7 @@ function setup() {
     [...bar.children].forEach((part, i) => part.classList.toggle("on", i <= index));
     count.textContent = `ขั้น ${index + 1} จาก ${steps.length}`;
     back.hidden = index === 0;
-    next.textContent = index === steps.length - 1 ? "บันทึกและดูข้อความ" : "ถัดไป";
+    next.textContent = index === steps.length - 1 ? "สร้างข้อความ" : "ถัดไป";
     errorBox.hidden = true;
     if (focus) {
       const title = steps[index].querySelector("legend");
@@ -99,10 +101,14 @@ function setup() {
     if (index === 0) {
       try { validateTriage(values.get("urgentNow"), chosen); } catch (error) { return error.message; }
     }
-    if (index === 1 && !chosen.length) return "กรุณาเลือกความช่วยเหลืออย่างน้อยหนึ่งข้อ";
+    const careOnly = ["pregnant", "infant", "elderly", "disabled"];
+    if (index === 1 && !chosen.some((need) => !careOnly.includes(need))) return "กรุณาเลือกความช่วยเหลืออย่างน้อยหนึ่งข้อ";
     if (index === 2 && !String(values.get("province") || "").trim()) return "กรุณาระบุจังหวัด";
     const hasPlace = String(values.get("landmark") || "").trim() || (String(values.get("lat") || "") && String(values.get("lon") || ""));
     if (index === 2 && !hasPlace) return "กรุณาระบุจุดสังเกตหรือพิกัด";
+    const people = Number(values.get("peopleCount"));
+    if (index === 3 && !(Number.isInteger(people) && people >= 1)) return "กรุณาแตะจำนวนคน";
+    if (index === 3 && people > 999) return "จำนวนคนต้องไม่เกิน 999";
     return "";
   }
 
@@ -231,7 +237,7 @@ function markSaved(card) {
   const note = el("p", "saved-note");
   note.append(
     el("b", "", "ข้อความพร้อมแล้ว แต่ยังไม่ถึงใคร เว็บนี้ไม่ส่งให้ใคร"),
-    el("span", "", "กดคัดลอกข้อความ แล้วเปิด LINE ปภ. วางและกดส่งเอง หรือโทร 1784 แล้วอ่านข้อความนี้ ถ้าคัดลอกหรือแชร์ ข้อความจะไปอยู่ในคลิปบอร์ดหรือแอปที่คุณเลือก")
+    el("span", "", "กดคัดลอกข้อความ แล้วเปิด LINE ปภ. @1784DDPM วางและกดส่งเอง หรือโทร 1784 แล้วอ่านข้อความนี้ ถ้ากดคัดลอก ข้อความจะค้างอยู่ในเครื่องให้วางต่อได้ ถ้ากดแชร์ ข้อความจะไปอยู่ในแอปที่คุณเลือก")
   );
   card.querySelector(".saved-note")?.remove();
   card.prepend(note);
