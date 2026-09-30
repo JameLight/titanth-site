@@ -155,7 +155,7 @@ export function shareText(item) {
   const thaiTime = new Intl.DateTimeFormat("th-TH", {
     dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Bangkok"
   }).format(new Date(item.createdAt));
-  return `ขอความช่วยเหลือน้ำท่วม (ข้อมูลจากผู้แจ้ง ยังไม่ยืนยัน)\nรหัสเคส: ${item.caseId}\nข้อมูล ณ (เวลาไทย): ${thaiTime}\nพื้นที่: ${loc}${coords}${map}${gpsNote}\nจำนวนคน: ${item.peopleCount}\nต้องการ: ${item.needs.map(n => NEEDS[n]).join(", ")}\nรายละเอียด: ${item.details || "ไม่มี"}\nโทรกลับ: ${item.contactPhone || "ไม่ได้ระบุ"}\nกรุณาตอบกลับเพื่อยืนยันว่าได้รับข้อมูลแล้ว`;
+  return `ขอความช่วยเหลือน้ำท่วม (ข้อมูลจากผู้แจ้ง ยังไม่ยืนยัน)\nรหัสบันทึกในเครื่อง (ไม่ใช่เลขรับเรื่องของหน่วยงาน): ${item.caseId}\nข้อมูล ณ (เวลาไทย): ${thaiTime}\nพื้นที่: ${loc}${coords}${map}${gpsNote}\nจำนวนคน: ${item.peopleCount}\nต้องการ: ${item.needs.map(n => NEEDS[n]).join(", ")}\nรายละเอียด: ${item.details || "ไม่มี"}\nโทรกลับ: ${item.contactPhone || "ไม่ได้ระบุ"}\nกรุณาตอบกลับเพื่อยืนยันว่าได้รับข้อมูลแล้ว`;
 }
 
 export function quickLocationText({ latitude, longitude, accuracy }, now = new Date()) {

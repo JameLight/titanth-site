@@ -11,7 +11,7 @@
   <meta property="og:locale" content="th_TH">
   <meta property="og:url" content="https://titanth.com/flood/">
   <meta property="og:title" content="ติดน้ำท่วม? โทร 1784 • เจ็บป่วยหรือบาดเจ็บฉุกเฉิน โทร 1669">
-  <meta property="og:description" content="โทรได้โดยไม่ต้องใช้เน็ต • เว็บนี้ช่วยเรียงข้อความให้ครบ คุณต้องโทรหรือกดส่งเอง • ไม่ใช่เว็บหน่วยงานรัฐ • ไม่มีทีมเฝ้ารับเรื่อง">
+  <meta property="og:description" content="โทรได้เมื่อมีสัญญาณโทรศัพท์ แม้ไม่มีเน็ต • เว็บนี้ช่วยเรียงข้อความให้ครบ คุณต้องโทรหรือกดส่งเอง • ไม่ใช่เว็บหน่วยงานรัฐ • ไม่มีทีมเฝ้ารับเรื่อง">
   <meta property="og:image" content="https://titanth.com/flood/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -20,37 +20,55 @@
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="stylesheet" href="./styles.css">
+<link rel="stylesheet" href="./steps.css">
   <title>ติดน้ำท่วม? โทร 1784 | พร้อมแจ้งน้ำท่วม</title>
 </head>
 <body>
   <div class="test-ribbon" id="service-ribbon">ไม่ใช่เว็บหน่วยงานรัฐ • ไม่มีทีมเฝ้ารับเรื่อง • เว็บไม่ส่งเรื่องเอง</div>
   <header class="site-header">
+    <nav class="mobile-call-bar" aria-label="โทรเมื่อมีอันตราย">
+      <a href="tel:1784" class="mobile-call mobile-call-ddpm">โทร 1784 <small>น้ำท่วม · ปภ.</small></a>
+      <a href="tel:1669" class="mobile-call mobile-call-medical">โทร 1669 <small>เจ็บป่วยฉุกเฉิน</small></a>
+    </nav>
     <div class="brand"><img src="./icon.svg" alt="" width="38" height="38"><div><strong>พร้อมแจ้งน้ำท่วม</strong><span>ตัวช่วยเตรียมข้อความ ไม่ใช่ช่องทางแจ้งเหตุ</span></div></div>
     
   </header>
   <main class="layout">
     <section class="primary">
       <section class="emergency sos" aria-labelledby="emergency-title">
-        <h1 id="emergency-title" class="sos-title">ติดน้ำท่วม? <span>โทร 1784 เพื่อแจ้งเหตุ</span></h1>
-        <p class="sos-coverage">เว็บนี้ช่วยเรียงข้อความให้ครบ ใช้ได้ทุกจังหวัด แล้วคุณโทรหรือกดส่งเอง</p>
+        <h1 id="emergency-title" class="sos-title">ติดน้ำหรืออันตราย? <span>โทรก่อน</span></h1>
+        <p class="sos-coverage">เว็บประชาชน ไม่ใช่ช่องแจ้งเหตุ เว็บไม่ส่งเรื่องเอง</p>
         <div class="sos-actions">
           <a href="tel:1784" class="sos-button sos-call">📞 โทร 1784 <small>แจ้งน้ำท่วม กู้ภัย • ปภ. 24 ชม.</small></a>
           <a href="tel:1669" class="sos-button sos-medical">🚑 โทร 1669 <small>เจ็บป่วยหรือบาดเจ็บฉุกเฉิน</small></a>
-          <a href="tel:199" class="sos-button sos-fire">🚒 โทร 199 <small>แจ้งไฟไหม้ • ใน กทม. ใช้แจ้งน้ำท่วมได้</small></a>
-          <p class="sos-say"><strong>เวลาโทร บอก:</strong> อยู่ที่ไหน จุดสังเกต กี่คน ใครป่วย ต้องการอะไร เบอร์โทรกลับ</p>
-          <button type="button" id="quick-location" class="sos-button sos-location" hidden>📍 ใช้ตำแหน่งฉัน <small>เฉพาะที่เกิดเหตุ • เว็บไม่ส่งให้</small></button>
+        </div>
+        <h2 id="quick-actions-title" class="quick-actions-title">ให้หน้านี้ช่วยอะไร?</h2>
+        <noscript><p class="nojs-warning">แบบฟอร์มและปุ่มพิกัดต้องเปิด JavaScript ถ้าเปิดไม่ได้ ให้โทร 1784 หรือ 1669 ตามเหตุ หรือ <a href="https://lin.ee/MoS2rXU" rel="noopener noreferrer">เปิด LINE ปภ. แล้วกดส่งเอง</a></p></noscript>
+        <div class="quick-actions" aria-labelledby="quick-actions-title">
+          <a class="quick-action quick-action-form" href="#form-title"><span aria-hidden="true">✍️</span><strong>เตรียมข้อความ</strong><small>กรอกทีละขั้น แล้วกดส่งเอง</small></a>
+          <button type="button" id="quick-location" class="quick-action sos-button sos-location" hidden><span aria-hidden="true">📍</span><strong>เตรียมพิกัดฉัน</strong><small>กดเมื่ออยู่จุดเกิดเหตุ · ส่งเอง</small></button>
+          <a class="quick-action" href="#official-alerts-title"><span aria-hidden="true">🔔</span><strong>ดูประกาศเตือน</strong><small>ตรวจจังหวัดและเวลาของข้อมูล</small></a>
+          <a class="quick-action" href="/flood-neighbors/"><span aria-hidden="true">🤝</span><strong>ช่วยเพื่อนบ้าน</strong><small>สร้างข้อความเสนอช่วย · แชร์เอง</small></a>
         </div>
         <div id="quick-location-row" class="quick-location-result" hidden>
           <p id="quick-location-status" role="status" aria-live="polite"></p>
-          <a id="quick-location-line" class="sos-button sos-line" href="https://lin.ee/MoS2rXU" rel="noopener noreferrer" hidden>เปิด LINE ปภ. <small>ต้องกด “ส่ง” ใน LINE เอง</small></a>
+          <a id="quick-location-line" class="sos-button sos-line" href="https://lin.ee/MoS2rXU" rel="noopener noreferrer" aria-describedby="quick-location-privacy" hidden>เปิด LINE พร้อมพิกัด <small>LINE ได้พิกัดเมื่อเปิด · ต้องกดส่งแชตเอง</small></a>
+          <p id="quick-location-privacy" class="quick-location-privacy" hidden>เมื่อเปิด LINE พิกัดในลิงก์จะถูกส่งให้ LINE แม้ยังไม่กดส่งแชต · หากไม่ต้องการ กด “คัดลอกข้อความ” ด้านล่างแทน</p>
           <div id="quick-location-more" class="quick-location-more" hidden><p class="quick-location-fallback">LINE ไม่มีข้อความหรือไม่ครบ? กลับมาหน้านี้ กด “คัดลอกข้อความ” แล้ววางใน LINE ตรวจข้อความและกดส่งเอง ถ้ากลับมาแล้วปุ่มหาย ให้กด “ใช้ตำแหน่งฉัน” ใหม่ หรือโทร 1784</p><button type="button" id="quick-location-share" class="secondary-button">แชร์ให้ญาติหรืออาสา</button><button type="button" id="quick-location-copy" class="secondary-button">คัดลอกข้อความ</button><button type="button" id="quick-location-media" class="secondary-button">แนบรูป/เสียงแล้วแชร์</button><button type="button" id="quick-location-qr" class="secondary-button" hidden>แสดง QR ให้คนที่มีสัญญาณสแกน</button></div>
           <div id="quick-location-qr-panel" class="qr-panel" hidden></div>
         </div>
-        <div class="sos-more"><a href="tel:1418" class="sos-small">โทร 1418 <small>มูลนิธิป่อเต็กตึ๊ง (เอกชน)</small></a><a href="https://lin.ee/MoS2rXU" target="_blank" rel="noopener noreferrer" class="sos-small">แชต LINE ปภ. <small>@1784DDPM</small></a></div>
-        <p class="sos-note">เว็บนี้ไม่ได้ส่งเรื่องเอง คุณต้องโทรหรือกดส่งใน LINE เอง แล้วดูคำตอบจากปลายทาง</p>
-        <div class="delivery-explainer" aria-label="ข้อมูลไปถึงใคร"><strong>ข้อมูลไปถึงใคร</strong><p>เมื่อคุณโทรหรือกดส่งใน LINE คุณติดต่อปลายทางนั้นด้วยตัวเอง เว็บนี้ไม่ทราบว่าอีกฝ่ายได้รับหรืออ่านแล้วหรือยัง</p></div>
-        <p class="sos-note"><strong>อยากเสนอช่วย?</strong> <a href="../flood-neighbors/">สร้างข้อความเสนอช่วยแล้วแชร์เอง ↗</a> ต้องใช้อินเทอร์เน็ตเพื่อเปิดหน้านี้</p>
-        <a class="sos-form-link" href="#form-title">หรือกรอกรายละเอียดเพื่อเตรียมข้อความครบ ↓</a>
+        <a href="https://lin.ee/MoS2rXU" target="_blank" rel="noopener noreferrer" class="sos-line-direct">เปิด LINE ปภ. แล้วกดส่งเอง <small>@1784DDPM · อาจต้องเพิ่มเพื่อนก่อน</small></a>
+        <details class="sos-other"><summary>เบอร์อื่นและวิธีบอกเหตุ</summary>
+          <div class="sos-more"><a href="tel:199" class="sos-small">โทร 199 <small>แจ้งไฟไหม้ · ใน กทม. ใช้แจ้งน้ำท่วมได้</small></a><a href="tel:1418" class="sos-small">โทร 1418 <small>มูลนิธิป่อเต็กตึ๊ง (เอกชน)</small></a></div>
+          <p class="sos-say"><strong>เวลาโทร บอก:</strong> อยู่ที่ไหน จุดสังเกต กี่คน ใครป่วย ต้องการอะไร เบอร์โทรกลับ</p>
+          <div class="delivery-explainer" aria-label="ข้อมูลไปถึงใคร"><strong>ข้อมูลไปถึงใคร</strong><p>เมื่อคุณโทรหรือกดส่งใน LINE คุณติดต่อปลายทางนั้นด้วยตัวเอง เว็บนี้ไม่ทราบว่าอีกฝ่ายได้รับหรืออ่านแล้วหรือยัง</p></div>
+        </details>
+        <p class="sos-note">การโทรต้องมีสัญญาณโทรศัพท์ · การใช้ LINE ต้องมีอินเทอร์เน็ต</p>
+      </section>
+      <section class="kpp-entry" aria-labelledby="kpp-entry-title">
+        <h2 id="kpp-entry-title">กำแพงเพชร: ดูข้อมูลน้ำและฝน</h2>
+        <a href="./kamphaeng-phet/">เปิดหน้ากำแพงเพชร <span aria-hidden="true">›</span></a>
+        <p>หน้าแสดงข้อมูลน้ำและฝนพร้อมลิงก์ต้นทาง บางส่วนเป็นข้อมูลย้อนหลังหรืออาจช้า ต้องใช้อินเทอร์เน็ต ตรวจเวลาและพื้นที่ก่อนใช้ · ไม่ใช่ช่องแจ้งเหตุ</p>
       </section>
       <details class="offline-help"><summary>ถ้าไฟดับหรือไม่มีอินเทอร์เน็ต</summary><p>หน้านี้อาจเปิดได้จากข้อมูลที่เคยโหลดไว้ในเครื่อง แต่การบันทึกข้อความหรือแสดง QR ไม่ได้ส่งถึงเจ้าหน้าที่หรือทีมอาสา หากคุณยังโทรได้ ให้ใช้ปุ่มโทร 1784 หรือ 1669 ด้านบนตามเหตุ</p><p>ถ้าส่งจากเครื่องนี้ไม่ได้ ให้แสดง QR ข้อความให้คนที่มีสัญญาณและไว้ใจช่วยส่งต่อเมื่อทำได้ ตรวจสอบกับผู้รับอีกครั้งว่าได้รับข้อมูลแล้ว รูปและเสียงที่เลือกในหน้านี้ไม่ถูกเก็บไว้เป็นเคส</p></details>
       <details class="offline-help prep-help"><summary>ก่อนน้ำมา ถ้ายังมีเวลา และหลังน้ำลด</summary>
@@ -103,24 +121,24 @@
       <noscript><p class="error">แบบฟอร์มนี้ใช้ไม่ได้เมื่อปิด JavaScript ให้โทร 1784 หรือแจ้ง LINE @1784DDPM โดยตรง</p></noscript>
       <div class="intro">
         <h2>เตรียมข้อความขอความช่วยเหลือน้ำท่วม</h2>
-        <p id="intro-copy">กรอกเท่าที่รู้ หน้านี้จะจัดเป็นข้อความให้ แล้วคุณส่งเองทาง LINE @1784DDPM หรืออ่านให้เจ้าหน้าที่ 1784 ฟัง เคสที่บันทึกจะอยู่ในเบราว์เซอร์เครื่องนี้</p>
+        <p id="intro-copy">ตอบคำถามสั้น ๆ ข้อที่มีดอกจัน * ต้องตอบ หน้านี้จะจัดเป็นข้อความให้ แล้วคุณส่งเองทาง LINE @1784DDPM หรืออ่านให้เจ้าหน้าที่ 1784 ฟัง เคสที่บันทึกจะอยู่ในเบราว์เซอร์เครื่องนี้</p>
       </div>
       <section class="composer" aria-labelledby="form-title">
         <div class="section-heading"><h2 id="form-title">บันทึกข้อมูลเคส</h2><span id="storage-scope">เคสเก็บในเครื่อง</span></div>
         <form id="case-form" novalidate hidden>
           <fieldset class="triage" aria-describedby="triage-help"><legend>ตอนนี้ต้องอพยพด่วนหรือมีผู้ป่วยไหม <span class="required">*</span></legend>
             <p id="triage-help">เลือกตามสถานการณ์จริง หากอันตรายให้โทร 1784 หรือ 1669 ตามเหตุก่อนกรอกแบบฟอร์ม</p>
-            <div class="triage-choices"><label><input type="radio" name="urgentNow" value="yes"> ใช่ ด่วน</label><label><input type="radio" name="urgentNow" value="no"> ยังปลอดภัย ต้องการของหรือข้อมูล</label></div>
+            <div class="triage-choices"><label><input type="radio" name="urgentNow" value="yes"> ใช่ ด่วน</label><label><input type="radio" name="urgentNow" value="no"> ยังไม่ต้องอพยพด่วน แต่อยากเตรียมข้อความติดต่อเอง</label></div>
             <div id="urgent-needs" class="triage-urgent" hidden><p>เลือกเหตุที่ตรงกับสถานการณ์อย่างน้อยหนึ่งข้อ</p><div class="needs-list"><label class="need"><input type="checkbox" name="needs" value="trapped"><span>มีคนติดอยู่</span></label><label class="need"><input type="checkbox" name="needs" value="immobile"><span>มีผู้ป่วยติดเตียงหรือคนเคลื่อนย้ายเองไม่ได้</span></label><label class="need"><input type="checkbox" name="needs" value="medical"><span>ต้องการความช่วยเหลือทางการแพทย์</span></label><label class="need"><input type="checkbox" name="needs" value="fast_water"><span>ระดับน้ำเพิ่มเร็ว</span></label><label class="need"><input type="checkbox" name="needs" value="dialysis_oxygen"><span>ต้องฟอกไตหรือใช้ออกซิเจน</span></label></div><p class="triage-warning">โทร 1784 เพื่อแจ้งน้ำท่วม หรือ 1669 เมื่อเจ็บป่วยหรือบาดเจ็บฉุกเฉิน การบันทึกในเว็บไม่ใช่การแจ้งเหตุ</p></div>
           </fieldset>
-          <fieldset><legend>สถานที่เกิดเหตุ</legend>
-            <div class="field-grid"><label>จังหวัด <span class="required">*</span><input name="province" list="province-options" autocomplete="address-level1" required placeholder="เลือกจังหวัดจากรายการ"></label><label>อำเภอหรือเขต<input name="district" autocomplete="address-level2" placeholder="ถ้าทราบ"></label><label>ตำบลหรือแขวง<input name="subdistrict" placeholder="ถ้าทราบ"></label><label>จุดสังเกต <span class="optional">ควรกรอกเสมอ</span><input name="landmark" placeholder="บ้านเลขที่ ซอย วัด หรืออาคารใกล้เคียง"></label></div>
+          <fieldset><legend>อยู่ที่ไหน</legend>
+            <div class="field-grid"><label>จังหวัด <span class="required">*</span><input name="province" list="province-options" autocomplete="address-level1" required placeholder="เลือกจังหวัดจากรายการ"></label><label>อำเภอหรือเขต<input name="district" autocomplete="address-level2" placeholder="ถ้าทราบ"></label><label>ตำบลหรือแขวง<input name="subdistrict" placeholder="ถ้าทราบ"></label><label>จุดสังเกต <span class="optional">ต้องใส่ ถ้าไม่ได้กดใช้ตำแหน่ง</span><input name="landmark" placeholder="บ้านเลขที่ ซอย วัด หรืออาคารใกล้เคียง"></label></div>
             <datalist id="province-options"></datalist>
             <div class="gps-row"><button type="button" id="gps-button" class="secondary-button">ใช้ตำแหน่งของโทรศัพท์นี้</button><span id="gps-status">กดเฉพาะเมื่ออยู่ที่จุดเกิดเหตุ ถ้าแจ้งแทนคนอื่น ให้กรอกจุดสังเกตแทน</span></div>
             <input type="hidden" name="lat"><input type="hidden" name="lon"><input type="hidden" name="accuracyMeters">
           </fieldset>
           <fieldset><legend>ผู้ที่ต้องการความช่วยเหลือ</legend>
-            <div class="field-grid"><label>จำนวนคน <span class="required">*</span><input name="peopleCount" type="number" inputmode="numeric" min="1" max="999" value="1" required></label><label>เบอร์โทรกลับ <span class="optional">ถ้ามี</span><input name="contactPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="เก็บในเครื่องและอยู่ในข้อความที่แชร์"></label></div>
+            <div class="field-grid"><label>จำนวนคน <span class="required">*</span><input name="peopleCount" type="number" inputmode="numeric" min="1" max="999" required></label><label>เบอร์โทรกลับ <span class="optional">ถ้ามี</span><input name="contactPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="เก็บในเครื่องและอยู่ในข้อความที่แชร์"></label></div>
             <div class="choice-label">ต้องการความช่วยเหลือเพิ่มเติมเรื่องใด (เลือกได้หลายข้อ)</div>
             <div id="needs-list" class="needs-list"></div>
             <div class="choice-label">มีกลุ่มที่ต้องดูแลเป็นพิเศษหรือไม่</div>
@@ -151,5 +169,6 @@
   <dialog id="media-dialog" aria-labelledby="media-title"><h2 id="media-title">แนบรูปหรือเสียงเพื่อส่งเอง</h2><p>เลือกถ่ายรูปหรืออัดเสียงจากอุปกรณ์ ถ้าเบราว์เซอร์ไม่เปิดกล้อง/ไมค์ ให้เลือกไฟล์ที่ถ่ายไว้ รูปหรือเสียงอาจมีใบหน้า เสียง และข้อมูลตำแหน่งอยู่ในไฟล์ ตรวจให้ดีก่อนแชร์</p><div class="media-inputs"><label>ถ่ายหรือเลือกรูป<input id="media-photo" type="file" accept="image/*" capture="environment"></label><label>อัดหรือเลือกเสียง<input id="media-audio" type="file" accept="audio/*" capture="microphone"></label></div><p id="media-status" role="status" aria-live="polite">ไฟล์ยังอยู่ในอุปกรณ์นี้ เว็บไม่อัปโหลดหรือเก็บไฟล์ไว้ในเคส</p><textarea id="media-manual-text" readonly rows="5" hidden aria-label="ข้อความสำหรับคัดลอกเอง"></textarea><a id="media-open-external" class="media-open-external" href="./?openExternalBrowser=1" target="_blank" rel="noopener noreferrer" hidden>ถ้าเปิดจาก LINE ให้เปิดหน้านี้ใน Safari/Chrome หลังคัดลอกข้อความ (เคสในเครื่องอาจไม่ตามไป) ↗</a><p>ปุ่มแชร์จะเปิดเมนูของเครื่อง คุณต้องเลือกปลายทางและกดส่งเอง หน้านี้ไม่รู้ว่าปลายทางได้รับหรือยัง หากอันตรายให้โทร 1784 หรือ 1669</p><div class="dialog-actions"><button type="button" id="media-cancel" class="text-button">ปิดและล้างไฟล์</button><button type="button" id="media-share" class="primary-button">เปิดเมนูแชร์พร้อมข้อความ</button></div></dialog>
   <div id="toast" role="status" aria-live="polite" class="toast" hidden></div>
   <script type="module" src="./app.js"></script>
+  <script type="module" src="./steps.js"></script>
 </body>
 </html>

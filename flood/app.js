@@ -464,6 +464,7 @@ function showQuickLocationResult(content, coords) {
   const line = $("#quick-location-line");
   line.href = ddpmLinePrefillUrl(content);
   line.hidden = false;
+  $("#quick-location-privacy").hidden = false;
   $("#quick-location-more").hidden = false;
   $("#quick-location-qr").hidden = !lastQuickQrText;
   $("#quick-location-qr-panel").hidden = true;
@@ -480,6 +481,7 @@ function showQuickLocationProblem(message) {
   lastQuickAccuracyWarning = "";
   $("#quick-location-row").classList.toggle("gps-uncertain", !message.startsWith("กำลัง"));
   $("#quick-location-line").hidden = true;
+  $("#quick-location-privacy").hidden = true;
   $("#quick-location-more").hidden = true;
   $("#quick-location-qr-panel").hidden = true;
   $("#quick-location-qr-panel").replaceChildren();

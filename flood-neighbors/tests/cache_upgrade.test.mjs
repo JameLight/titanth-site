@@ -5,7 +5,7 @@ import vm from 'node:vm';
 
 test('the new flood page shell replaces the previous cached shell', async () => {
   const events = {};
-  const keys = new Set(['promjaeng-flood-public-v20', 'promjaeng-flood-public-v21', 'unrelated-cache']);
+  const keys = new Set(['promjaeng-flood-public-v20', 'promjaeng-flood-public-v21', 'promjaeng-flood-public-v22', 'unrelated-cache']);
   let shell = [];
   const scope = 'https://example.invalid/flood/';
   const cache = { addAll: async requests => { shell = requests.map(request => request.url); } };
@@ -29,10 +29,12 @@ test('the new flood page shell replaces the previous cached shell', async () => 
   events.install({ waitUntil: promise => { pending = promise; } });
   await pending;
   assert.ok(shell.includes(`${scope}index.html`));
-  assert.ok(keys.has('promjaeng-flood-public-v22'));
+  assert.ok(keys.has('promjaeng-flood-public-v26'));
+  assert.ok(shell.includes(`${scope}steps.js`) && shell.includes(`${scope}steps.css`), 'the step files are cached for offline use');
   events.activate({ waitUntil: promise => { pending = promise; } });
   await pending;
   assert.equal(keys.has('promjaeng-flood-public-v20'), false);
   assert.equal(keys.has('promjaeng-flood-public-v21'), false);
+  assert.equal(keys.has('promjaeng-flood-public-v22'), false, 'the live cache before this change is removed');
   assert.equal(keys.has('unrelated-cache'), true);
 });
