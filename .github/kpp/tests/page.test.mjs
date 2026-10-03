@@ -195,6 +195,17 @@ test("forecast notice says only what is known about its age", () => {
   assert.ok(K.forecastNotice(f, f + 6 * 3600e3 + 60e3).startsWith("พยากรณ์ชุดนี้ดึงเมื่อ 29 ก.ย. 14:22 น."), "just over 6 hours: the notice");
 });
 
+test("old alert data notice: after 4 hours it says when the alerts were saved and that newer ones may exist", () => {
+  const saved = Date.parse("2026-09-30T01:49:00+07:00");
+  assert.equal(K.ALERTS_OLD_H, 4);
+  assert.equal(K.alertsNotice(saved, saved + 60 * 60e3), "", "one hour old: no notice");
+  assert.equal(K.alertsNotice(saved, saved + 4 * 3600e3), "", "exactly 4 hours: no notice yet");
+  assert.equal(K.alertsNotice(saved, saved + 4 * 3600e3 + 60e3), "ข้อมูลประกาศชุดนี้บันทึกเมื่อ 30 ก.ย. 01:49 น. เว็บนี้ยังไม่ได้บันทึกชุดใหม่ใน 4 ชั่วโมงที่ผ่านมา อาจมีประกาศใหม่ที่หน้านี้ยังไม่แสดง ตรวจประกาศล่าสุดที่เว็บ ปภ.");
+  assert.equal(K.alertsNotice(NaN, saved), "ไม่ทราบเวลาที่บันทึกข้อมูลประกาศชุดนี้ อาจมีประกาศใหม่ที่หน้านี้ยังไม่แสดง ตรวจประกาศล่าสุดที่เว็บ ปภ.");
+  const late = K.alertsNotice(saved, saved + 9 * 3600e3);
+  assert.ok(!late.includes("ไม่มีประกาศ") && !late.includes("ดึงไม่ได้"), "no claim that there is no alert, and none about why");
+});
+
 test("TMD's Thai-time stamp is read as Thai time", () => {
   assert.equal(K.thaiStampMs("2026-09-29 13:14:00"), Date.parse("2026-09-29T13:14:00+07:00"));
   assert.ok(Number.isNaN(K.thaiStampMs("")));

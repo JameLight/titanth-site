@@ -311,3 +311,37 @@ test("Codex 17:03: an alert dated later than the clock is never shown as in effe
   assert.equal(pg.alerts().active.length, 1, "at its start time the minute check shows it");
   assert.ok(!pg.alerts().calm.includes("ยังไม่ถึง"));
 });
+
+test("alert data saved more than 4 hours ago: the box says so first, links to DDPM, and the minute check adds it", () => {
+  const alerts = { source: "ปภ.", checked_at: "2026-09-29T10:30:00+07:00", items: [] };
+  const pg = openPage({ data: dataSet({ alerts }), now: at("09-29T14:30") }); // exactly 4 hours after the save
+  assert.ok(!pg.alerts().calm.includes("ยังไม่ได้บันทึกชุดใหม่"), "4 hours: no notice yet");
+  pg.clock.now = at("09-29T14:31"); pg.minute();
+  const calm = pg.alerts().calm;
+  assert.ok(calm.startsWith("ข้อมูลประกาศชุดนี้บันทึกเมื่อ 29 ก.ย. 10:30 น. เว็บนี้ยังไม่ได้บันทึกชุดใหม่ใน 4 ชั่วโมงที่ผ่านมา อาจมีประกาศใหม่ที่หน้านี้ยังไม่แสดง ตรวจประกาศล่าสุดที่เว็บ ปภ. ↗"), calm);
+  assert.ok(calm.includes("ยังไม่พบประกาศที่กำลังแสดงของ ปภ. สำหรับกำแพงเพชร ในข้อมูลประกาศที่บันทึกเมื่อ 29 ก.ย. 10:30 น."), "the usual line stays, below the notice");
+  assert.ok(pg.$("alertCalm").innerHTML.includes('<a href="https://www.disaster.go.th/" target="_blank" rel="noopener">เว็บ ปภ. ↗</a>'));
+  assert.equal(pg.$("alertStale").hidden, true, "no alert in effect: the notice stays in the alert section");
+});
+
+test("Codex 07:51: an unreadable alert save time is said as unknown, never shown as NaN", () => {
+  const alerts = { source: "ปภ.", checked_at: "garbage", items: [] };
+  const pg = openPage({ data: dataSet({ alerts }), now: at("09-29T14:30") });
+  const calm = pg.alerts().calm;
+  assert.ok(!/NaN|undefined/.test(calm), calm);
+  assert.ok(calm.startsWith("ไม่ทราบเวลาที่บันทึกข้อมูลประกาศชุดนี้ อาจมีประกาศใหม่ที่หน้านี้ยังไม่แสดง"), calm);
+  assert.ok(calm.includes("ยังไม่พบประกาศที่กำลังแสดงของ ปภ. สำหรับกำแพงเพชร ในข้อมูลประกาศชุดนี้ (ไม่ทราบเวลาที่บันทึก)"), calm);
+});
+
+test("Codex 07:49: old alert data with an alert in effect puts the notice right above the red box", () => {
+  const alerts = { source: "ปภ.", checked_at: "2026-09-29T09:00:00+07:00", items: [{ id: "CB-7", sent_at: "2026-09-29T08:50:00+07:00", duration_h: 12, title: "t", text: "ข้อความทดสอบ" }] };
+  const pg = openPage({ data: dataSet({ alerts }), now: at("09-29T14:30") }); // 5.5 hours after the save
+  assert.equal(pg.alerts().active.length, 1, "the red box is shown");
+  assert.equal(pg.$("alertStale").hidden, false);
+  assert.ok(strip(pg.$("alertStale").innerHTML).startsWith("ข้อมูลประกาศชุดนี้บันทึกเมื่อ 29 ก.ย. 09:00 น. เว็บนี้ยังไม่ได้บันทึกชุดใหม่ใน 4 ชั่วโมงที่ผ่านมา"));
+  assert.ok(!pg.alerts().calm.includes("ยังไม่ได้บันทึกชุดใหม่"), "not repeated lower down");
+  pg.clock.now = at("09-29T22:00"); pg.minute(); // the alert's display time has ended
+  assert.equal(pg.alerts().active.length, 0);
+  assert.equal(pg.$("alertStale").hidden, true, "no alert in effect any more: the notice moves back to the alert section");
+  assert.ok(pg.alerts().calm.startsWith("ข้อมูลประกาศชุดนี้บันทึกเมื่อ 29 ก.ย. 09:00 น."));
+});

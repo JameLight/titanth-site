@@ -167,6 +167,15 @@
     return `พยากรณ์ชุดนี้ดึงเมื่อ ${thDateTime(fetchedMs)} เว็บนี้ยังไม่มีชุดที่ดึงใหม่ใน 6 ชั่วโมงที่ผ่านมา อาจไม่ใช่ฉบับล่าสุด ดูฉบับล่าสุดที่เว็บกรมอุตุนิยมวิทยา`;
   }
 
+  // Notice for old alert data. The updater saves the alerts at least every 3 hours while it runs, so a save older than
+  // 4 hours means it has not run or could not read the alerts since. The notice says only that, and where to look.
+  const ALERTS_OLD_H = 4;
+  function alertsNotice(savedMs, nowMs) {
+    if (!Number.isFinite(savedMs)) return "ไม่ทราบเวลาที่บันทึกข้อมูลประกาศชุดนี้ อาจมีประกาศใหม่ที่หน้านี้ยังไม่แสดง ตรวจประกาศล่าสุดที่เว็บ ปภ.";
+    if (nowMs - savedMs <= ALERTS_OLD_H * 3600e3) return "";
+    return `ข้อมูลประกาศชุดนี้บันทึกเมื่อ ${thDateTime(savedMs)} เว็บนี้ยังไม่ได้บันทึกชุดใหม่ใน ${ALERTS_OLD_H} ชั่วโมงที่ผ่านมา อาจมีประกาศใหม่ที่หน้านี้ยังไม่แสดง ตรวจประกาศล่าสุดที่เว็บ ปภ.`;
+  }
+
   // "YYYY-MM-DD HH:MM[:SS]" written in Thai time (as TMD stamps its responses) to milliseconds; NaN when unreadable.
   function thaiStampMs(s) {
     const m = /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/.exec(String(s || ""));
@@ -184,5 +193,5 @@
     return date === thaiDate(nowMs) ? "วันนี้" : date === thaiDate(nowMs + 24 * 3600e3) ? "พรุ่งนี้" : "";
   }
 
-  return { STALE_H, FLAT_MIN, FLAT_GAP, cmOf, lastIdx, cls, gapText, isOld, trend, change8, flatRun, flatNote, readingAt, rowLine, usedSpan, activeAlerts, upcomingAlerts, pastAlerts, forecastNotice, peakDrop, thaiStampMs, thaiDate, dayLabel };
+  return { STALE_H, FLAT_MIN, FLAT_GAP, cmOf, lastIdx, cls, gapText, isOld, trend, change8, flatRun, flatNote, readingAt, rowLine, usedSpan, activeAlerts, upcomingAlerts, pastAlerts, forecastNotice, ALERTS_OLD_H, alertsNotice, peakDrop, thaiStampMs, thaiDate, dayLabel };
 });
