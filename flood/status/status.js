@@ -64,11 +64,13 @@
   async function readAll() {
     $("reload").disabled = true;
     await Promise.all([readIntake(), readStats()]);
+    $("status-fallback").hidden = true;
     const now = new Date();
     $("read-time").textContent = `ตรวจเมื่อ ${now.toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" })} น. (เวลาไทย)`;
     $("reload").disabled = false;
   }
 
   $("reload").addEventListener("click", readAll);
+  $("reload").hidden = false;
   readAll();
 })();
