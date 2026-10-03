@@ -1,0 +1,15 @@
+:root{font-family:"Thonburi","Noto Sans Thai","Helvetica Neue",Arial,sans-serif;color:#173744;background:#f6fafb;font-size:16px;line-height:1.6;--navy:#103b50;--line:#c8d8dd;--red:#a82b21}
+*{box-sizing:border-box}
+body{margin:0;background:#f6fafb}
+.top{display:flex;flex-direction:column;padding:.7rem 1rem;background:var(--navy);color:#fff}.top span{font-size:.85rem;opacity:.9}
+main{max-width:760px;margin:0 auto;padding:1rem}
+h1{font-size:1.4rem;color:var(--navy);margin:.6rem 0}
+h2{font-size:1.08rem;color:var(--navy);margin:1.3rem 0 .4rem}
+ul{padding-left:1.2rem}li{margin:.3rem 0}
+p,li{overflow-wrap:anywhere}
+.draft{background:#fff7df;border:2px solid #825710;border-radius:10px;padding:.7rem;color:#5b3d06}
+.warn{background:#fff2ef;border:1px solid var(--red);border-radius:10px;padding:.7rem}
+.todo{color:#825710;font-style:italic}
+.meta{color:#506872;font-size:.85rem}
+code{background:#eef4f6;padding:.05rem .3rem;border-radius:4px}
+footer{max-width:760px;margin:1.5rem auto 3rem;padding:0 1rem}
