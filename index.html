@@ -17,7 +17,7 @@
 <script data-goatcounter="https://titanth.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script><script>document.addEventListener("click",function(e){var a=e.target.closest("a");if(!a||!window.goatcounter)return;var h=a.getAttribute("href")||"";if(h.indexOf("/free-checker/app.html")===0){var demo=h.indexOf("?demo")!==-1;goatcounter.count({path:demo?"event/free-sample-open":"event/free-own-file-open",title:demo?"Free sample opened":"Own-file checker opened",event:true});}else if(h.indexOf("https://shop.titanth.com/products/")===0)goatcounter.count({path:"event/buy-click",title:"Buy link clicked",event:true});});</script>
 </head>
 <body>
-<header><a class="brand" href="/">TITANTH</a><nav><a href="/free-checker/">Free checker</a><a href="/guides/">Guides</a><a href="/answers/">Answers</a><a href="/catalog-check/">Catalog Check $59</a></nav></header>
+<header><a class="brand" href="/" aria-label="TITANTH home"><img src="/img/titanth-logo.svg" alt="TITANTH" width="104" height="104"></a><nav><a href="/free-checker/">Free checker</a><a href="/guides/">Guides</a><a href="/answers/">Answers</a><a href="/catalog-check/">Catalog Check $59</a></nav></header>
 <main>
 <p class="flood-notice" lang="th"><a href="/flood/"><strong>น้ำท่วม:</strong> เตรียมข้อความขอความช่วยเหลือ แล้วส่งเองทางช่องทางทางการ (โทร 1784 · LINE @1784DDPM · 1669) เว็บนี้ไม่ได้ส่งเรื่องให้ →</a></p>
 
@@ -30,7 +30,7 @@
 <p class="action-note"><a href="/free-checker/">Want to use your own Shopify CSV? Check the first 25 data rows free.</a></p>
 </section>
 <div class="quick-facts" aria-label="Product facts"><div><strong>25 data rows free</strong><span>Try your own CSV before buying</span></div><div><strong>10,000 rows</strong><span>Full version, up to 10 MB</span></div><div><strong>US$59 once</strong><span>One merchant store; no subscription</span></div><div><strong>Local review</strong><span>No catalog upload or Shopify login</span></div></div>
-<section class="decision-section" aria-labelledby="example-title"><p class="eyebrow">A worked example</p><h2 id="example-title">From a Shopify export to a useful supplier question.</h2><p>Illustrative data, not a real customer result or a customs decision.</p><div class="example-flow"><div><b>1 · Your CSV</b><span>Canvas tote · SKU CB-01<br>Shopify's export has no column made for the maker's code.</span></div><div><b>2 · The next action</b><span>Confirm the scope for this item. Ask the maker which product code identifies this exact tote, or whether they use another confirmed reference.</span></div><div><b>3 · Your review record</b><span>Enter only the answer and source you verified. Both versions export a supplier sheet, working CSV and change log; the full version handles the whole catalog.</span></div></div><p class="proof-note">An unanswered code is a question to resolve. The checker cannot invent or authenticate a code.</p><p><a class="inline-link" href="/free-checker/app.html?demo">Try this kind of check with a synthetic sample →</a></p></section>
+<section class="decision-section" aria-labelledby="example-title"><p class="eyebrow">A worked example</p><h2 id="example-title">From a Shopify export to a useful supplier question.</h2><p>Illustrative data, not a real customer result or a customs decision.</p><div class="example-flow"><div><b>1 · Your CSV</b><span>Canvas tote · SKU CB-01<br>This export has no maker-code field.</span></div><div><b>2 · The next action</b><span>Confirm the scope for this item. Ask the maker which product code identifies this exact tote, or whether they use another confirmed reference.</span></div><div><b>3 · Your review record</b><span>Enter only the answer and source you verified. Both versions export a supplier sheet, working CSV and change log; the full version handles the whole catalog.</span></div></div><p class="proof-note">An unanswered code is a question to resolve. The checker cannot invent or authenticate a code. Shopify offers an NS-PID type in each variant’s Barcodes, but this store has not verified its Product CSV round trip. A defined product metafield can add one product-level CSV value; confirm the maker code for each exact variant.</p><p><a class="inline-link" href="/free-checker/app.html?demo">Try this kind of check with a synthetic sample →</a></p></section>
 <figure class="shot readable-shot"><img src="/img/shot-worksheet.jpg" alt="TITANTH Catalog Check worksheet: each product row with its finding and next step" loading="lazy" width="910" height="1100"><figcaption>Actual tool interface using synthetic sample data. <a href="/img/shot-worksheet.jpg">Open the full-size screenshot.</a></figcaption></figure>
 <h2>How it works</h2>
 <ol class="plain-steps">
@@ -39,6 +39,7 @@
 <li><strong>Work the list</strong>: fix blank SKUs and bad barcodes yourself, send the supplier question sheet for the maker's codes, record each confirmed value.</li>
 </ol>
 <h2>Free or full?</h2>
+<p class="table-hint">On a phone, swipe the table sideways to compare both versions.</p>
 <div class="table-scroll"><table><tr><th></th><th>Free online checker</th><th>Catalog Check — US$59 once</th></tr>
 <tr><td>Rows checked</td><td>First 25 CSV data rows</td><td>Whole catalog, up to 10,000 rows</td></tr>
 <tr><td>Findings with next steps</td><td>Yes</td><td>Yes</td></tr>
@@ -49,16 +50,17 @@
 <p><a class="inline-link" href="/catalog-check/">See exactly what the full version includes →</a></p>
 <details class="reference-details"><summary>Why product identifiers matter for EU shipments</summary>
 <p>For the distance-sale imports covered by the rule, the customs data calls for a merchant product identifier, a maker or supplier identifier, and a standardised identifier where one exists. Scope and exceptions need case-by-case review.</p>
+<p class="table-hint">On a phone, swipe the table sideways to see each code and its source.</p>
 <div class="table-scroll"><table><tr><th>Code</th><th>Customs name</th><th>Where it usually lives in Shopify</th><th>Required?</th></tr>
 <tr><td>Your product code</td><td>Merchant product identifier (M-PID)</td><td><code>Variant SKU</code></td><td>Yes</td></tr>
-<tr><td>Maker's / supplier's code</td><td>Non-standardised manufacturer product identifier (NS-PID)</td><td><strong>No standard column</strong> — you must collect it</td><td>Yes</td></tr>
+<tr><td>Maker's / supplier's code</td><td>Non-standardised manufacturer product identifier (NS-PID)</td><td>NS-PID type in variant Barcodes (CSV round trip unverified here); defined product metafield for one product-level value</td><td>Yes</td></tr>
 <tr><td>Barcode</td><td>Standardised manufacturer product identifier (S-PID: GTIN, EAN, UPC, ISBN)</td><td><code>Variant Barcodes</code> (<code>Barcodes</code> in Shopify's help page; older exports: <code>Variant Barcode</code> or <code>Barcode</code>)</td><td>Where one exists</td></tr></table></div>
 <p class="meta">Source: <a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=celex:32026R1022">Commission Delegated Regulation (EU) 2026/1022</a>. Voluntary from 1 July 2026, mandatory from 1 November 2026. This page is a data-readiness aid, not legal advice.</p>
 </details>
 <p class="meta">For more context on timing and carrier fields, see <a href="/guides/carrier-pid-fields-fedex-ups-dhl/">what carriers say</a> and <a href="/guides/new-eu-customs-code-2026-2108-shopify-sellers/">the September 2026 customs-code update</a>.</p>
 <h2>Start with the guides</h2>
 <ul>
-<li><a href="/guides/shopify-csv-manufacturer-identifier/">Where is the manufacturer identifier in a Shopify export? (It isn't — here is what to do)</a></li>
+<li><a href="/guides/shopify-csv-manufacturer-identifier/">Manufacturer codes in a Shopify export: fields, metafields, and variants</a></li>
 <li><a href="/guides/eu-parcel-held-missing-product-identifier/">Parcel held at EU customs for a missing product identifier — checklist</a></li>
 <li><a href="/guides/supplier-product-code-request-template/">Email template: asking a supplier for product codes</a></li>
 <li><a href="/guides/new-eu-customs-code-2026-2108-shopify-sellers/">The new EU customs code (Regulation 2026/2108): what changes for sellers, and when</a></li>
