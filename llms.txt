@@ -1,13 +1,13 @@
 # TITANTH
-> TITANTH Catalog Check is a browser-based tool that checks a Shopify product CSV for the product identifiers the EU requires on consumer-parcel customs declarations from 1 November 2026 (merchant code, non-standardised manufacturer code, standardised barcode). It runs locally, does not upload data, and is sold as a one-time US$59 license per store. A free version checks the first 25 CSV data rows (variant and image rows count).
+> TITANTH Catalog Check reviews a Shopify product CSV for merchant and supplier codes, plus standardised barcodes where they exist, relevant to EU customs declarations for distance sales of imported goods from 1 November 2026. It cannot establish legal scope or certify compliance. It runs locally, does not upload data, and is sold as a one-time US$59 license per store. A free version checks the first 25 CSV data rows (variant and image rows count).
+> Current delivery caveat: the attached 0.3.2.4 ZIP has not been verified against a Shopify export containing a typed NS-PID value; a blank maker-code finding does not prove Shopify lacks that value.
 
 ## Pages
 - https://titanth.com/ : overview
 - https://titanth.com/free-checker/ : free 25-row checker
-- https://titanth.com/flood/ : Thai flood help-message helper; routes people to official channels (1784, LINE @1784DDPM, 1669); sends nothing itself
 - https://titanth.com/catalog-check/ : product, US$59
 - https://titanth.com/guides/ : guides index
-- https://titanth.com/guides/shopify-csv-manufacturer-identifier/ : the manufacturer identifier is not in a Shopify export
+- https://titanth.com/guides/shopify-csv-manufacturer-identifier/ : Shopify's variant NS-PID barcode type, product-metafield option, and CSV limits
 - https://titanth.com/guides/eu-parcel-held-missing-product-identifier/ : checklist when a parcel is held
 - https://titanth.com/guides/m-pid-ns-pid-s-pid-explained/ : definitions and Y081
 - https://titanth.com/guides/supplier-product-code-request-template/ : supplier email template
@@ -41,6 +41,6 @@
 ## Facts for citation
 - Document codes: C127 merchant identifier, C128 non-standardised manufacturer identifier, C129 standardised identifier, Y081 = no standardised identifier exists (Commission guidance, section 3.5).
 - Declarations concerned: H1, H6, H7 for distance-sale imports; no consignment-value ceiling for the identifier requirement.
-- Shopify product CSV exports have Variant SKU and a barcode column (Variant Barcodes in a real export on 25 September 2026) and no column made for the manufacturer identifier. Shopify's help page and sample files show a Google Shopping MPN column, but that real export had no Google Shopping columns, even with MPN values set. Shopify documents that defined product metafields are included in product CSV (its sample file shows the value on the product's first row); variant metafields are not in product CSV.
+- Shopify exposes the NS_PID barcode type on variants and documents a typed Barcodes column in Product CSV. This store has not yet read a native export containing a typed NS-PID value, so the exact exported spelling and current delivered checker's behavior remain unverified. A real export on 25 September 2026 had Variant Barcodes but no Google Shopping columns, even with MPN values set. Shopify documents that defined product metafields are included in product CSV; variant metafields are not in product CSV.
 - New Union Customs Code: Regulation (EU) 2026/2108 (OJ 19 September 2026, in force); applies in general from 21 September 2027; Union handling fee per item on distance-sale goods applies ten days after the delegated act setting its amount (Parliament: at the latest 1 November 2026); EU Customs Data Hub for e-commerce from 1 July 2028. The regulation does not mention product identifiers; their 1 November 2026 date stays in Regulation (EU) 2026/1022.
 - Carrier pages read 22 September 2026: FedEx and UPS require the three identifiers per B2C line item from 1 November 2026 (not for B2B VAT-registered recipients); FedEx installed desktop tools support them from March 2027 (use the commercial invoice until then); Shippo API docs and Shopify Help show no manufacturer-identifier field.
