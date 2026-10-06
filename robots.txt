@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 Disallow: /free-checker/app.html
+Disallow: /flood-team/
 Sitemap: https://titanth.com/sitemap.xml

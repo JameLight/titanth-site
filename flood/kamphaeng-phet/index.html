@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://hyd-app-db.rid.go.th; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#10262d">
+  <title>น้ำกำแพงเพชรล่าสุด | ระดับน้ำจุดวัด ฝน และประกาศ</title>
+  <meta name="description" content="ระดับน้ำแม่น้ำปิงและคลองในกำแพงเพชร เทียบตลิ่ง ตามค่าของกรมชลประทานที่ดึงได้ล่าสุดพร้อมเวลา พร้อมประกาศ ปภ. และพยากรณ์ฝนกรมอุตุฯ ติดน้ำโทร 1784 เจ็บป่วยฉุกเฉินโทร 1669 หน้านี้ทำโดยประชาชน ไม่ใช่หน่วยงานรัฐ">
+  <link rel="canonical" href="https://titanth.com/flood/kamphaeng-phet/">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="th_TH">
+  <meta property="og:url" content="https://titanth.com/flood/kamphaeng-phet/">
+  <meta property="og:title" content="น้ำกำแพงเพชรล่าสุด: ระดับน้ำจุดวัดเทียบตลิ่ง">
+  <meta property="og:description" content="ภาพระดับน้ำปิงที่ตัวเมือง สายน้ำจากตากถึงขาณุฯ แผนที่ 11 อำเภอ ตามค่าของกรมชลประทานที่ดึงได้ล่าสุดพร้อมเวลา ติดน้ำโทร 1784">
+  <link rel="stylesheet" href="./kpp.css">
+</head>
+<body>
+<nav class="help" aria-label="โทรขอความช่วยเหลือ">
+  <a class="main" href="tel:1784"><b>1784</b><small>ติดน้ำ ขอกู้ภัย · ปภ. 24 ชม.</small></a>
+  <a href="tel:1669"><b>1669</b><small>เจ็บป่วยฉุกเฉิน</small></a>
+</nav>
+<p class="jsfail" id="jsFail" role="status">หน้านี้ยังโหลดตัวเลขไม่ขึ้น ลองโหลดหน้าใหม่ หรือดูที่<a href="https://hyd-app-db.rid.go.th/hydro2hd_admsl.html" target="_blank" rel="noopener">เว็บกรมชลประทาน ↗</a> ติดน้ำโทร 1784</p>
+<main class="wrap" id="app">
+  <div class="status" id="status">
+    <div class="stx"><h1 id="stWord">น้ำกำแพงเพชรล่าสุด</h1> <span class="age old" id="age">กำลังโหลดข้อมูล</span></div>
+    <button class="go" id="goAll" type="button" aria-label="ดูทุกจุดวัด"><span class="golbl" aria-hidden="true">ดูทุกจุด </span><span aria-hidden="true">›</span></button>
+  </div>
+  <noscript><p class="nodata">หน้านี้ต้องเปิด JavaScript เพื่อแสดงระดับน้ำ ถ้าติดน้ำหรือต้องการความช่วยเหลือ โทร 1784 (ปภ. 24 ชม.) เจ็บป่วยฉุกเฉิน โทร 1669</p></noscript>
+  <p class="role">เว็บประชาชน ไม่ใช่หน่วยงานรัฐ ไม่รับแจ้งเหตุ · ติดน้ำ โทร 1784</p>
+  <div id="activeAlerts"></div>
+
+  <section class="hero" aria-labelledby="heroTitle">
+    <div class="where" id="heroTitle">แม่น้ำปิง · ตัวเมืองกำแพงเพชร (จุดวัดของกรมชลประทาน · ไม่ใช่ระดับน้ำหน้าบ้าน)</div>
+    <div class="chips"><span class="verdict" id="hVerdict"></span><span class="chip" id="hTrend"></span></div>
+    <p class="sub" id="hWatch"></p>
+    <p class="sentence" id="hSentence"></p>
+    <svg class="xsec" id="xsec" viewBox="0 0 340 196" role="img" aria-label="ภาพตัดขวางแม่น้ำปิงที่ตัวเมือง เทียบระดับน้ำกับตลิ่ง"></svg>
+    <p class="sub" id="hUp"></p>
+  </section>
+
+  <div class="tiles" id="tiles" hidden>
+    <button class="tile" type="button" data-go="river"><b id="tRiver">–</b><span id="tRiverOf">ถึงเกณฑ์เฝ้าระวัง/วิกฤติ</span></button>
+    <button class="tile" type="button" data-go="roads"><b>2</b><span>ถนนที่เคยรายงานว่าผ่านไม่ได้ (28 ก.ย.)</span></button>
+    <button class="tile" type="button" data-go="map"><b id="tMap">8/11</b><span>อำเภอที่ดาวเทียมเห็นน้ำท่วม (23–29 ก.ย.)</span></button>
+  </div>
+
+  <section class="panel" id="river" aria-labelledby="riverH">
+    <h2 id="riverH">สายน้ำจากตากถึงขาณุฯ <small id="riverTime">กรมชลประทาน</small></h2>
+    <div class="replay">
+      <button id="play" type="button">▶ ย้อนดู 33 ชม.</button>
+      <input id="scrub" type="range" min="0" max="32" value="32" aria-label="เลือกเวลาย้อนหลัง">
+      <output id="clock" for="scrub"></output>
+    </div>
+    <p class="key" id="rKey"></p>
+    <ul class="ribbon" id="ribbon"></ul>
+    <p class="note">แตะจุดไหนก็ได้เพื่อดูกราฟ สีตามเกณฑ์ของกรมชลประทาน</p>
+  </section>
+
+  <section class="panel" id="map" aria-labelledby="mapH">
+    <h2 id="mapH">แผนที่ 11 อำเภอ <small>ดาวเทียม GISTDA รวม 23–29 ก.ย.</small></h2>
+    <svg class="map" id="mapSvg" role="img" aria-label="แผนที่อำเภอของกำแพงเพชร ลงสีตามสัดส่วนพื้นที่ที่ดาวเทียมเห็นน้ำท่วม พร้อมแม่น้ำและจุดวัดน้ำ"></svg>
+    <div class="legend"><span>สัดส่วนพื้นที่ที่เห็นน้ำท่วม:</span><span class="lg"><i class="l0"></i>ไม่พบ</span><span class="lg"><i class="l1"></i>ต่ำกว่า 1%</span><span class="lg"><i class="l2"></i>1–5%</span><span class="lg"><i class="l3"></i>มากกว่า 5%</span></div>
+    <p class="note" id="mapNote">สีอำเภอมาจากภาพหลายวันในช่วง 23–29 ก.ย. ไม่ใช่ภาพตอนนี้ คลองขลุงราว 39,000 ไร่ ขาณุฯ ราว 38,000 ไร่ ส่วนนี้ยังไม่อัปเดตอัตโนมัติ</p>
+    <p class="mapcredit">แผนที่: ขอบเขตอำเภอจากกรมแผนที่ทหาร ผ่าน OCHA/HDX และ geoBoundaries (<a href="https://creativecommons.org/licenses/by/3.0/igo/" target="_blank" rel="noopener">CC BY 3.0 IGO ↗</a>) ปรับให้เรียบง่าย · ลำน้ำ © ผู้ร่วมพัฒนา <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap ↗</a> (ODbL) · ตำแหน่งจุดวัด: กรมชลประทาน</p>
+  </section>
+
+  <section class="panel" id="roads" aria-labelledby="roadH">
+    <h2 id="roadH">ถนนที่มีรายงานว่าผ่านไม่ได้ <small>กรมทางหลวง · ทางหลวงชนบท</small></h2>
+    <p class="calm" id="roadOld">ข้อมูลถนนในหน้านี้ยังไม่อัปเดตอัตโนมัติ รายการด้านล่างเป็นรายงานของวันที่ 28 ก.ย. อาจเปลี่ยนแล้ว ก่อนออกเดินทางโทร <a href="tel:1586" aria-label="โทร 1586 สายด่วนกรมทางหลวง">1586</a> (ทางหลวง) หรือ <a href="tel:1146" aria-label="โทร 1146 สายด่วนกรมทางหลวงชนบท">1146</a> (ทางหลวงชนบท)</p>
+    <div class="roads">
+      <div class="road old"><b>ทล.1117 คลองแม่ลาย–ช่องเย็น กม.45–46</b><span>รายงานว่าผ่านไม่ได้เมื่อ 28 ก.ย. 17:30 น. (กรมทางหลวง)</span></div>
+      <div class="road old"><b>ถนนชนบท กพ.4014</b><span>รายงานว่าผ่านไม่ได้ ตามรายงานของกรมทางหลวงชนบท 28 ก.ย.</span></div>
+    </div>
+    <p class="note">ไม่มีข้อมูลยืนยันว่าถนนเส้นไหนปลอดภัย อย่าขับหรือเดินผ่านน้ำไหลแรงหรือน้ำที่ไม่รู้ความลึก</p>
+  </section>
+
+  <section class="panel" aria-labelledby="rainH">
+    <h2 id="rainH">ฝนวันนี้–พรุ่งนี้ <small id="rainSrc">พยากรณ์ 7 วัน กรมอุตุนิยมวิทยา</small></h2>
+    <p class="calm" id="rainOld" hidden></p>
+    <div class="days" id="days"></div>
+    <p class="note">ดูเรดาร์ฝน สถานีตาก ได้ที่ <a href="https://weather.tmd.go.th/tak.php" target="_blank" rel="noopener">เว็บกรมอุตุนิยมวิทยา ↗</a> เวลาบนภาพเรดาร์เป็นเวลาสากล ช้ากว่าเวลาไทย 7 ชม. ตรวจวันเวลาบนภาพก่อนใช้ <span class="nowline" id="radarNow"></span></p>
+  </section>
+
+  <section class="panel" aria-labelledby="warnH">
+    <h2 id="warnH">ประกาศทางการ <small>ปภ. ข้อความเตือนเข้ามือถือ</small></h2>
+    <div id="alertCalm"></div>
+    <div id="alertPast"></div>
+  </section>
+
+  <footer class="foot">
+    <b>ตัวเลขมาจากไหน</b>
+    <ul id="sources">
+      <li>ระดับน้ำและสี: กรมชลประทาน รายงานระดับน้ำรายชั่วโมง (<a href="https://hyd-app-db.rid.go.th/hydro2hd_admsl.html" target="_blank" rel="noopener">หน้าเว็บต้นทาง ↗</a>) สีตามเกณฑ์ของกรมชลประทาน: ต่ำกว่าระดับเฝ้าระวังคือปกติ ตั้งแต่ระดับเฝ้าระวังคือเฝ้าระวัง ถึงหรือเหนือตลิ่งคือวิกฤติ</li>
+      <li>พื้นที่เห็นน้ำท่วม: GISTDA ชั้นข้อมูลรวม 7 วัน 23–29 ก.ย. หารด้วยพื้นที่อำเภอ</li>
+      <li>ถนน: กรมทางหลวง รายงาน 28 ก.ย. 17:30 น. และกรมทางหลวงชนบท 28 ก.ย.</li>
+      <li>ฝน: กรมอุตุนิยมวิทยา พยากรณ์อากาศ 7 วัน · ประกาศ: ปภ. ข้อความเตือนเข้ามือถือ (Cell Broadcast)</li>
+      <li>ดูข้อมูลเพิ่มเติม: <a href="https://kamphaengphet.thaiwater.net/" target="_blank" rel="noopener">ThaiWater กำแพงเพชร ↗</a></li>
+      <li>ระดับน้ำ: เมื่อเปิดหน้านี้ มือถือของคุณจะดึงตัวเลขจากเว็บกรมชลประทานโดยตรง และดึงซ้ำทุก 10 นาที ถ้าดึงไม่ได้ จะแสดงค่าที่ระบบบันทึกไว้ล่าสุดพร้อมเวลา ประกาศและพยากรณ์ ระบบตรวจทุก 30 นาที ข้อมูลเก่าเกิน 2 ชั่วโมง ป้ายจะเป็นสีเหลือง เกิน 6 ชั่วโมงจะเป็นสีเทา จุดที่ไม่มีค่าใหม่เกิน 3 ชั่วโมงจะขึ้นว่าไม่มีข้อมูลล่าสุด</li>
+      <li>หน้านี้ทำโดยประชาชน ไม่ใช่หน่วยงานรัฐ ไม่รับแจ้งเหตุ ไม่ขอเงิน ไม่ต้องล็อกอิน ไม่ขอพิกัดจากโทรศัพท์</li>
+    </ul>
+  </footer>
+</main>
+
+<div class="scrim" id="scrim" hidden></div>
+<section class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="shName">
+  <div class="handle"></div>
+  <div class="row"><div><h2 id="shName"></h2><div class="sub" id="shPlace"></div></div><button class="close" id="shClose" type="button">ปิด</button></div>
+  <div class="strip"><div>ระดับน้ำ<b id="shGap"></b></div><div>แนวโน้ม<b id="shTrend"></b></div><div>สถานะ<b id="shCls"></b></div></div>
+  <p class="note" id="shFlat" hidden></p>
+  <svg class="chart" id="shChart" viewBox="0 0 340 200" role="img" aria-label="กราฟระดับน้ำย้อนหลัง"></svg>
+</section>
+
+<script src="./geo.js"></script>
+<script src="./data.js"></script>
+<script src="./kpp-core.js"></script>
+<script src="./kpp.js"></script>
+</body>
+</html>
