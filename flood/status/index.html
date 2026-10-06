@@ -20,6 +20,12 @@
     <h1>ระบบนี้ทำอะไรได้แล้วบ้าง ตอนนี้</h1>
     <p class="lead">สถานะรับเรื่องอ่านจากการตั้งค่า ส่วนจำนวนทีมและเรื่องอ่านจากฐานข้อมูลเมื่อเปิดหน้านี้หรือกด “อ่านใหม่” แสดงเฉพาะตัวเลขรวม ไม่มีชื่อ เบอร์ หรือตำแหน่งของใคร</p>
 
+    <section class="card fallback" id="status-fallback" aria-label="ข้อมูลสถานะยังไม่ปรากฏ">
+      <p><strong>ยังไม่แสดงสถานะปัจจุบัน</strong></p>
+      <p>ถ้าข้อความนี้ไม่หายไป ให้ลองโหลดหน้านี้ใหม่ ตัวเลขด้านล่างยังไม่ได้อ่านจากระบบ จึงบอกไม่ได้ว่ามีทีมเฝ้าเวรหรือมีเรื่องในระบบหรือไม่ หากต้องการแจ้งเหตุ โทร 1784; เจ็บป่วยหรือบาดเจ็บฉุกเฉิน โทร 1669</p>
+      <noscript><p>เบราว์เซอร์นี้ปิด JavaScript อยู่ จึงอ่านสถานะปัจจุบันไม่ได้</p></noscript>
+    </section>
+
     <section class="card" aria-labelledby="h-help">
       <h2 id="h-help">หน้าเตรียมข้อความ</h2>
       <p class="big ok">เปิดใช้</p>
@@ -28,19 +34,19 @@
 
     <section class="card" aria-labelledby="h-intake">
       <h2 id="h-intake">ส่งเรื่องเข้าทีมอาสาผ่านเว็บ</h2>
-      <p class="big" id="intake-state">กำลังอ่าน…</p>
-      <p id="intake-note"></p>
+      <p class="big unknown" id="intake-state">ยังไม่ได้อ่าน</p>
+      <p id="intake-note">ยังยืนยันสถานะรับเรื่องไม่ได้ กรุณาใช้ช่องทางโทรด้านบนหากต้องการแจ้งเหตุ</p>
     </section>
 
     <section class="card" aria-labelledby="h-duty">
       <h2 id="h-duty">จังหวัดที่มีทีมเฝ้าเวรอยู่ตอนนี้</h2>
-      <p class="big" id="duty-count">กำลังอ่าน…</p>
-      <ul id="duty-list" class="list"></ul>
+      <p class="big unknown" id="duty-count">ยังไม่ได้อ่าน</p>
+      <ul id="duty-list" class="list"><li>ยังไม่มีข้อมูลปัจจุบัน ไม่ได้แปลว่าไม่มีทีม</li></ul>
     </section>
 
     <section class="card" aria-labelledby="h-cases">
       <h2 id="h-cases">เรื่องในระบบของทีมอาสา</h2>
-      <p class="big" id="cases-summary">กำลังอ่าน…</p>
+      <p class="big unknown" id="cases-summary">ยังไม่ได้อ่าน</p>
       <dl id="cases-detail" class="detail" hidden>
         <dt>รอทีมรับ</dt><dd id="c-waiting"></dd>
         <dt>รอเกิน 10 นาที</dt><dd id="c-waiting10"></dd>
@@ -49,7 +55,7 @@
       </dl>
     </section>
 
-    <p class="readtime"><span id="read-time">ยังไม่ได้อ่าน</span> <button type="button" id="reload">อ่านใหม่</button></p>
+    <p class="readtime"><span id="read-time">ยังไม่ได้อ่านข้อมูลปัจจุบัน</span> <button type="button" id="reload" hidden>อ่านใหม่</button></p>
 
     <section class="card plain" aria-labelledby="h-unknown">
       <h2 id="h-unknown">สิ่งที่เราไม่รู้และไม่นับ</h2>

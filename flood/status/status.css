@@ -6,6 +6,7 @@
 main{max-width:640px;margin:auto;padding:1rem}.back a{color:var(--navy);font-weight:700}
 h1{font-size:1.6rem;line-height:1.3;color:var(--navy);margin:.4rem 0 .4rem}.lead{color:var(--muted);margin:0 0 1rem}
 .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:1rem;margin-bottom:.9rem}.card.plain{background:#edf3f5}
+.card.fallback{border-color:#d8b874;background:#fff9e8}.card.fallback[hidden]{display:none}
 .card h2{font-size:1.05rem;margin:0 0 .3rem}.card p{margin:.2rem 0}
 .big{font-size:1.7rem;font-weight:800;margin:.1rem 0 .3rem!important}.ok{color:#0f5f3a}.off{color:#7b1c16}.unknown{color:#795310}
 .list{margin:.3rem 0 0;padding-left:1.2rem}.detail{display:grid;grid-template-columns:1fr auto;gap:.2rem 1rem;margin:.4rem 0 0}.detail dd{margin:0;font-weight:800}.detail[hidden]{display:none}.nw{white-space:nowrap}
