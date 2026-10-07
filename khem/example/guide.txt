@@ -1,0 +1,19 @@
+ตัวอย่างเข็ม: ข้อมูลสังเคราะห์หนึ่งงาน สองรอบ
+
+1. input-round-1.json กำหนดเป้าหมาย/ข้อกำหนดและระบุว่ายังไม่ได้ตรวจลิงก์หรือมือถือ
+2. output-round-1.json คือผลจริงของ work.review ผ่าน native recording core บน Mac
+3. input-round-2.json ใช้ work_key เดิมและ expected_prior_record_sha256 จากผลรอบแรก เพิ่มข้อความรอบใหม่และข้อสงสัยอีกข้อ
+4. output-round-2.json รักษาเป้าหมาย ข้อกำหนด และข้อสงสัยรอบแรก พร้อม prior_record_sha256 ผูกประวัติ
+5. manifest.json ระบุ SHA-256 ของ input/output และข้อจำกัดของตัวอย่าง
+
+RECORDED_ONLY หมายถึงบันทึกข้อความในขอบเขตนี้ได้ ไม่ใช่ยืนยันข้อเท็จจริงหรืองานเสร็จ
+record_sha256 คือแฮชของ canonical packet.record; canonical JSON ใช้ UTF-8, sort keys, ไม่มีช่องว่างส่วนเกิน
+ลายเซ็นใน packet ตรวจแล้วด้วย native verifier; ไม่ใช่ independent truth/identity certification
+กุญแจสาธารณะและลายเซ็นเป็นข้อมูลสำหรับตรวจ recording binding ไม่ใช่ private key หรือ token
+schema ของใบรับรองในตัวอย่างคือ khem.workbench.recording-receipt.v1 ไม่ใช่ receipt.062 เดิม
+worker_isolation รุ่น Mac คือ PYTHON_AUDIT_DEVELOPMENT_ONLY_NOT_OS_SANDBOX
+factual_truth_verified=false; completion_established=false; effect_authorized=false
+
+ทุกข้อความงานในตัวอย่างเป็นข้อมูลสังเคราะห์ ไม่ใช่ผลลูกค้า ไม่มี private runtime/credentials ให้ดาวน์โหลด
+หากสนใจ ให้ส่งเพียงชื่อกระบวนการทั่วไปและสิ่งส่งมอบที่ต้องการไปช่องทางติดต่อธุรกิจในหน้า /khem/
+อย่าแนบ client code, passwords, API keys หรือข้อมูลบุคคลอื่นในอีเมลแรก

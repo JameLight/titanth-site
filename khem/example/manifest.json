@@ -1,0 +1,20 @@
+{
+  "schema": "khem.public-synthetic-example.v1",
+  "synthetic": true,
+  "real_native_recording": true,
+  "customer_result": false,
+  "human_identity_verified": false,
+  "factual_truth_verified": false,
+  "completion_established": false,
+  "effect_authorized": false,
+  "private_runtime_or_credentials_included": false,
+  "worker_isolation": "PYTHON_AUDIT_DEVELOPMENT_ONLY_NOT_OS_SANDBOX",
+  "files": {
+    "output-round-1.json": "35c2e978c7699ed6c70d3da85d5c64035a60a1706b0442a88f5dd6bad5f64d53",
+    "input-round-2.json": "1faab473a2fa09c242bbed58b7d79cbdf51ca8695ef875e0dcbf8e70e99eb6b2",
+    "input-round-1.json": "bba0192ca4cd1e38e0b4fa8e6cd9fb7e7896eec3b52e3eccde0f0821e94ba402",
+    "output-round-2.json": "401d57c3ed20de3d480e9c692985a51998baecb4d439194b966ec867a3372646"
+  },
+  "round_1_record_sha256": "976144539b7272cc365b6fd04bd5b7c806c56187d7f029c00dfa9d2d4c6eb1af",
+  "round_2_record_sha256": "e1d9a33689d34232c3d6dc9aee4262294f71768dab106bc39c0430ccf0732cea"
+}
