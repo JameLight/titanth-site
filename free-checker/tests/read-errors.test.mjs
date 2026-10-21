@@ -36,6 +36,6 @@ test('changing the scope before a catalog loads keeps the message', () => {
   assert.match(script, /\$\('scope'\)\.addEventListener\('change',\(\)=>\{if\(text\)invalidate\(\);\}\);/);
 });
 
-test('a file over the free checker's 25,000-row parse limit is told to export a smaller set', () => {
+test("a file over the free checker's 25,000-row parse limit is told to export a smaller set", () => {
   assert.match(readProblem(new Error('CSV exceeds the 25000 data-row limit.'), 'Handle,Title\n'), /more than 25,000 data rows/);
 });
