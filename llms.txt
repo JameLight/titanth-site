@@ -13,7 +13,7 @@
 - https://titanth.com/guides/supplier-product-code-request-template/ : supplier email template
 - https://titanth.com/guides/carrier-pid-fields-fedex-ups-dhl/ : where carriers take the codes
 - https://titanth.com/guides/eu-product-identifier-etsy-ebay-woocommerce-shopify/ : by platform
-- https://titanth.com/guides/eu-product-identifier-deadline-1-november-2026/ : timeline and six-week plan
+- https://titanth.com/guides/eu-product-identifier-deadline-1-november-2026/ : timeline, last-week checklist, and what to do after
 - https://titanth.com/guides/shopify-barcode-errors-eu-customs/ : barcode errors
 
 ## Facts
