@@ -1,10 +1,10 @@
 # TITANTH
-> TITANTH Catalog Check reviews a Shopify product CSV for merchant and supplier codes, plus standardised barcodes where they exist, relevant to EU customs declarations for distance sales of imported goods from 1 November 2026. It cannot establish legal scope or certify compliance. It runs locally, does not upload data, and is sold as a one-time US$59 license per store. A free version checks the first 25 CSV data rows (variant and image rows count).
+> TITANTH Catalog Check reviews a Shopify product CSV for merchant and supplier codes, plus standardised barcodes where they exist, relevant to EU customs declarations for distance sales of imported goods from 1 November 2026. It cannot establish legal scope or certify compliance. It runs locally, does not upload data, and is sold as a one-time US$59 license per store. A free version checks the first 100 CSV data rows (variant and image rows count).
 > Current delivery note: the attached 0.3.2.16 ZIP reads a typed NS-PID value correctly from a real Shopify Product CSV export on 21 October 2026 (written as ns-pid:CODE in Variant Barcodes); a blank maker-code finding does not prove Shopify lacks that value.
 
 ## Pages
 - https://titanth.com/ : overview
-- https://titanth.com/free-checker/ : free 25-row checker
+- https://titanth.com/free-checker/ : free 100-row checker
 - https://titanth.com/catalog-check/ : product, US$59
 - https://titanth.com/guides/ : guides index
 - https://titanth.com/guides/shopify-csv-manufacturer-identifier/ : Shopify's variant NS-PID barcode type, product-metafield option, and CSV limits

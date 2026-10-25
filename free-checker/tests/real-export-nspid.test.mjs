@@ -15,7 +15,7 @@ const analyzeCatalog = runInNewContext(`(() => {${engine}\nreturn analyzeCatalog
 const csv = readFileSync(new URL('./shopify-real-export-nspid-20261021.csv', import.meta.url), 'utf8');
 
 test('the free checker reads the NS-PID that Shopify writes as ns-pid: in a real export', () => {
-  const report = analyzeCatalog(csv, { scope: 'in_scope', maxRows: 25 });
+  const report = analyzeCatalog(csv, { scope: 'in_scope', maxRows: 100 });
   assert.equal(report.variants.length, 1);
   const [variant] = report.variants;
   assert.equal(variant.nsPid, 'TEST-MAKER-REF-001');

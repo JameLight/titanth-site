@@ -6,7 +6,7 @@ import { runInNewContext } from 'node:vm';
 const html = readFileSync(new URL('../app.html', import.meta.url), 'utf8');
 const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
 const start = script.indexOf('// Turn a file-reading failure');
-const end = script.indexOf('const FREE_ROWS=25;', start);
+const end = script.indexOf('const FREE_ROWS=100;', start);
 assert(start >= 0 && end > start, 'the test must exercise readProblem as shipped in app.html');
 const readProblem = runInNewContext(`${script.slice(start, end)}\nreadProblem`, { label: (en) => en });
 
