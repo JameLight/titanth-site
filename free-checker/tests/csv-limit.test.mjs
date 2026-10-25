@@ -17,14 +17,14 @@ test('the shipped script matches its Content Security Policy hash', () => {
   assert(html.includes(`script-src 'sha256-${digest}'`));
 });
 
-test('25 data rows plus trailing blank lines remain within the free checker limit', () => {
+test('100 data rows plus trailing blank lines remain within the free checker limit', () => {
   for (const newline of ['\n', '\r\n', '\r']) {
-    const rows = Array.from({ length: 25 }, (_, i) => `item-${i},sku-${i}`);
+    const rows = Array.from({ length: 100 }, (_, i) => `item-${i},sku-${i}`);
     const csv = ['Handle,Variant SKU', ...rows, '', ''].join(newline);
-    const parsed = parseCsv(csv, { maxRows: 25 });
-    assert.equal(parsed.rows.length, 25);
-    assert.equal(parsed.rows.at(-1).values.join(','), 'item-24,sku-24');
-    assert.throws(() => parseCsv(['Handle,Variant SKU', ...rows, 'item-25,sku-25'].join(newline), { maxRows: 25 }), /first 25 CSV data rows/);
-    assert.throws(() => parseCsv(['Handle,Variant SKU', 'a,A1', '', 'b,B1'].join(newline), { maxRows: 25 }), /has 1 fields; expected 2/);
+    const parsed = parseCsv(csv, { maxRows: 100 });
+    assert.equal(parsed.rows.length, 100);
+    assert.equal(parsed.rows.at(-1).values.join(','), 'item-99,sku-99');
+    assert.throws(() => parseCsv(['Handle,Variant SKU', ...rows, 'item-100,sku-100'].join(newline), { maxRows: 100 }), /first 100 CSV data rows/);
+    assert.throws(() => parseCsv(['Handle,Variant SKU', 'a,A1', '', 'b,B1'].join(newline), { maxRows: 100 }), /has 1 fields; expected 2/);
   }
 });
