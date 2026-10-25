@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How to add NS-PID codes to Shopify in bulk with a CSV import | TITANTH</title>
+<meta name="description" content="Add makers&#x27; codes to Shopify variants as NS-PID barcodes in bulk: the ns-pid:CODE format, escapes and the overwrite import. Tested 25 October 2026.">
+<link rel="canonical" href="https://titanth.com/guides/add-ns-pid-codes-to-shopify-in-bulk/">
+<meta property="og:type" content="article"><meta property="og:title" content="How to add NS-PID codes to Shopify in bulk with a CSV import | TITANTH"><meta property="og:description" content="Add makers&#x27; codes to Shopify variants as NS-PID barcodes in bulk: the ns-pid:CODE format, escapes and the overwrite import. Tested 25 October 2026."><meta property="og:url" content="https://titanth.com/guides/add-ns-pid-codes-to-shopify-in-bulk/"><meta property="og:site_name" content="TITANTH">
+<meta name="twitter:card" content="summary">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<link rel="stylesheet" href="/site.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "Organization", "name": "TITANTH", "url": "https://titanth.com", "email": "jamelight@titanth.com", "telephone": "+66899989628", "address": {"@type": "PostalAddress", "streetAddress": "No. 16/1, Kalothai Road, Soi 1, Nai Mueang Kamphaeng Phet Subdistrict", "addressLocality": "Mueang Kamphaeng Phet", "addressRegion": "Kamphaeng Phet", "postalCode": "62000", "addressCountry": "TH"}}</script>
+<script type="application/ld+json">{"@type": "Article", "headline": "How to add NS-PID codes to Shopify in bulk with a CSV import | TITANTH", "datePublished": "2026-10-25", "dateModified": "2026-10-25", "author": {"@type": "Person", "name": "Wachara Sangjanthai"}, "publisher": {"@type": "Organization", "name": "TITANTH"}, "@context": "https://schema.org"}</script>
+<script type="application/ld+json">{"@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "Does Shopify accept ns-pid: in a Product CSV import?", "acceptedAnswer": {"@type": "Answer", "text": "Yes, in our tests. On 25 October 2026 we imported a Variant Barcodes value such as ean:4006381333931; ns-pid:MK-100 with 'Overwrite products with matching handles' on two archived test products. Shopify stored the code with the NS-PID type, and its export afterwards matched the imported file in every cell."}}, {"@type": "Question", "name": "What if a variant already has an NS-PID?", "acceptedAnswer": {"@type": "Answer", "text": "Do not add a second one. Change the existing code in Shopify admin after confirming the correct value with the supplier."}}, {"@type": "Question", "name": "Can a spreadsheet damage the codes?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. A spreadsheet can turn a long numeric code into 4.00638E+12 or drop leading zeros. Ask suppliers to send codes as text, and check those columns before you import."}}], "@context": "https://schema.org"}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [{"@type": "ListItem", "position": 1, "name": "Home", "item": "https://titanth.com/"}, {"@type": "ListItem", "position": 2, "name": "Guides", "item": "https://titanth.com/guides/"}, {"@type": "ListItem", "position": 3, "name": "Add NS-PID codes in bulk", "item": "https://titanth.com/guides/add-ns-pid-codes-to-shopify-in-bulk/"}]}</script>
+<script data-goatcounter="https://titanth.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script><script>document.addEventListener("click",function(e){var a=e.target.closest("a");if(!a||!window.goatcounter)return;var h=a.getAttribute("href")||"";if(h.indexOf("/free-checker/app.html")===0)goatcounter.count({path:"event/free-checker-open",title:"Free checker opened",event:true});else if(h.indexOf("https://shop.titanth.com/products/")===0)goatcounter.count({path:"event/buy-click",title:"Buy link clicked",event:true});});</script>
+<link rel="icon" type="image/svg+xml" href="/img/titanth-logo.svg">
+</head>
+<body>
+<header><a class="brand" href="/" aria-label="TITANTH home"><img src="/img/titanth-logo.svg" alt="TITANTH" width="104" height="104"></a><nav><a href="/free-checker/">Free checker</a><a href="/guides/">Guides</a><a href="/answers/">Answers</a><a href="/catalog-check/">Catalog Check $59</a></nav></header>
+<main>
+<p class="crumbs"><a href="/">Home</a> › <a href="/guides/">Guides</a> › Add NS-PID codes in bulk</p>
+<h1>How to add NS-PID codes to Shopify in bulk</h1>
+<p class="answer"><strong>Short answer:</strong> in a current Shopify Product CSV export, add each maker's code to the variant's <code>Variant Barcodes</code> cell as <code>ns-pid:CODE</code>, after any barcodes already there and separated by <code>; </code>. Keep every column and every row of each product you change, then import with "Overwrite products with matching handles". We tested this on 25 October 2026 with two archived test products: Shopify stored the codes with the NS-PID type, and its export afterwards matched the import file in every cell.</p>
+<h2>What the cell looks like</h2>
+<ul>
+<li>A variant that already has an EAN: <code>ean:4006381333931; ns-pid:MK-100</code></li>
+<li>A variant with no barcode yet: <code>ns-pid:MK-100</code></li>
+<li>A code that contains <code>:</code>, <code>;</code> or <code>\</code> needs a backslash before each of them. The code <code>MK:200;X</code> is written <code>ns-pid:MK\:200\;X</code>.</li>
+<li>Shopify allows up to 20 barcodes per variant, and only one of them should be the NS-PID.</li>
+</ul>
+<h2>Step by step</h2>
+<ol>
+<li><strong>Export</strong> the products from Shopify (Products → Export → CSV). Use the current format with the <code>Variant Barcodes</code> column. Keep this file unchanged as your backup.</li>
+<li><strong>Get the maker's own code</strong> for each exact variant from the supplier or the product documents. A vendor name, your SKU or a guess is not the maker's code.</li>
+<li><strong>Add the codes</strong> in a copy of the export as shown above. Skip variants that already have an NS-PID.</li>
+<li><strong>Keep whole products.</strong> Leave every column in the file, including option columns and <code>Status</code>, and keep all rows of each product you change, including image rows. Remove products you did not change. Shopify's help warns that blank included cells overwrite existing values, that missing option columns can remove variants, and that a missing Status column can make a product active.</li>
+<li><strong>Check the codes</strong> before importing. If a spreadsheet turned a code into <code>4.00638E+12</code> or dropped leading zeros, fix it from the supplier's original. Save as UTF-8 CSV with commas.</li>
+<li><strong>Import</strong> in Shopify admin (Products → Import), tick "Overwrite products with matching handles" and read the preview. Try one product first.</li>
+<li><strong>Re-export and check</strong> a few variants in the admin: each should show the code with the NS-PID type next to its existing barcodes.</li>
+</ol>
+<h2>What we tested</h2>
+<ul>
+<li>25 October 2026, this store, two new archived test products: one with 2 variants, one with 2 options, 4 variants, 3 images, quotes and commas in the description and mixed barcodes (<code>upc:</code>, an untyped internal code with <code>\:</code> and <code>\;</code>, an existing NS-PID and a blank).</li>
+<li>Export → add codes → import with overwrite → export again. Only <code>Variant Barcodes</code> changed; status stayed archived; images were not duplicated; in the first test the variant IDs did not change.</li>
+<li>Not tested: passing the codes on to a carrier or customs broker.</li>
+</ul>
+<h2>Two things a CSV cannot show</h2>
+<ul>
+<li>Shopify's per-variant "no standardised identifier" setting has no Product CSV column, so a blank barcode in the file is unknown, not "none".</li>
+<li>A Shopify staff member wrote on its <a href="https://community.shopify.dev/t/about-eu-new-barcode-requirements-and-barcode-types/38703">developer forum</a> (20 October 2026) that when a variant has no NS-PID-typed barcode, Shopify fills one in from its other barcodes, the SKU or the variant ID. That value may not be the maker's own code.</li>
+</ul>
+<h2>Doing it with TITANTH</h2>
+<p>The <a href="/catalog-check/">full Catalog Check</a> (US$59 once, offline) makes a supplier question sheet from your export, reads it back when suppliers have filled it, adds each code as <code>ns-pid:</code> with the escapes above, refuses a second NS-PID and spreadsheet-damaged numbers, and gives you an import file with only the products you changed. The <a href="/free-checker/">free checker</a> shows the gaps in the first 100 rows of your export.</p>
+<p class="cta-row"><a class="cta" href="/free-checker/">Check your CSV free — first 100 rows</a></p>
+<h2>Questions</h2>
+<details><summary>Does Shopify accept ns-pid: in a Product CSV import?</summary><p>Yes, in our tests. On 25 October 2026 we imported a Variant Barcodes value such as ean:4006381333931; ns-pid:MK-100 with &#x27;Overwrite products with matching handles&#x27; on two archived test products. Shopify stored the code with the NS-PID type, and its export afterwards matched the imported file in every cell.</p></details><details><summary>What if a variant already has an NS-PID?</summary><p>Do not add a second one. Change the existing code in Shopify admin after confirming the correct value with the supplier.</p></details><details><summary>Can a spreadsheet damage the codes?</summary><p>Yes. A spreadsheet can turn a long numeric code into 4.00638E+12 or drop leading zeros. Ask suppliers to send codes as text, and check those columns before you import.</p></details>
+<p><a href="/guides/shopify-csv-manufacturer-identifier/">What a Shopify export contains →</a> · <a href="/guides/supplier-product-code-request-template/">Supplier request template →</a></p>
+</main>
+<footer>
+<p><strong>TITANTH</strong> is operated by Wachara Sangjanthai, an individual in Thailand. Email <a href="mailto:jamelight@titanth.com">jamelight@titanth.com</a> · +66 89 998 9628 · No. 16/1, Kalothai Road, Soi 1, Nai Mueang Kamphaeng Phet Subdistrict, Mueang Kamphaeng Phet District, Kamphaeng Phet 62000, Thailand</p>
+<p><a href="/policies/refund/">Refunds</a> · <a href="/policies/delivery/">Delivery</a> · <a href="/policies/terms/">Terms</a> · <a href="/policies/privacy/">Privacy</a> · <a href="/guides/">All guides</a></p>
+<p>TITANTH Catalog Check is a data-readiness tool. It is not legal advice, a customs filing service, an HS-code classifier, or a compliance certificate. Sources: <a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=celex:32026R1022">Regulation (EU) 2026/1022</a> · <a href="https://taxation-customs.ec.europa.eu/document/download/053e5b4e-f0be-4f20-9a23-3e3b659a6676_en?filename=Customs+Guidance+on+EUR+3+customs+duty.pdf">Commission customs guidance, section 8 (5 October 2026)</a>. Commission PID guidance checked 2026-10-07; Shopify UI and <a href="https://shopify.dev/docs/api/admin-graphql/2026-10/enums/BarcodeType">BarcodeType reference</a> reviewed 2026-09-29; CSV export checked 2026-10-21; re-import tested 2026-10-25; other legal context last reviewed 2026-09-25.</p>
+</footer>
+</body>
+</html>

@@ -26,6 +26,7 @@
 - https://titanth.com/guides/c127-c128-c129-y081-declaration-codes/ : C127 / C128 / C129 codes
 - https://titanth.com/guides/eu-3-euro-duty-vs-product-identifiers/ : €3 duty vs identifiers
 - https://titanth.com/guides/does-the-eu-product-identifier-rule-apply-to-my-store/ : Does it apply to me?
+- https://titanth.com/guides/add-ns-pid-codes-to-shopify-in-bulk/ : Add NS-PID codes to Shopify in bulk (ns-pid:CODE in Variant Barcodes, overwrite import, tested 25 October 2026)
 - https://titanth.com/guides/shopify-metafield-for-manufacturer-code/ : Metafield for maker's code
 - https://titanth.com/guides/how-to-check-a-gtin-ean-upc-check-digit/ : GTIN check digit
 - https://titanth.com/guides/csv-columns-for-eu-product-identifiers/ : CSV column template

@@ -34,6 +34,7 @@
 <li>Variant metafields are not included in product CSV export or import; Shopify points to the variant bulk editor for editing them in bulk. To keep a copy you can check, use a simple side sheet: columns <code>Variant SKU</code>, <code>Manufacturer code</code>, <code>Source</code>.</li>
 <li>To check codes kept in a variant metafield or side sheet, match each record to the exact exported variant using a verified unique SKU. Resolve missing or duplicate SKUs, then add the code on each matching row in a working copy of the CSV and select that column under "Match identifier columns". The checker does not join side sheets or read variant metafields automatically. Do not import a TITANTH review worksheet into Shopify.</li>
 </ol>
+<p>For the CSV steps, see <a href="/guides/add-ns-pid-codes-to-shopify-in-bulk/">how to add NS-PID codes to Shopify in bulk</a>.</p>
 <h2>What appears in the product CSV</h2>
 <ul><li><strong>Typed Barcodes:</strong> Shopify has an NS-PID type per variant, and a real export writes it as ns-pid:CODE (checked 21 October 2026). A re-import kept it in two controlled tests on archived test products (25 October 2026); still inspect a fresh export after your own import.</li>
 <li><strong>Google Shopping MPN column:</strong> not always. Shopify's help page and sample files show it, but a real export from our own store on 25 September 2026 had no Google Shopping columns at all, even though the test products had MPN values. Open your own export and check the headers.</li>
