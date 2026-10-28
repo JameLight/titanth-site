@@ -1,0 +1,50 @@
+:root{font-family:"Thonburi","Noto Sans Thai","Helvetica Neue",Arial,sans-serif;color:#173744;background:#f6fafb;font-size:16px;line-height:1.6;--navy:#103b50;--teal:#0c6976;--muted:#506872;--line:#c8d8dd;--red:#a82b21;--redbg:#fff2ef;--green:#0f5f3a;--greenbg:#f0fbf4}
+*{box-sizing:border-box}
+body{margin:0;background:#f6fafb}
+a{color:var(--teal)}
+.top{display:flex;align-items:center;gap:.75rem;padding:.7rem 1rem;background:var(--navy);color:#fff}
+.top a{color:#fff;font-weight:700;text-decoration:none;min-height:44px;display:inline-flex;align-items:center}
+main{max-width:44rem;margin:0 auto;padding:1rem}
+h1{font-size:clamp(1.55rem,6.5vw,2.1rem);line-height:1.25;color:var(--navy);margin:.2rem 0 .6rem}
+h2{font-size:1.35rem;line-height:1.3;color:var(--navy);margin:0 0 .5rem}
+h3{font-size:1.1rem;color:var(--navy);margin:0 0 .35rem}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:1rem;margin:0 0 1rem}
+.urgent{background:var(--redbg);border:2px solid #d7aaa3;border-radius:12px;padding:1rem;margin:0 0 1rem}
+.urgent p{margin:0 0 .6rem;font-weight:700;color:#782118}
+.calls{display:grid;gap:.6rem}
+.call{display:block;min-height:56px;padding:.7rem 1rem;border-radius:10px;color:#fff;text-decoration:none;text-align:center;font-size:1.15rem;font-weight:800;line-height:1.3}
+.call small{display:block;font-size:.9rem;font-weight:500}
+.c1784{background:var(--red)}.c1669{background:var(--navy)}
+.two{display:grid;gap:.8rem}
+@media(min-width:620px){.two{grid-template-columns:1fr 1fr}}
+.yes{background:var(--greenbg);border:2px solid #047a3a;border-radius:10px;padding:.8rem 1rem}
+.yes h3{color:var(--green)}
+.no{background:var(--redbg);border:2px solid #d7aaa3;border-radius:10px;padding:.8rem 1rem}
+.no h3{color:var(--red)}
+.yes ul,.no ul{margin:0;padding-left:1.2rem}
+.yes li,.no li{margin:.2rem 0}
+.toc ol{margin:.3rem 0 0;padding-left:1.4rem;columns:1}
+@media(min-width:620px){.toc ol{columns:2}}
+.toc li{margin:.15rem 0;break-inside:avoid}
+.toc a{display:inline-flex;align-items:center;min-height:44px;padding:.1rem 0}
+.step{background:#fff;border:1px solid var(--line);border-radius:12px;padding:1rem;margin:0 0 1rem;scroll-margin-top:.5rem}
+.step .no-badge{display:inline-flex;align-items:center;justify-content:center;min-width:2rem;height:2rem;padding:0 .4rem;border-radius:999px;background:var(--navy);color:#fff;font-weight:800;margin-right:.4rem}
+.step figure{margin:.6rem 0}
+.step img{display:block;width:100%;max-width:420px;height:auto;margin:0 auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+.step figure img+img{margin-top:.6rem}
+.step figcaption{font-size:.9rem;color:var(--muted);text-align:center;margin-top:.3rem}
+.marks{list-style:none;margin:.4rem 0 0;padding:0;display:grid;gap:.35rem}
+.marks li{display:flex;gap:.55rem;align-items:flex-start}
+.marks b.m{flex:none;display:inline-flex;align-items:center;justify-content:center;width:1.7rem;height:1.7rem;border-radius:50%;background:#e11d48;color:#fff;font-size:.9rem;margin-top:.1rem}
+.marks b.i{flex:none;display:inline-flex;align-items:center;justify-content:center;width:1.7rem;height:1.7rem;border-radius:50%;background:var(--navy);color:#fff;font-size:.9rem;margin-top:.1rem}
+.warn{background:var(--redbg);border:1px solid #d7aaa3;border-radius:8px;padding:.6rem .8rem;color:#782118;font-weight:700;margin:.6rem 0 0}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:.5rem .6rem;text-align:left;vertical-align:top}
+th{background:#f6fafb;width:40%}
+.ok{color:var(--green);font-weight:800}.off{color:var(--red);font-weight:800}
+.dl{display:grid;gap:.5rem;margin:.5rem 0 0;padding:0;list-style:none}
+.dl a{display:flex;align-items:center;min-height:44px;padding:.5rem .8rem;border:1px solid var(--line);border-radius:10px;background:#fff;font-weight:700;text-decoration:none}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(6.5rem,1fr));gap:.5rem;margin:.6rem 0 0;padding:0;list-style:none}
+.cards a{display:block;min-height:44px;padding:.45rem .5rem;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:.88rem;text-decoration:none;text-align:center}
+.fine{font-size:.9rem;color:var(--muted)}
+footer{max-width:44rem;margin:0 auto;padding:1rem 1rem 2rem;font-size:.9rem;color:var(--muted)}
